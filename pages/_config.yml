@@ -20,9 +20,10 @@ email: conseg@pucrs.pt_BR
 description: >- # this means to ignore newlines until "baseurl:"
   SpeedyCHAIN ​​is a blockchain prototype developed to support the CONSEG (Reliability and Systems Security Group of PPGCC / PUC-RS) researches  
 baseurl: "/" # the subpath of your site, e.g. /blog
-url: "https://conseg.github.io/speedchain/" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://conseg.github.io/speedychain/" # the base hostname & protocol for your site, e.g. http://example.com
 #twitter_username: colnotrs
-github_username:  dev-conseg
+github_username: dev-conseg
+show_downloads: "true"
 
 # Build settings
 markdown: kramdown
