@@ -3,7 +3,7 @@ layout: default
 title: "Home"
 ---
 
-This is the source code for a blockchain prototype, designed to run on IoT devices.
+This is the source code for a blockchain prototype.
 
 It was wrote in Python 2.7.
 
@@ -35,8 +35,6 @@ The key folder is just a bunch of random public and private keys created for tes
 
 # Videos
 
-Video tutorial setting up CORE emulator infrastructure:
-https://www.youtube.com/watch?v=xCGu3r73xl4
+[Video tutorial setting up CORE emulator infrastructure](https://www.youtube.com/watch?v=xCGu3r73xl4)
 
-Video tutorial setting up SpeedyChain and using DeviceSimulator:
-https://www.youtube.com/watch?v=3MA8HBgbA8k
+[Video tutorial setting up SpeedyChain and using DeviceSimulator](https://www.youtube.com/watch?v=3MA8HBgbA8k)

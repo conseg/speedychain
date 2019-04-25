@@ -4,8 +4,7 @@ title: Sobre
 permalink: /sobre/
 ---
 
-Este projeto é resultado de parceria firmada entre:
+This project is mantained by:
 
-- [Colégio Notarial do Brasil - Seção Rio Grande do Sul](https://colnotrs.org.br/)
-- [COOPNORE](https://www.coopnore.com.br/)
-- [Doc.Space](https://doc.space/)
+- CONSEG
+- PUC-RS

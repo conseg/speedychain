@@ -14,30 +14,30 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 locale: "pt_BR"
-title: Projeto da Central de Serviços Integrados do CNB-RS
-logo: /assets/img/logo.png
-email: dev@doc.space
+title: SpeedyCHAIN
+logo: /assets/img/speedychain-logo.svg
+email: conseg@pucrs.pt_BR
 description: >- # this means to ignore newlines until "baseurl:"
-  Artefatos de modelagem, identidade visual, scripts, documentações, certificados digitais e agregador de issues da Central de Serviços Integrados do CNB-RS
+  SpeedyCHAIN ​​is a blockchain prototype developed to support the research developed by CONSEG 
 baseurl: "/" # the subpath of your site, e.g. /blog
-url: "https://colnotrs.doc.space" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://conseg.github.io/speedchain/" # the base hostname & protocol for your site, e.g. http://example.com
 #twitter_username: colnotrs
-github_username:  dev-doc-space
+github_username:  dev-conseg
 
 # Build settings
 markdown: kramdown
-theme: jekyll-theme-minimal
+theme: jekyll-theme-slate
 plugins:
   - jekyll-feed
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
 # to override the default setting.
-# exclude:
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
+exclude:
+  - Gemfile
+  - Gemfile.lock
+#  - node_modules
+#  - vendor/bundle/
+#  - vendor/cache/
+#  - vendor/gems/
+#  - vendor/ruby/

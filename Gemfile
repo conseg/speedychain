@@ -20,7 +20,7 @@ source "https://rubygems.org"
 # If you have any plugins, put them here!
 group :jekyll_plugins do
   gem "github-pages"
-  gem 'jekyll-theme-minimal'
+  gem 'jekyll-theme-slate'
   gem "jekyll-feed", "~> 0.11.0"
 end
 
@@ -29,4 +29,3 @@ gem "tzinfo-data", platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
 # Performance-booster for watching directories on Windows
 gem "wdm", "~> 0.1.0" if Gem.win_platform?
-

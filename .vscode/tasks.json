@@ -12,7 +12,7 @@
         {
             "label": "Deploy: PRD",
             "type": "shell",
-            "command": "bundle exec jekyll build --source '${workspaceFolder}/docs-src' --destination '${workspaceFolder}/docs'; copy '${workspaceFolder}/docs-src/CNAME' '${workspaceFolder}/docs'; git add .; $version = Get-Date -UFormat '%Y%m%d%H%M%S'; $msg = ('Atualiza ambiente de produção - versão {0}' -f $version); git commit -m $msg; git push",
+            "command": "bundle exec jekyll build --source '${workspaceFolder}/docs-src' --destination '${workspaceFolder}/docs'; git add .; $version = Get-Date -UFormat '%Y%m%d%H%M%S'; $msg = ('Atualiza ambiente de produção - versão {0}' -f $version); git commit -m $msg; git push",
             "problemMatcher": []
         }
     ]
