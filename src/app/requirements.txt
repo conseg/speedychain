@@ -1,0 +1,2 @@
+pyCrypto>=1.4.0
+flask>=1.0.2

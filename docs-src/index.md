@@ -1,6 +1,11 @@
+---
+layout: default
+title: "Home"
+---
+
 This is the source code for a blockchain prototype, designed to run on IoT devices.
 
-It was wrote in Python 2.7
+It was wrote in Python 2.7.
 
 Dependencies:
 - pyCrypto
@@ -8,8 +13,9 @@ Dependencies:
 
 The key folder is just a bunch of random public and private keys created for tests purpose.
 
-HOW-TO:
-1. ajustar ip do arquivo P2P.py
+# How-to
+
+1. ajustar IP do arquivo P2P.py
 2. sudo python3 P2P.py (erro [Errno 98] é normal)
 3. sudo ./sendRequest.sh
 4. opção 5, inserir ip
@@ -19,12 +25,15 @@ HOW-TO:
 8. opção 8 p/ listar as infos
 9. repetir passos 6 e 7 de acordo com necessidade
 
-TODO List:
+# Todo list
+
 - implement an consensus algorithm
 - improve the REST methods
 - auto-generate the keys (for test purpouses only)
 - instrumentalize code and parametrize its time collect
 - change the info genesis block hash to point to the block header hash
+
+# Videos
 
 Video tutorial setting up CORE emulator infrastructure:
 https://www.youtube.com/watch?v=xCGu3r73xl4
