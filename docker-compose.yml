@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+
+  speedychain-node01:
+    build: ./src
+    networks:
+      - backend
+    ports:
+      - "9999:9999"
+    # entrypoint:
+    #   - 
+
+  speedychain-node02:
+    build: ./src
+    networks:
+      - backend
+    ports:
+      - "9999:9999"
+    # entrypoint:
+    #   - 
+
+  speedychain-node03:
+    build: ./src
+    networks:
+      - backend
+    ports:
+      - "9999:9999"
+    # entrypoint:
+    #   - 
+
+networks:
+  backend:
+  frontend:
