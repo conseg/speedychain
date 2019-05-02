@@ -1,3 +1,5 @@
+![SpeedyCHAIN](pages/assets/images/speedychain-logo.svg)
+
 This is the source code for a blockchain prototype, designed to run on IoT devices.
 
 It was wrote in Python 2.7
