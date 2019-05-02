@@ -6,7 +6,7 @@
         {
             "label": "Start: localhost",
             "type": "shell",
-            "command": "bundle exec jekyll serve --source '${workspaceFolder}/pages' --incremental --watch",
+            "command": "bundle exec jekyll serve --source '${workspaceFolder}/pages' --watch",
             "problemMatcher": []
         },
         {
