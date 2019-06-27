@@ -1,0 +1,7 @@
+Flask>=1.0.3
+Pyro4>=4.76
+crypto>=1.4.1
+pyCrypto>=2.6.1
+# pyCryptoDome>=3.8.2
+merkle>=0.1.3
+requests>=2.22.0

@@ -1,0 +1,16 @@
+FROM python:3.7-alpine3.9
+
+LABEL maintainer="CONSEG – Grupo de Confiabilidade e Segurança de Sistemas <conseg@pucrs.br>"
+LABEL version="1.0"
+
+WORKDIR /app
+
+RUN apk update && \
+    apk add gcc g++ make libffi-dev openssl-dev
+    
+COPY conf/pip.conf /etc/
+COPY requirements.txt /app
+RUN pip install --no-cache-dir -r requirements.txt
+
+# python Device.py 172.28.0.2 9090 gateway01 1 10
+ENTRYPOINT  [ "python", "Device.py", "172.28.0.2", "9090", "gateway01", "1", "10" ]

@@ -1,0 +1,17 @@
+FROM python:2.7-alpine
+
+LABEL maintainer="CONSEG – Grupo de Confiabilidade e Segurança de Sistemas <conseg@pucrs.br>"
+LABEL version="1.0"
+
+WORKDIR /app
+
+RUN apk update && \
+    apk add gcc g++ make libffi-dev openssl-dev
+
+COPY conf/pip.conf /etc/
+COPY requirements.txt /app
+RUN pip install --no-cache-dir -r requirements.txt
+
+EXPOSE 9999
+
+ENTRYPOINT  [ "python", "Gateway.py", "name-server", "9090", "gateway01", "PoW" ]
