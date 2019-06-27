@@ -1803,7 +1803,7 @@ def main():
 
         # print ("Please copy the server address: PYRO:chain.server...... as shown and use it in deviceSimulator.py")
         ns = Pyro4.locateNS(host=nameServerIP)  # , port=nameServerPort)
-        daemon = Pyro4.Daemon()  # getMyIP())
+        daemon = Pyro4.Daemon(getMyIP())
         uri = daemon.register(R2ac, gatewayName)
         myURI = str(uri)
 
