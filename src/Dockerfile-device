@@ -12,5 +12,5 @@ COPY conf/pip.conf /etc/
 COPY requirements.txt /app
 RUN pip install --no-cache-dir -r requirements.txt
 
-# python Device.py 172.28.0.2 9090 gateway01 1 10
+# python Device.py 50.16.193.245 9090 gateway-us-east-1 1 10
 ENTRYPOINT  [ "python", "Device.py", "172.28.0.2", "9090", "gateway01", "1", "10" ]

@@ -15,7 +15,9 @@ def configure(filename):
     log = logging.getLogger("speedychain")
     log.setLevel(logging.INFO)
     # logging in file
-    logFolder = os.path.join(os.getcwd(), "log") 
+    # Dev local
+    # logFolder = os.path.join(os.getcwd(), "log")
+    logFolder = "/var/log"
     if not os.path.exists(logFolder):
         try:
             os.makedirs(logFolder)
