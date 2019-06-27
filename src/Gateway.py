@@ -25,7 +25,7 @@ import DeviceInfo
 import PeerInfo
 import DeviceKeyMapping
 
-logger = Logger.logging.getLogger("speedchain")
+logger = Logger.logging.getLogger("speedychain")
 
 def getTime():
     """ Return the current time
@@ -1807,6 +1807,7 @@ def main():
         uri = daemon.register(R2ac, gatewayName)
         myURI = str(uri)
 
+        logger = Logger.configure(gatewayName + ".log")
         logger.info("Running gateway " + gatewayName + " in " + myURI)
         logger.info("Name server: " + nameServerIP + ":" + nameServerPort)
         logger.info("Consensus algorythm: " + consensus)

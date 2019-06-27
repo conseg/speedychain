@@ -18,7 +18,7 @@ from Crypto.PublicKey import RSA
 import Logger as Logger
 import CryptoFunctions
 
-logger = Logger.logging.getLogger("speedchain")
+logger = Logger.logging.getLogger("speedychain")
 
 fname = socket.gethostname()
 
@@ -414,7 +414,7 @@ if __name__ == '__main__':
         random.seed()
         deviceName = "device" + "%05d" % random.randrange(10000)
 
-        logger = Logger.configure(deviceName + "-" + str(time.time()) + ".log")
+        logger = Logger.configure(deviceName + ".log")
         logger.info("Running device " + deviceName + " in " + getMyIP())
 
         gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)

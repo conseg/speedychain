@@ -10,7 +10,7 @@
             "command": [
                 "pyro4-ns",
                 "-n",
-                "localhost",
+                "0.0.0.0",
                 "-p",
                 "9090"
             ],

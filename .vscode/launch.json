@@ -8,7 +8,7 @@
       "name": "Run Gateway",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}\\src\\gateway\\Gateway.py",
+      "program": "${workspaceFolder}\\src\\Gateway.py",
       "args": [
         "localhost",
         "9090",
@@ -23,7 +23,7 @@
       "name": "Run Device",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}\\src\\device\\Device.py",
+      "program": "${workspaceFolder}\\src\\SDevice.py",
       "args": [
         "localhost",
         "9090",

@@ -12,7 +12,7 @@ except ImportError:
 
 def configure(filename):
     """ Setup the logging environment """
-    log = logging.getLogger("speedchain")
+    log = logging.getLogger("speedychain")
     log.setLevel(logging.INFO)
     # logging in file
     logFolder = os.path.join(os.getcwd(), "log") 
