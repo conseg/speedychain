@@ -14,4 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 9999
 
+# python2.7 Gateway.py 50.16.193.245 9090 gateway-us-east-1 PoW &
+# python2.7 Gateway.py 50.16.193.245 9090 gateway-us-west-2 PoW &
+# python2.7 Gateway.py 50.16.193.245 9090 gateway-ap-northeast-1 PoW &
 ENTRYPOINT  [ "python", "Gateway.py", "name-server", "9090", "gateway01", "PoW" ]
