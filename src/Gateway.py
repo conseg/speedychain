@@ -404,8 +404,8 @@ class R2ac(object):
         if (blk != False and blk.index > 0):
             devAESKey = findAESKey(devPublicKey)
             if (devAESKey != False):
-                logger.info("Appending transaction to block #" +
-                            str(blk.index) + "...")
+                # logger.info("Appending transaction to block #" +
+                #             str(blk.index) + "...")
                 # plainObject contains [Signature + Time + Data]
 
                 plainObject = CryptoFunctions.decryptAES(
@@ -445,7 +445,8 @@ class R2ac(object):
                     logger.debug("Sending block #" +
                                  str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ';T2;Time to add transaction in a block' + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ';T2;Time to add transaction in a block' +
+                                '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done")
@@ -473,8 +474,8 @@ class R2ac(object):
         if (blk != False and blk.index > 0):
             devAESKey = findAESKey(devPublicKey)
             if (devAESKey != False):
-                logger.info("Appending transaction to block #" +
-                            str(blk.index) + "...")
+                # logger.info("Appending transaction to block #" +
+                #             str(blk.index) + "...")
                 # plainObject contains [Signature + Time + Data]
 
                 plainObject = CryptoFunctions.decryptAES(
@@ -519,7 +520,8 @@ class R2ac(object):
                     logger.debug("Sending block #" +
                                  str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";T2;Time to add transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ";T2;Time to add transaction in a block;" +
+                                '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done in transations")
@@ -540,7 +542,7 @@ class R2ac(object):
         """
         trans = pickle.loads(transaction)
         t1 = time.time()
-        logger.info("Received transaction #" + (str(trans.index)))
+        # logger.info("Received transaction #" + (str(trans.index)))
         blk = ChainFunctions.findBlock(pubKey)
         if blk != False:
             logger.debug("Transaction size in the block = " +
@@ -566,8 +568,8 @@ class R2ac(object):
         # print("picked....")
         t1 = time.time()
         # logger.debug("Received block #" + (str(b.index)))
-        logger.info("Received block #" + str(b.index) +
-                    " from gateway " + str(gwName))
+        # logger.info("Received block #" + str(b.index) +
+        #             " from gateway " + str(gwName))
         if isBlockValid(b):
             # print("updating is valid...")
             ChainFunctions.addBlockHeader(b)
@@ -612,7 +614,7 @@ class R2ac(object):
 
         # print("addingblock... DevPubKey:" + devPubKey)
         # logger.debug("|---------------------------------------------------------------------|")
-        logger.info("Block received from device")
+        # logger.info("Block received from device")
         aesKey = ''
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPubKey)
@@ -778,9 +780,9 @@ class R2ac(object):
         # logger.info("-------")
         # print("Block Ledger size: " + str(size))
         # print("-------")
-        for b in blk.transactions:
-            logger.info(b.strBlock())
-            logger.info("-------")
+        # for b in blk.transactions:
+            # logger.info(b.strBlock())
+            # logger.info("-------")
             # print(b.strBlock())
             # print("-------")
         return "ok"
@@ -790,10 +792,10 @@ class R2ac(object):
             @return "ok" - done
         """
         global peers
-        logger.info("|--------------------------------------|")
-        for p in peers:
-            logger.info("PEER URI: "+p.peerURI)
-        logger.info("|--------------------------------------|")
+        # logger.info("|--------------------------------------|")
+        # for p in peers:
+            # logger.info("PEER URI: "+p.peerURI)
+        # logger.info("|--------------------------------------|")
         return "ok"
 
     def calcMerkleTree(self, blockToCalculate):
@@ -976,8 +978,8 @@ class R2ac(object):
         newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, consensus)
         signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers)
         if (signature == False):
-            logger.info("Consesus was not achieved: block #" +
-                        str(newBlock.index) + " will not be added")
+            # logger.info("Consesus was not achieved: block #" +
+            #             str(newBlock.index) + " will not be added")
             return False
         ChainFunctions.addBlockHeader(newBlock)
         sendBlockToPeers(newBlock)
@@ -1314,8 +1316,8 @@ def handlePBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
                 sendBlockToPeers(newBlock)
                 # print("handlePBFT = true")
                 return True
-    logger.info("Consesus was not Achieved!!! Block(" +
-                str(newBlock.index)+") will not added")
+    # logger.info("Consesus was not Achieved!!! Block(" +
+    #             str(newBlock.index)+") will not added")
     # print("handlePBFT = false")
     return False
 
