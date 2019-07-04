@@ -13,5 +13,5 @@ EXPOSE 9090
 # sudo su
 # ps -aux | grep pyro
 # pyro4-ns -n 0.0.0.0 -p 9090 &
-# pyro4-nsc -n 0.0.0.0 -p 9090 list
+# pyro4-nsc -n 50.16.193.245 -p 9090 list
 ENTRYPOINT [ "pyro4-ns", "-n", "0.0.0.0", "-p", "9090" ]

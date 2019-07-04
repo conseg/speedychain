@@ -14,6 +14,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 9999
 
+# sudo su
+# cd /app/src
+# ps -aux | grep python
+
 # gateway-us-east-1 = ec2-54-234-235-37.compute-1.amazonaws.com = 172.31.87.59
 # python2.7 Gateway.py 50.16.193.245 9090 gateway-us-east-1 PoW &
 
