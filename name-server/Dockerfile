@@ -9,4 +9,7 @@ RUN pip install --upgrade pip && \
 
 EXPOSE 9090
 
-ENTRYPOINT [ "pyro4-ns", "-n", "172.28.0.2", "-p", "9090" ]
+# sudo su
+# pyro4-ns -n 0.0.0.0 -p 9090 &
+# pyro4-nsc -n 0.0.0.0 -p 9090 list
+ENTRYPOINT [ "pyro4-ns", "-n", "0.0.0.0", "-p", "9090" ]

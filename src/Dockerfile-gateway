@@ -14,7 +14,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 9999
 
+# gateway-us-east-1 = ec2-54-234-235-37.compute-1.amazonaws.com = 172.31.87.59
 # python2.7 Gateway.py 50.16.193.245 9090 gateway-us-east-1 PoW &
+
+# gateway-us-west-2 = ec2-34-213-63-178.us-west-2.compute.amazonaws.com = 172.31.21.183
 # python2.7 Gateway.py 50.16.193.245 9090 gateway-us-west-2 PoW &
+
+# gateway-ap-northeast-1 = ec2-52-194-252-12.ap-northeast-1.compute.amazonaws.com = 172.31.39.133
 # python2.7 Gateway.py 50.16.193.245 9090 gateway-ap-northeast-1 PoW &
+
 ENTRYPOINT  [ "python", "Gateway.py", "name-server", "9090", "gateway01", "PoW" ]
