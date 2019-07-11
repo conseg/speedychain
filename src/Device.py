@@ -19,6 +19,8 @@ import Logger as Logger
 import CryptoFunctions
 
 logger = Logger.logging.getLogger("speedychain")
+deviceName = ""
+consensus = ""
 
 fname = socket.gethostname()
 
@@ -219,8 +221,8 @@ def newElection():
     return True
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-def defineConsensus():
-    receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
+def defineConsensus(receivedConsensus):
+    #receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
     # server will set its consensus and send it to all peers
     server.setConsensus(receivedConsensus)
     # print("Consensus " + receivedConsensus + " was defined")
@@ -335,6 +337,7 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     # os.remove(fname)
     # ---->
     server.setDeviceName(deviceName)
+    defineConsensus(consensus)
     return gatewayURI
 
 #############################################################################
@@ -414,6 +417,7 @@ if __name__ == '__main__':
         deviceName = sys.argv[4]
         blocks = sys.argv[5]
         transactions = sys.argv[6]
+        consensus = sys.argv[7]
 
         logger = Logger.configure(deviceName + ".log")
         logger.info("Running device " + deviceName + " in " + getMyIP())

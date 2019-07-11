@@ -28,7 +28,6 @@ import DeviceKeyMapping
 logger = Logger.logging.getLogger("speedychain")
 gatewayName = ""
 deviceName = ""
-consensus = ""
 
 def getTime():
     """ Return the current time
@@ -406,6 +405,7 @@ class R2ac(object):
         global gwPub
         global gatewayName
         global deviceName
+        global consensus
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
         if (blk != False and blk.index > 0):
@@ -452,7 +452,7 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #             str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + deviceName + ";T2;Time to add transaction in a block;" +
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + ";T2;Time to add transaction in a block;" +
                                 '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
@@ -478,6 +478,7 @@ class R2ac(object):
         global gwPub
         global gatewayName
         global deviceName
+        global consensus
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
         if (blk != False and blk.index > 0):
@@ -529,7 +530,7 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #              str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + deviceName + "T2;Time to add transaction in a block;" +
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + "T2;Time to add transaction in a block;" +
                                 '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
@@ -551,6 +552,7 @@ class R2ac(object):
         """
         global gatewayName
         global deviceName
+        global consensus
         trans = pickle.loads(transaction)
         t1 = time.time()
         # logger.info("Received transaction #" + (str(trans.index)))
@@ -563,7 +565,7 @@ class R2ac(object):
                     isTransactionValid(trans, pubKey)
                 ChainFunctions.addBlockTransaction(blk, trans)
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + deviceName + "T3;Time to update transaction received;" +
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + "T3;Time to update transaction received;" +
                     '{0:.12f}'.format((t2 - t1) * 1000))
         return "done"
 
@@ -575,6 +577,7 @@ class R2ac(object):
         """
         global gatewayName
         global deviceName
+        global consensus
         # print("Updating IoT Block Ledger, in Gw: "+str(gwName))
         # logger.debug("updateIoTBlockLedger Function")
         b = pickle.loads(iotBlock)
@@ -588,7 +591,7 @@ class R2ac(object):
             ChainFunctions.addBlockHeader(b)
         t2 = time.time()
         # print("updating was done")
-        logger.info("gateway;" + gatewayName + ";" + deviceName + "T4;Time to add new block in peers;" +
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + "T4;Time to add new block in peers;" +
                     '{0:.12f}'.format((t2 - t1) * 1000))
 
     def addBlockConsensusCandidate(self, devPubKey):
@@ -626,6 +629,7 @@ class R2ac(object):
         global consensusLock
         global gatewayName
         global deviceName
+        global consensus
 
         # print("addingblock... DevPubKey:" + devPubKey)
         # logger.debug("|---------------------------------------------------------------------|")
@@ -668,7 +672,6 @@ class R2ac(object):
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
                 orchestratorObject.runPBFT()
             if(consensus == "dBFT" or consensus == "Witness3"):
-
                 # consensusLock.acquire(1) # only 1 consensus can be running at same time
                 # for p in peers:
                 #     obj=p.object
@@ -712,7 +715,7 @@ class R2ac(object):
             #     print "thread not working..."
 
             if(consensus == "PBFT" or consensus == "dBFT" or consensus == "Witness3" or consensus == "PoW"):
-                consensusLock.release()
+                # consensusLock.release() EXCLUÍDO PELO ARRUDA
                 for p in peers:
                     obj = p.object
                     obj.releaseLockRemote()
@@ -722,9 +725,9 @@ class R2ac(object):
         # print("Before encription of rsa2")
 
         t3 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + deviceName + "T1;Time to generate key;" +
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + ";T1;Time to generate key;" +
                     '{0:.12f}'.format((t2 - t1) * 1000))
-        logger.info("gateway;" + gatewayName + ";" + deviceName + "T8;Time to add block (perform consensus and update all peers);" +
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + ";T8;Time to add block (perform consensus and update all peers);" +
                     '{0:.12f}'.format((t3 - t1) * 1000))
         # logger.debug("|---------------------------------------------------------------------|")
         # print("block added")
@@ -817,6 +820,7 @@ class R2ac(object):
         # print ("received: "+str(blockToCalculate))
         global gatewayName
         global deviceName
+        global consensus
         t1 = time.time()
         blk = ChainFunctions.getBlockByIndex(blockToCalculate)
         trans = blk.transactions
@@ -825,7 +829,7 @@ class R2ac(object):
         mt.add_leaf(trans, True)
         mt.make_tree()
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + deviceName + "T5;Time to generate merkle tree (size = " +
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + "T5;Time to generate merkle tree (size = " +
                     str(size) + ");" + '{0:.12f}'.format((t2 - t1) * 1000))
         return "ok"
 
@@ -890,6 +894,7 @@ class R2ac(object):
         global orchestratorObject
         global gatewayName
         global deviceName
+        global consensus
 
         t1 = time.time()
         for peer in peers:
@@ -908,7 +913,7 @@ class R2ac(object):
             dat = pickle.dumps(orchestratorObject)
             obj.loadElectedOrchestrator(dat)
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + deviceName + "T7;Time to execute new election block consensus;" +
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + "T7;Time to execute new election block consensus;" +
                     '{0:.12f}'.format((t2 - t1) * 1000))
         # logger.info("New Orchestator loaded is: " + str(newOrchestratorURI))
         # orchestratorObject
@@ -940,6 +945,7 @@ class R2ac(object):
         """ Run the PBFT consensus to add a new block on the chain """
         global gatewayName
         global deviceName
+        global consensus
         # print("I am in runPBFT")
         t1 = time.time()
         global gwPvt
@@ -950,7 +956,7 @@ class R2ac(object):
 
         PBFTConsensus(blk, gwPub, devPubKey)
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + deviceName + "T6;Time to execute PBFT block consensus;" +
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + "T6;Time to execute PBFT block consensus;" +
                     '{0:.12f}'.format((t2 - t1) * 1000))
         # print("Finish PBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
 
@@ -958,6 +964,7 @@ class R2ac(object):
         """ Run the dBFT consensus to add a new block on the chain """
         global gatewayName
         global deviceName
+        global consensus
         # print("I am in rundBFT")
         t1 = time.time()
         global gwPvt
@@ -967,7 +974,7 @@ class R2ac(object):
         # logger.debug("Running dBFT function to block(" + str(blk.index) + ")")
         PBFTConsensus(blk, gwPub, devPubKey)
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + deviceName + "T6;Time to execute BFT block consensus;" +
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + "T6;Time to execute BFT block consensus;" +
                     '{0:.12f}'.format((t2 - t1) * 1000))
         # print("Finish dBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
 
@@ -976,6 +983,7 @@ class R2ac(object):
         """ Run the PoW consensus to add a new block on the chain """
         global gatewayName
         global deviceName
+        global consensus
         # print("I am in runPoW")
         t1 = time.time()
         global gwPvt
@@ -985,7 +993,7 @@ class R2ac(object):
 
         if (PoWConsensus(blk, gwPub, devPubKey)):
             t2 = time.time()
-            logger.info("gateway;" + gatewayName + ";" + deviceName + "T6;Time to execute PoW block consensus;" +
+            logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + ";T6;Time to execute PoW block consensus;" +
                         '{0:.12f}'.format((t2 - t1) * 1000))
             # # print("Finish PoW consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
         else:
@@ -997,6 +1005,7 @@ class R2ac(object):
     def runNoConsesus(self):
         global gatewayName
         global deviceName
+        global consensus
         # print("Running without consensus")
         t1 = time.time()
 
@@ -1011,7 +1020,7 @@ class R2ac(object):
         ChainFunctions.addBlockHeader(newBlock)
         sendBlockToPeers(newBlock)
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + deviceName + "T6;Time to execute block consensus (not achieved);" +
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";" + deviceName + "T6;Time to execute block consensus (not achieved);" +
                     '{0:.12f}'.format((t2 - t1) * 1000))
         # print("Finish adding Block without consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
         return True
@@ -1074,7 +1083,7 @@ class R2ac(object):
     #     return True
     #     # print(str(myVoteForNewOrchestrator))
 
-# NEW CONSENSUS @Roben
+    # NEW CONSENSUS @Roben
 
     def verifyBlockCandidateRemote(self, newBlock, askerPubKey):
         """ Receive a new block and verify if it's authentic\n
@@ -1792,18 +1801,18 @@ def saveOrchestratorURI(uri):
         @param uri - orchestrator URI
     """
     # text_file = open("/home/core/nodes/Gw1.txt", "w")
-    text_file = open("/tmp/Gw1.txt", "w")
-    text_file.write(uri)
-    text_file.close()
+    #text_file = open("/tmp/Gw1.txt", "w")
+    #text_file.write(uri)
+    #text_file.close()
 
 def saveURItoFile(uri):
     """ Save the peer's URI to a file \n
         @param uri - peers URI
     """
-    fname = socket.gethostname()
-    text_file = open(fname, "w")
-    text_file.write(uri)
-    text_file.close()
+    #fname = socket.gethostname()
+    #text_file = open(fname, "w")
+    #text_file.write(uri)
+    #text_file.close()
 
 """ Main function initiate the system"""
 def main():
@@ -1812,6 +1821,7 @@ def main():
     global votesForNewOrchestrator
     global gatewayName
     global deviceName
+    #global consensus
 
     if len(sys.argv[1:]) < 1:
 
@@ -1827,7 +1837,7 @@ def main():
         nameServerIP = sys.argv[1]
         nameServerPort = sys.argv[2]
         gatewayName = sys.argv[3]
-        consensus = sys.argv[4]
+        #consensus = sys.argv[4]
 
         # create the blockchain
         bootstrapChain2()
@@ -1841,7 +1851,7 @@ def main():
         logger = Logger.configure(gatewayName + ".log")
         logger.info("Running gateway " + gatewayName + " in " + myURI)
         logger.info("Name server: " + nameServerIP + ":" + nameServerPort)
-        logger.info("Consensus algorythm: " + consensus)
+        #logger.info("Consensus algorythm: " + consensus)
 
         # COMPARAR POW X DBFT X PBFT
         ns.register(name=gatewayName, uri=uri, safe=False)  # safe=True)
