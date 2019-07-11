@@ -8,11 +8,12 @@
       "name": "Run Gateway",
       "type": "python",
       "request": "launch",
+      "pythonPath": "C:\\Program Files\\Python27\\python.exe",
       "program": "${workspaceFolder}\\src\\Gateway.py",
       "args": [
         "localhost",
         "9090",
-        "sa-east-1-01",
+        "gateway-local",
         "PoW"
       ],
       "console": "integratedTerminal",

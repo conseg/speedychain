@@ -319,6 +319,7 @@ def executeEVM():
 
 
 def loadConnection(nameServerIP, nameServerPort, gatewayName):
+    global deviceName
     """ Load the URI of the connection  """
     # ----> Adicionado por Arruda
     ns = Pyro4.locateNS(host=nameServerIP) #, port=nameServerPort)
@@ -333,6 +334,7 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     # text_file.close()
     # os.remove(fname)
     # ---->
+    server.setDeviceName(deviceName)
     return gatewayURI
 
 #############################################################################
@@ -409,10 +411,9 @@ if __name__ == '__main__':
         nameServerIP = sys.argv[1]
         nameServerPort = sys.argv[2]
         gatewayName = sys.argv[3]
-        blocks = sys.argv[4]
-        transactions = sys.argv[5]
-        random.seed()
-        deviceName = "device" + "%05d" % random.randrange(10000)
+        deviceName = sys.argv[4]
+        blocks = sys.argv[5]
+        transactions = sys.argv[6]
 
         logger = Logger.configure(deviceName + ".log")
         logger.info("Running device " + deviceName + " in " + getMyIP())
