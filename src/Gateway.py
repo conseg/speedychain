@@ -1839,16 +1839,18 @@ def main():
         gatewayName = sys.argv[3]
         gatewayIP = sys.argv[4]
 
+        logger = Logger.configure(gatewayName + ".log")
+
         # create the blockchain
         bootstrapChain2()
 
         # print ("Please copy the server address: PYRO:chain.server...... as shown and use it in deviceSimulator.py")
         ns = Pyro4.locateNS(host=nameServerIP)  # , port=nameServerPort)
+        logger.info("gatewayIP = " + gatewayIP)
         daemon = Pyro4.Daemon(gatewayIP)
         uri = daemon.register(R2ac, gatewayName)
         myURI = str(uri)
 
-        logger = Logger.configure(gatewayName + ".log")
         logger.info("Running gateway " + gatewayName + " in " + myURI)
         logger.info("Name server: " + nameServerIP + ":" + nameServerPort)
         #logger.info("Consensus algorythm: " + consensus)
