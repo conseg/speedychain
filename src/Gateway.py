@@ -715,7 +715,7 @@ class R2ac(object):
             #     print "thread not working..."
 
             if(consensus == "PBFT" or consensus == "dBFT" or consensus == "Witness3" or consensus == "PoW"):
-                # consensusLock.release() EXCLUÍDO PELO ARRUDA
+                # consensusLock.release() EXCLUIDO PELO ARRUDA
                 for p in peers:
                     obj = p.object
                     obj.releaseLockRemote()
