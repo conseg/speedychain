@@ -1837,14 +1837,14 @@ def main():
         nameServerIP = sys.argv[1]
         nameServerPort = sys.argv[2]
         gatewayName = sys.argv[3]
-        #consensus = sys.argv[4]
+        gatewayIP = sys.argv[4]
 
         # create the blockchain
         bootstrapChain2()
 
         # print ("Please copy the server address: PYRO:chain.server...... as shown and use it in deviceSimulator.py")
         ns = Pyro4.locateNS(host=nameServerIP)  # , port=nameServerPort)
-        daemon = Pyro4.Daemon(getMyIP())
+        daemon = Pyro4.Daemon(gatewayIP)
         uri = daemon.register(R2ac, gatewayName)
         myURI = str(uri)
 
