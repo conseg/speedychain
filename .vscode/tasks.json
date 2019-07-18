@@ -17,6 +17,56 @@
             "problemMatcher": []
         },
         {
+            "label": "List Pyro Name Server Objects",
+            "type": "shell",
+            "isBackground": true,
+            "command": [
+                "pyro4-nsc",
+                "-n",
+                "127.0.0.1",
+                "-p",
+                "9090",
+                "list"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean Pyro Name Server Objects",
+            "type": "shell",
+            "isBackground": true,
+            "command": [
+                "pyro4-nsc",
+                "-n",
+                "127.0.0.1",
+                "-p",
+                "9090",
+                "removematching",
+                "gateway*"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Run SpeedyCHAIy
+            N Gateway",
+            "type": "shell",
+            "windows": {
+                "options": {
+                    "cwd": "${workspaceFolder}/src"
+                }
+            },
+            "command":[
+                "py",
+                "-2",
+                "Gateway.py",
+                "127.0.0.1",
+                "9090",
+                "gateway-local-1"
+            ],
+            "dependsOn": [
+                "Clean Pyro Name Server Objects"
+            ]
+        },
+        {
             "label": "Run CONSEG Pages",
             "type": "shell",
             "command": "bundle exec jekyll serve --source '${workspaceFolder}/doc' --incremental --watch",

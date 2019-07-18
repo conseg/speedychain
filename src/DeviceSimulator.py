@@ -336,7 +336,6 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     # text_file.close()
     # os.remove(fname)
     # ---->
-    server.setDeviceName(deviceName)
     defineConsensus(consensus)
     return gatewayURI
 

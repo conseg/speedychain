@@ -5,32 +5,95 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Gateway",
+      "name": "Run Gateway 1",
       "type": "python",
       "request": "launch",
       "pythonPath": "C:\\Program Files\\Python27\\python.exe",
       "program": "${workspaceFolder}\\src\\Gateway.py",
       "args": [
-        "localhost",
+        "127.0.0.1",
         "9090",
-        "gateway-local",
-        "PoW"
+        "gateway-local-1"
       ],
       "console": "integratedTerminal",
       "justMyCode": true,
       "port": 5678
     },
     {
-      "name": "Run Device",
+      "name": "Run Gateway 2",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}\\src\\SDevice.py",
+      "pythonPath": "C:\\Program Files\\Python27\\python.exe",
+      "program": "${workspaceFolder}\\src\\Gateway.py",
       "args": [
-        "localhost",
+        "127.0.0.1",
         "9090",
-        "sa-east-1-01",
-        "10",
-        "100"
+        "gateway-local-2"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "port": 5679
+    },
+    {
+      "name": "Run Gateway 3",
+      "type": "python",
+      "request": "launch",
+      "pythonPath": "C:\\Program Files\\Python27\\python.exe",
+      "program": "${workspaceFolder}\\src\\Gateway.py",
+      "args": [
+        "127.0.0.1",
+        "9090",
+        "gateway-local-3"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "port": 5680
+    },
+    {
+      "name": "Run DeviceSimulator (PoW)",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}\\src\\DeviceSimulator.py",
+      "args": [
+        "127.0.0.1",
+        "9090",
+        "gateway-local-1",
+        "device-local-1",
+        "2",
+        "5",
+        "PoW"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Run DeviceSimulator (dBFT)",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}\\src\\DeviceSimulator.py",
+      "args": [
+        "127.0.0.1",
+        "9090",
+        "gateway-local-1",
+        "device-local-1",
+        "2",
+        "5",
+        "dBFT"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Run DeviceSimulator (pBFT)",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}\\src\\DeviceSimulator.py",
+      "args": [
+        "127.0.0.1",
+        "9090",
+        "gateway-local-1",
+        "device-local-1",
+        "2",
+        "5",
+        "PBFT"
       ],
       "console": "integratedTerminal"
     }

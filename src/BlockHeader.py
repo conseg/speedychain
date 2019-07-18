@@ -10,8 +10,6 @@ class BlockHeader:
         self.nonce = nonce
         self.publicKey = publicKey
 
-
-
     def __str__(self):
         return "%s,%s,%s,%s,%s,%s,%s" % (
             str(self.index), str(self.previousHash), str(self.timestamp), str(self.transactions), str(self.hash), str(self.nonce),
