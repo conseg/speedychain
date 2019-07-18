@@ -384,7 +384,7 @@ def isBlockValid(block):
 class R2ac(object):
     def __init__(self):
         """ Init the R2AC chain on the peer"""
-        logger.info("R2ac gateway initialized")
+        logger.info("SpeedyCHAIN Gateway initialized")
 
     def addTransaction(self, devPublicKey, encryptedObj):
         """ Receive a new transaction to be add to the chain, add the transaction
@@ -1840,8 +1840,8 @@ def main():
         # print("tamanho de todos os votos: "+str(len(votesForNewOrchestrator)))
         # print("after getting last chain blocks")
 
-    logger.info("Running gateway " + gatewayName + " in " + myURI)
-    logger.info("Name server: " + nameServerIP + ":" + str(nameServerPort))
+    logger.info("Running SpeedyCHAIN gateway " + gatewayName + " in " + myURI)
+    logger.info("Pyro name server: " + nameServerIP + ":" + str(nameServerPort))
 
     daemon.requestLoop()
 
@@ -1849,8 +1849,7 @@ def main():
 if __name__ == '__main__':
     if len(sys.argv[1:]) < 1:
         print("Command line syntax:")
-        print("  python -m r2ac.py <name server IP> <name server port> <gateway name> <consensus algorythm>")
-        print("    <consensus algorythm> = None | dBFT | PBFT | PoW | Witness3")
+        print("  python -m Gateway.py <name server IP> <name server port> <gateway name>")
         print("  Pyro name server must be running on <name server IP>:<name server port>")
         print("    Run Pyro4: pyro4-ns -n <name server IP> -p <name server port>")
         quit()
