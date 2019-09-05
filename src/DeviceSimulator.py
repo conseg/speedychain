@@ -219,7 +219,12 @@ def merkle():
 def newElection():
     server.electNewOrchestrator()
     return True
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ###WHAT???###
+
+def defineInteractiveConsensus():
+    receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
+    server.setConsensus(receivedConsensus)
+    return True
 
 def defineConsensus(receivedConsensus):
     #receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
@@ -344,61 +349,61 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
 ######################          Main         ################################
 #############################################################################
 #############################################################################
-# def main():
-    # """ Creates an interactive screen for the user with all option of a device"""
-    # global server
-    # options = {
-    #     1: setServer,
-    #     2: addPeer,
-    #     3: addBlockOnChain,
-    #     4: sendData,
-    #     5: listBlockHeader,
-    #     6: listTransactions,
-    #     7: listPeers,
-    #     8: newKeyPair,
-    #     9: defineAutomaNumbers,
-    #     10: merkle,
-    #     11: newElection,
-    #     12: defineConsensus,
-    #     13: createBlockForSC,
-    #     14: showLastTransactionData,
-    #     15: callEVM,
-    #     16: evmConnector,
-    #     17: executeEVM
-    # }
+def InteractiveMain():
+    """ Creates an interactive screen for the user with all option of a device"""
+    global server
+    options = {
+        1: setServer,
+        2: addPeer,
+        3: addBlockOnChain,
+        4: sendData,
+        5: listBlockHeader,
+        6: listTransactions,
+        7: listPeers,
+        8: newKeyPair,
+        9: defineAutomaNumbers,
+        10: merkle,
+        11: newElection,
+        12: defineInteractiveConsensus,
+        13: createBlockForSC,
+        14: showLastTransactionData,
+        15: callEVM,
+        16: evmConnector,
+        17: executeEVM
+    }
 
-    # mode = -1
-    # while True:
-    #     print("Choose your option [" + str(server) + "]")
-    #     print("0 - Exit")
-    #     print("1 - Set Server Address[ex:PYRO:chain.server@blablabala:00000]")
-    #     print("2 - Add Peer")
-    #     print(
-    #         "3 - Authentication Request [a)Gw Generate AES Key;b)Enc key with RSA;c)Dec AES Key]")
-    #     print(
-    #         "4 - Produce Data [a)sign data;b)encrypt with AES key;c)Send to Gateway;d)GW update ledger and peers")
-    #     print("5 - List Block Headers from connected Gateway")
-    #     print("6 - List Transactions for a given Block Header")
-    #     print("7 - List PEERS")
-    #     print("8 - Recreate Device KeyPair")
-    #     print("9 - Run a batch operation...")
-    #     print("10 - Create Merkle Tree for a given block")
-    #     print(
-    #         "11 - Elect a new node as Orchestator (used for voting based consensus")
-    #     print("12 - Set a consensus algorithm")
-    #     print("13 - Create a block for Smart Contract")
-    #     print("14 - Show data from last transaction from block Index")
-    #     print("15 - Call Smart Contract")
-    #     # print("16 - EVM connector")
-    #     # print("17 - execute EVM code")
-# 
-    #     try:
-    #         mode = int(input('Input:'))
-    #     except ValueError:
-    #         print ("Not a number")
-    #     if (mode == 0):
-    #         break
-    #     options[mode]()
+    mode = -1
+    while True:
+        print("Choose your option [" + str(server) + "]")
+        print("0 - Exit")
+        print("1 - Set Server Address[ex:PYRO:chain.server@blablabala:00000]")
+        print("2 - Add Peer")
+        print(
+            "3 - Authentication Request [a)Gw Generate AES Key;b)Enc key with RSA;c)Dec AES Key]")
+        print(
+            "4 - Produce Data [a)sign data;b)encrypt with AES key;c)Send to Gateway;d)GW update ledger and peers")
+        print("5 - List Block Headers from connected Gateway")
+        print("6 - List Transactions for a given Block Header")
+        print("7 - List PEERS")
+        print("8 - Recreate Device KeyPair")
+        print("9 - Run a batch operation...")
+        print("10 - Create Merkle Tree for a given block")
+        print(
+            "11 - Elect a new node as Orchestator (used for voting based consensus")
+        print("12 - Set a consensus algorithm")
+        print("13 - Create a block for Smart Contract")
+        print("14 - Show data from last transaction from block Index")
+        print("15 - Call Smart Contract")
+        # print("16 - EVM connector")
+        # print("17 - execute EVM code")
+
+        try:
+            mode = int(input('Input:'))
+        except ValueError:
+            print ("Not a number")
+        if (mode == 0):
+            break
+        options[mode]()
 
 if __name__ == '__main__':
 
@@ -414,21 +419,24 @@ if __name__ == '__main__':
         nameServerPort = sys.argv[2]
         gatewayName = sys.argv[3]
         deviceName = sys.argv[4]
-        blocks = sys.argv[5]
-        transactions = sys.argv[6]
-        consensus = sys.argv[7]
+        if (len(sys.argv) < 6):
+            InteractiveMain()
+        else:
+            blocks = sys.argv[5]
+            transactions = sys.argv[6]
+            consensus = sys.argv[7]
 
-        logger = Logger.configure(deviceName + ".log")
-        logger.info("Running device " + deviceName + " in " + getMyIP())
+            logger = Logger.configure(deviceName + ".log")
+            logger.info("Running device " + deviceName + " in " + getMyIP())
 
-        gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
+            gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
-        logger.info("Connected to gateway: " + gatewayURI.asString())
+            logger.info("Connected to gateway: " + gatewayURI.asString())
 
-        logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
-        automa(int(blocks), int(transactions))
+            logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
+            automa(int(blocks), int(transactions))
 
-    # else:
+        # else:
         # os.system("clear")
         # loadConnection()
         # main()
