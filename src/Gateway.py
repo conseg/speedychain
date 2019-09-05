@@ -732,25 +732,24 @@ class R2ac(object):
             @return "ok" - done
         """
         # logger.info("Showing Block Header data for peer: " + myURI)
-        # print("Showing Block Header data for peer: " + myURI)
+        print("Showing Block Header data for peer: " + myURI)
         size = ChainFunctions.getBlockchainSize()
         # logger.info("IoT Ledger size: " + str(size))
         # logger.info("|-----------------------------------------|")
-        # print("IoT Ledger size: " + str(size))
-        # print("|-----------------------------------------|")
+        print("IoT Ledger size: " + str(size))
+        print("|-----------------------------------------|")
         theChain = ChainFunctions.getFullChain()
-        # for b in theChain:
+        for b in theChain:
         # logger.info(b.strBlock())
         # logger.info("|-----------------------------------------|")
-        # print(b.strBlock())
-        # print("|-----------------------------------------|")
+            print(b.strBlock())
+            print("|-----------------------------------------|")
         return "ok"
 
     def showLastTransactionData(self, blockIndex):
-        # print("Showing Data from Last Transaction from block #: " + str(blockIndex))
+        print("Showing Data from Last Transaction from block #: " + str(blockIndex))
         blk = ChainFunctions.getBlockByIndex(blockIndex)
-        lastTransactionInfo = ChainFunctions.getLatestBlockTransaction(
-            blk).data
+        lastTransactionInfo = ChainFunctions.getLatestBlockTransaction(blk).data
         transactionData = lastTransactionInfo.strInfoData()
 
         # print("My data is: "+str(transactionData))
@@ -762,20 +761,20 @@ class R2ac(object):
             @param index - index of the block\n
             @return "ok" - done
         """
-        # print("Showing Transactions data for peer: " + myURI)
+        print("Showing Transactions data for peer: " + myURI)
         # logger.info("Showing Trasactions data for peer: " + myURI)
         blk = ChainFunctions.getBlockByIndex(index)
-        # print("Block for index"+str(index))
+        print("Block for index"+str(index))
         size = len(blk.transactions)
         # logger.info("Block Ledger size: " + str(size))
         # logger.info("-------")
-        # print("Block Ledger size: " + str(size))
-        # print("-------")
-        # for b in blk.transactions:
-        # logger.info(b.strBlock())
-        # logger.info("-------")
-        # print(b.strBlock())
-        # print("-------")
+        print("Block Ledger size: " + str(size))
+        print("-------")
+        for b in blk.transactions:
+            # logger.info(b.strBlock())
+            # logger.info("-------")
+            print(b.strBlock())
+            print("-------")
         return "ok"
 
     def listPeer(self):

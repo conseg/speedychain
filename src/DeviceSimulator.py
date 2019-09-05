@@ -223,6 +223,7 @@ def newElection():
 
 def defineInteractiveConsensus():
     receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
+    print("after receiving consensus string: "+receivedConsensus)
     server.setConsensus(receivedConsensus)
     return True
 
@@ -300,14 +301,14 @@ def callEVM():
         respostaJSON = json.loads(resposta)
         # print(respsotaJSON['Ret'])
 
-        #if respostaJSON['Erro'] != "":
-            #logger.Exception("Transacao nao inserida")
-        #elif chamadaJSON['Tipo'] == "Exec":
-            #logger.info("Execucao, sem insercao de dados na blockchain")
-        #else:
-            #transacao = '{ "Tipo" : "%s", "Data": "%s", "From": "%s", "To" : "%s", "Root" : "%s" }' % (
-                #chamadaJSON['Tipo'], chamadaJSON['Data'], chamadaJSON['From'], chamadaJSON['To'], respostaJSON['Root'])
-            #logger.info("Transacao sendo inserida: %s \n" % transacao)
+        if respostaJSON['Erro'] != "":
+            logger.Exception("Transacao nao inserida")
+        elif chamadaJSON['Tipo'] == "Exec":
+            logger.info("Execucao, sem insercao de dados na blockchain")
+        else:
+            transacao = '{ "Tipo" : "%s", "Data": "%s", "From": "%s", "To" : "%s", "Root" : "%s" }' % (
+                chamadaJSON['Tipo'], chamadaJSON['Data'], chamadaJSON['From'], chamadaJSON['To'], respostaJSON['Root'])
+            logger.info("Transacao sendo inserida: %s \n" % transacao)
         sendDataSC(transacao)
             # pass
 
@@ -419,19 +420,18 @@ if __name__ == '__main__':
         nameServerPort = sys.argv[2]
         gatewayName = sys.argv[3]
         deviceName = sys.argv[4]
+        logger = Logger.configure(deviceName + ".log")
+        logger.info("Running device " + deviceName + " in " + getMyIP())
+
+        gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
+
+        logger.info("Connected to gateway: " + gatewayURI.asString())
         if (len(sys.argv) < 6):
             InteractiveMain()
         else:
             blocks = sys.argv[5]
             transactions = sys.argv[6]
             consensus = sys.argv[7]
-
-            logger = Logger.configure(deviceName + ".log")
-            logger.info("Running device " + deviceName + " in " + getMyIP())
-
-            gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
-
-            logger.info("Connected to gateway: " + gatewayURI.asString())
 
             logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
             automa(int(blocks), int(transactions))
