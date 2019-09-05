@@ -426,7 +426,8 @@ if __name__ == '__main__':
         gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
         logger.info("Connected to gateway: " + gatewayURI.asString())
-        if (len(sys.argv) < 6):
+
+        if (len(sys.argv) < 6): #when it is not called with number of blocks/transactions and consensus, it is called interactive mode
             InteractiveMain()
         else:
             blocks = sys.argv[5]
