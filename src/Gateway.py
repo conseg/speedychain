@@ -9,6 +9,7 @@ import socket
 import traceback
 import thread
 import random
+import json
 
 from flask import Flask, request
 
@@ -455,6 +456,66 @@ class R2ac(object):
             # logger.debug("--Transaction not appended--Key not found")
             return "key not found"
 
+##############################
+################ To add an Smart Contract transaction can be done in 2 ways
+#################### method was overloaded
+#######################################################
+    def addTransactionSC2(self, transacao,signedDatabyDevice,devPublicKey,devTime):
+        """ Receive a new transaction to be add to the chain, add the transaction
+            to a block and send it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        print("####I am here 66###")
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+        blk = ChainFunctions.findBlock(devPublicKey)
+        if (blk != False and blk.index > 0):
+
+                isSigned = True; #ToDo verify device signature
+
+                if isSigned:
+                    # print("it is signed!!!")
+                    deviceInfo = DeviceInfo.DeviceInfo(signedDatabyDevice, devTime, transacao)
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                        ChainFunctions.getLatestBlockTransaction(blk))
+
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData)
+
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #              str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+                    # print("all done in transations")
+                    return "ok!"
+                else:
+                    # print("Signature is not ok")
+                    # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    return "Invalid Signature"
+            # logger.debug("--Transaction not appended--Key not found")
+        return "key not found"
+
     def addTransactionSC(self, devPublicKey, encryptedObj):
         """ Receive a new transaction to be add to the chain, add the transaction
             to a block and send it to all peers\n
@@ -747,7 +808,7 @@ class R2ac(object):
         return "ok"
 
     def showLastTransactionData(self, blockIndex):
-        print("Showing Data from Last Transaction from block #: " + str(blockIndex))
+        #print("Showing Data from Last Transaction from block #: " + str(blockIndex))
         blk = ChainFunctions.getBlockByIndex(blockIndex)
         lastTransactionInfo = ChainFunctions.getLatestBlockTransaction(blk).data
         transactionData = lastTransactionInfo.strInfoData()
@@ -1096,6 +1157,89 @@ class R2ac(object):
             return False
         else:
             return True
+
+
+##############################Smart Contracts####################
+    def callEVM(self, dumpedType, dumpedData, dumpedFrom, dumpedDest,dumedSignedDatabyDevice,dumpedDevPubKey):
+        """ Call a Ethereum Virtual Machine and use a pre-defined set of parameters\n
+            @param tipo - type of the call, can be Execute, Create or Call\n
+            @param data - It is the binary data of the contract\n
+            @param origin - from account\n
+            @param dest - destination account\n
+            @signedDatabyDevice - device signature for concat tipo,data,origin and dest
+            @devPubKey - to verify signature
+        """
+        # Create a TCP
+        # IP socket
+
+        tipo = pickle.loads(dumpedType)
+        data = pickle.loads(dumpedData)
+        origin = pickle.loads(dumpedFrom)
+        dest = pickle.loads(dumpedDest)
+        signedDatabyDevice=pickle.loads(dumedSignedDatabyDevice)
+        devPubKey = pickle.loads(dumpedDevPubKey)
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Coleta o data da ultima transacao um json
+        scBlock = ChainFunctions.findBlock(devPubKey)
+        ultimaTrans = ChainFunctions.getLatestBlockTransaction(scBlock).data.strInfoData()
+        ultimaTransJSON = json.loads(ultimaTrans)
+        transAtual = json.loads(
+            '{"Tipo":"%s","Data":"%s","From":"%s","To":"%s"}' % (tipo, data, origin, dest))
+
+        chamada = '{"Tipo":"%s","Data":"%s","From":"%s","To":"%s","Root":"%s"}' % (
+            transAtual['Tipo'], transAtual['Data'], transAtual['From'], transAtual['To'], ultimaTransJSON['Root'])
+        # chamada =  '{"Tipo":"%s","Data":"%s","From":null,"To":null,"Root":"%s"}' % (transAtual['Tipo'], transAtual['Data'], ultimaTransJSON['Root'])
+        chamadaJSON = json.loads(chamada)
+
+        # chamada = '{"Tipo":"Exec","Data":"YAFgQFNgAWBA8w==","From":null,"To":null,"Root":null}'  # Comentar
+        # chamadaJSON = json.loads(chamada)  # Comentar
+        try:
+            # Tamanho maximo do JSON 6 caracteres
+            s.connect(('localhost', 6666))
+            tamanhoSmartContract = str(len(chamada))
+            for i in range(6 - len(tamanhoSmartContract)):
+                tamanhoSmartContract = '0' + tamanhoSmartContract
+            # print("Enviando tamanho " + tamanhoSmartContract + "\n")
+            # Envia o SC
+            s.send(tamanhoSmartContract)
+            time.sleep(1)
+            # print(json.dumps(chamadaJSON))
+            s.send(chamada)
+
+            # Recebe tamanho da resposta
+            tamanhoResposta = s.recv(6)
+            # print("Tamanho da resposta: " + tamanhoResposta)
+            # Recebe resposta
+            resposta = s.recv(int(tamanhoResposta))
+            # print(resposta + "\n")
+
+            # Decodifica resposta
+            respostaJSON = json.loads(resposta)
+            # print(respsotaJSON['Ret'])
+            if respostaJSON['Erro'] != "":
+                logger.Exception("Transacao nao inserida")
+            elif chamadaJSON['Tipo'] == "Exec":
+                logger.info("Execucao, sem insercao de dados na blockchain")
+            else:
+                transacao = '{ "Tipo" : "%s", "Data": "%s", "From": "%s", "To" : "%s", "Root" : "%s" }' % (
+                    chamadaJSON['Tipo'], chamadaJSON['Data'], chamadaJSON['From'], chamadaJSON['To'],
+                    respostaJSON['Root'])
+                logger.info("Transacao sendo inserida: %s \n" % transacao)
+                t = ((time.time() * 1000) * 1000)
+                timeStr = "{:.0f}".format(t)
+                data = timeStr + transacao+signedDatabyDevice
+                signedData = CryptoFunctions.signInfo(gwPvt, data)
+                logger.debug("###Printing Signing Smart Contract Data before sending: " + signedData)
+                print("I am Here before SC")
+                self.addTransactionSC2(transacao, signedDatabyDevice, devPubKey, timeStr)
+            # pass
+
+        finally:
+            # print("fim\n")
+            s.close()
+        return True
 
 def addNewBlockToSyncList(devPubKey):
     """ Add a new block to a syncronized list through the peers\n

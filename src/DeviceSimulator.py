@@ -5,6 +5,7 @@ import os
 import time
 import socket
 import random
+import pickle
 
 import Pyro4
 
@@ -249,72 +250,84 @@ def showLastTransactionData():
     lastDataTransactionData = server.showLastTransactionData(blockIndex)
     return lastDataTransactionData
 
-def callEVM():
+def callEVMInterface():
     # Create a TCP
     # IP socket
     global privateKey
     global publicKey
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Coleta o data da ultima transacao um json
-    ultimaTrans = showLastTransactionData()
-    ultimaTransJSON = json.loads(ultimaTrans)
+    # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #
+    # # Coleta o data da ultima transacao um json
+    # ultimaTrans = showLastTransactionData()
+    # ultimaTransJSON = json.loads(ultimaTrans)
 
     # print("###Please, insert data to call the Smart Contract###")
-    tipo = str(input("Type (Exec,Criar,Cham): "))
+    callType = str(input("Type (Exec,Criar,Cham): "))
     data = str(input("Data (binary in hexa): "))
     origin = str(input("From account: "))
     dest = str(input("Destination account: "))
+    scInfo = callType+data+origin+dest
+    signedData = CryptoFunctions.signInfo(privateKey,scInfo)
 
-    transAtual = json.loads(
-        '{"Tipo":"%s","Data":"%s","From":"%s","To":"%s"}' % (tipo, data, origin, dest))
+    scType = pickle.dumps(callType)
+    scData = pickle.dumps(data)
+    scFrom = pickle.dumps(origin)
+    scDest = pickle.dumps(dest)
+    scSignedData = pickle.dumps(signedData)
+    scPublicKey = pickle.dumps(publicKey)
 
-    chamada = '{"Tipo":"%s","Data":"%s","From":"%s","To":"%s","Root":"%s"}' % (
-        transAtual['Tipo'], transAtual['Data'], transAtual['From'], transAtual['To'], ultimaTransJSON['Root'])
-    #chamada =  '{"Tipo":"%s","Data":"%s","From":null,"To":null,"Root":"%s"}' % (transAtual['Tipo'], transAtual['Data'], ultimaTransJSON['Root'])
-    chamadaJSON = json.loads(chamada)
+    logger.debug("###Printing Signing Sc before sending: "+signedData)
 
-    # chamada = '{"Tipo":"Exec","Data":"YAFgQFNgAWBA8w==","From":null,"To":null,"Root":null}'  # Comentar
-    # chamadaJSON = json.loads(chamada)  # Comentar
-
-    try:
-        # Tamanho maximo do JSON 6 caracteres
-        s.connect(('localhost', 6666))
-        tamanhoSmartContract = str(len(chamada))
-        for i in range(6 - len(tamanhoSmartContract)):
-            tamanhoSmartContract = '0' + tamanhoSmartContract
-        # print("Enviando tamanho " + tamanhoSmartContract + "\n")
-        # Envia o SC
-        s.send(tamanhoSmartContract)
-        time.sleep(1)
-        # print(json.dumps(chamadaJSON))
-        s.send(chamada)
-
-        # Recebe tamanho da resposta
-        tamanhoResposta = s.recv(6)
-        # print("Tamanho da resposta: " + tamanhoResposta)
-        # Recebe resposta
-        resposta = s.recv(int(tamanhoResposta))
-        # print(resposta + "\n")
-
-        # Decodifica resposta
-        respostaJSON = json.loads(resposta)
-        # print(respsotaJSON['Ret'])
-
-        if respostaJSON['Erro'] != "":
-            logger.Exception("Transacao nao inserida")
-        elif chamadaJSON['Tipo'] == "Exec":
-            logger.info("Execucao, sem insercao de dados na blockchain")
-        else:
-            transacao = '{ "Tipo" : "%s", "Data": "%s", "From": "%s", "To" : "%s", "Root" : "%s" }' % (
-                chamadaJSON['Tipo'], chamadaJSON['Data'], chamadaJSON['From'], chamadaJSON['To'], respostaJSON['Root'])
-            logger.info("Transacao sendo inserida: %s \n" % transacao)
-        sendDataSC(transacao)
-            # pass
-
-    finally:
-        # print("fim\n")
-        s.close()
+    server.callEVM(scType,scData,scFrom,scDest,scSignedData,scPublicKey)
+    # transAtual = json.loads(
+    #     '{"Tipo":"%s","Data":"%s","From":"%s","To":"%s"}' % (tipo, data, origin, dest))
+    #
+    # chamada = '{"Tipo":"%s","Data":"%s","From":"%s","To":"%s","Root":"%s"}' % (
+    #     transAtual['Tipo'], transAtual['Data'], transAtual['From'], transAtual['To'], ultimaTransJSON['Root'])
+    # #chamada =  '{"Tipo":"%s","Data":"%s","From":null,"To":null,"Root":"%s"}' % (transAtual['Tipo'], transAtual['Data'], ultimaTransJSON['Root'])
+    # chamadaJSON = json.loads(chamada)
+    #
+    # # chamada = '{"Tipo":"Exec","Data":"YAFgQFNgAWBA8w==","From":null,"To":null,"Root":null}'  # Comentar
+    # # chamadaJSON = json.loads(chamada)  # Comentar
+    #
+    # try:
+    #     # Tamanho maximo do JSON 6 caracteres
+    #     s.connect(('localhost', 6666))
+    #     tamanhoSmartContract = str(len(chamada))
+    #     for i in range(6 - len(tamanhoSmartContract)):
+    #         tamanhoSmartContract = '0' + tamanhoSmartContract
+    #     # print("Enviando tamanho " + tamanhoSmartContract + "\n")
+    #     # Envia o SC
+    #     s.send(tamanhoSmartContract)
+    #     time.sleep(1)
+    #     # print(json.dumps(chamadaJSON))
+    #     s.send(chamada)
+    #
+    #     # Recebe tamanho da resposta
+    #     tamanhoResposta = s.recv(6)
+    #     # print("Tamanho da resposta: " + tamanhoResposta)
+    #     # Recebe resposta
+    #     resposta = s.recv(int(tamanhoResposta))
+    #     # print(resposta + "\n")
+    #
+    #     # Decodifica resposta
+    #     respostaJSON = json.loads(resposta)
+    #     # print(respsotaJSON['Ret'])
+    #
+    #     if respostaJSON['Erro'] != "":
+    #         logger.Exception("Transacao nao inserida")
+    #     elif chamadaJSON['Tipo'] == "Exec":
+    #         logger.info("Execucao, sem insercao de dados na blockchain")
+    #     else:
+    #         transacao = '{ "Tipo" : "%s", "Data": "%s", "From": "%s", "To" : "%s", "Root" : "%s" }' % (
+    #             chamadaJSON['Tipo'], chamadaJSON['Data'], chamadaJSON['From'], chamadaJSON['To'], respostaJSON['Root'])
+    #         logger.info("Transacao sendo inserida: %s \n" % transacao)
+    #         sendDataSC(transacao)
+    #         # pass
+    #
+    # finally:
+    #     # print("fim\n")
+    #     s.close()
     return True
 
 
@@ -368,7 +381,7 @@ def InteractiveMain():
         12: defineInteractiveConsensus,
         13: createBlockForSC,
         14: showLastTransactionData,
-        15: callEVM,
+        15: callEVMInterface,
         16: evmConnector,
         17: executeEVM
     }
