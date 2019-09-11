@@ -48,6 +48,7 @@ def getTime():
 lock = thread.allocate_lock()
 consensusLock = thread.allocate_lock()
 blockConsensusCandidateList = []
+smartcontractLockList = []
 
 # Enable/Disable the transaction validation when peer receives a transaction
 validatorClient = True
@@ -460,6 +461,12 @@ class R2ac(object):
 ################ To add an Smart Contract transaction can be done in 2 ways
 #################### method was overloaded
 #######################################################
+    def addSCinLockList(self,devPublicKey):
+        while(devPublicKey in smartcontractLockList):
+            time.sleep(0.01)
+        smartcontractLockList.append(devPublicKey)
+        return True
+
     def addTransactionSC2(self, transacao,signedDatabyDevice,devPublicKey,devTime):
         """ Receive a new transaction to be add to the chain, add the transaction
             to a block and send it to all peers\n
@@ -470,14 +477,34 @@ class R2ac(object):
             @return "Key not found" - the device's key are not found
         """
         # logger.debug("Transaction received")
-        print("####I am here 66###")
+        global smartcontractLockList
         global gwPvt
         global gwPub
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
+
+        self.addSCinLockList(devPublicKey)
+            #wait
+
+        # if (consensus == "dBFT" or consensus == "Witness3"):
+        #     # consensusLock.acquire(1) # only 1 consensus can be running at same time
+        #     # for p in peers:
+        #     #     obj=p.object
+        #     #     obj.acquireLockRemote()
+        #     self.lockForConsensus()
+        #     # print("ConsensusLocks acquired!")
+        #     orchestratorObject.addBlockConsensusCandidate(pickedKey)
+        #     orchestratorObject.rundBFT()
+        #
+        #processing....
+        #
+        #
+        #at end...
+
+
         if (blk != False and blk.index > 0):
 
-                isSigned = True; #ToDo verify device signature
+                isSigned = True #ToDo verify device signature
 
                 if isSigned:
                     # print("it is signed!!!")
@@ -492,7 +519,10 @@ class R2ac(object):
 
                     transaction = Transaction.Transaction(
                         nextInt, prevInfoHash, gwTime, deviceInfo, signData)
-
+                    #
+                    #Set a lock for each device/sc pubkey
+                    #verify lock
+                    #perform consensus if it is not locked
                     # send to consensus
                     # if not consensus(newBlockLedger, gwPub, devPublicKey):
                     #    return "Not Approved"
@@ -514,6 +544,7 @@ class R2ac(object):
                     # logger.debug("--Transaction not appended--Transaction Invalid Signature")
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
+        smartcontractLockList.remove(devPublicKey)
         return "key not found"
 
     def addTransactionSC(self, devPublicKey, encryptedObj):
