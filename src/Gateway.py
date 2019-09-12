@@ -477,6 +477,7 @@ class R2ac(object):
             @return "Key not found" - the device's key are not found
         """
         # logger.debug("Transaction received")
+
         global smartcontractLockList
         global gwPvt
         global gwPub
@@ -538,10 +539,12 @@ class R2ac(object):
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done in transations")
+                    smartcontractLockList.remove(devPublicKey)
                     return "ok!"
                 else:
                     # print("Signature is not ok")
                     # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    smartcontractLockList.remove(devPublicKey)
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
         smartcontractLockList.remove(devPublicKey)
@@ -1210,6 +1213,7 @@ class R2ac(object):
         signedDatabyDevice=pickle.loads(dumedSignedDatabyDevice)
         devPubKey = pickle.loads(dumpedDevPubKey)
 
+
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Coleta o data da ultima transacao um json
@@ -1223,35 +1227,39 @@ class R2ac(object):
             transAtual['Tipo'], transAtual['Data'], transAtual['From'], transAtual['To'], ultimaTransJSON['Root'])
         # chamada =  '{"Tipo":"%s","Data":"%s","From":null,"To":null,"Root":"%s"}' % (transAtual['Tipo'], transAtual['Data'], ultimaTransJSON['Root'])
         chamadaJSON = json.loads(chamada)
-
+        print("antes do try")
         # chamada = '{"Tipo":"Exec","Data":"YAFgQFNgAWBA8w==","From":null,"To":null,"Root":null}'  # Comentar
         # chamadaJSON = json.loads(chamada)  # Comentar
         try:
             # Tamanho maximo do JSON 6 caracteres
+            print("AQUI 00001")
             s.connect(('localhost', 6666))
+            print("AQUI 000016666")
             tamanhoSmartContract = str(len(chamada))
             for i in range(6 - len(tamanhoSmartContract)):
                 tamanhoSmartContract = '0' + tamanhoSmartContract
             # print("Enviando tamanho " + tamanhoSmartContract + "\n")
             # Envia o SC
+            print("AQUI 00002")
             s.send(tamanhoSmartContract)
             time.sleep(1)
             # print(json.dumps(chamadaJSON))
             s.send(chamada)
-
+            print("AQUI 000003")
             # Recebe tamanho da resposta
             tamanhoResposta = s.recv(6)
             # print("Tamanho da resposta: " + tamanhoResposta)
             # Recebe resposta
             resposta = s.recv(int(tamanhoResposta))
             # print(resposta + "\n")
-
+            print("AQUI 1")
             # Decodifica resposta
             respostaJSON = json.loads(resposta)
             # print(respsotaJSON['Ret'])
             if respostaJSON['Erro'] != "":
                 logger.Exception("Transacao nao inserida")
             elif chamadaJSON['Tipo'] == "Exec":
+                print("AQUI 2")
                 logger.info("Execucao, sem insercao de dados na blockchain")
             else:
                 transacao = '{ "Tipo" : "%s", "Data": "%s", "From": "%s", "To" : "%s", "Root" : "%s" }' % (
@@ -1263,7 +1271,7 @@ class R2ac(object):
                 data = timeStr + transacao+signedDatabyDevice
                 signedData = CryptoFunctions.signInfo(gwPvt, data)
                 logger.debug("###Printing Signing Smart Contract Data before sending: " + signedData)
-                print("I am Here before SC")
+                #print("I am Here before SC")
                 self.addTransactionSC2(transacao, signedDatabyDevice, devPubKey, timeStr)
             # pass
 

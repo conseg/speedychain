@@ -86,17 +86,16 @@ def callEVMInterface(privatekey, publickey, callType, data, origin, dest):
     #dest = str(input("Destination account: "))
     scInfo = callType+data+origin+dest
     signedData = CryptoFunctions.signInfo(privateKey,scInfo)
-
     scType = pickle.dumps(callType)
     scData = pickle.dumps(data)
     scFrom = pickle.dumps(origin)
     scDest = pickle.dumps(dest)
     scSignedData = pickle.dumps(signedData)
     scPublicKey = pickle.dumps(publicKey)
-
     #logger.debug("###Printing Signing Sc before sending: "+signedData)
 
     server.callEVM(scType,scData,scFrom,scDest,scSignedData,scPublicKey)
+    #print("depois do callEVM")
     return True
 
 
@@ -141,7 +140,9 @@ print "Carregando " + args.file
 
 with open(args.file) as csvfile:
     reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
+
     for row in reader: #Starting Batch
+        time.sleep(5)
         if row['Command'] == "1":
             createBlockForSC2(row['SK'], row['PK'])
             #continue
