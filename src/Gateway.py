@@ -1736,10 +1736,11 @@ def verifyTransactionCandidate(block, newTransaction, generatorGwPub, generatorD
         transactionValidation = False
         return transactionValidation
 
-    lastTransaction = ChainFunctions.getLatestBlockTransaction(block)
+    #lastTransaction = ChainFunctions.getLatestBlockTransaction(block)
     # print("Index:"+str(lastBlk.index)+" prevHash:"+str(lastBlk.previousHash)+ " time:"+str(lastBlk.timestamp)+ " pubKey:")
-    lastTransactionHash = CryptoFunctions.calculateHash(lastTransaction.index, lastTransaction.previousHash, lastTransaction.timestamp,
-                                                        lastTransaction.data, lastTransaction.signature, lastTransaction.signature)
+    #lastTransactionHash = CryptoFunctions.calculateHash(lastTransaction.index, lastTransaction.previousHash, lastTransaction.timestamp, lastTransaction.data, lastTransaction.signature, lastTransaction.signature)
+    lastTransactionHash = CryptoFunctions.calculateTransactionHash(ChainFunctions.getLatestBlockTransaction(block))
+
     # print ("This Hash:"+str(lastBlkHash))
     # print ("Last Hash:"+str(block.previousHash))
     if (lastTransactionHash != newTransaction.previousHash):
