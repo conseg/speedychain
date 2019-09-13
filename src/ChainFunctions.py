@@ -11,14 +11,14 @@ def startBlockChain():
     """ Add the genesis block to the chain """
     BlockHeaderChain.append(getGenesisBlock())
 
-def createNewBlock(devPubKey, gwPvt, consensus):
+def createNewBlock(devPubKey, gwPvt, blockContext, consensus):
     """ Receive the device public key and the gateway private key then it generates a new block \n
     @param devPubKey - Public key of the requesting device \n
     @param gwPvt - Private key of the gateway \n
 
     @return BlockHeader
     """
-    newBlock = generateNextBlock("new block", devPubKey, getLatestBlock(), gwPvt, consensus)
+    newBlock = generateNextBlock("new block", devPubKey, getLatestBlock(), gwPvt, blockContext, consensus)
     ##@Regio addBlockHeader is done during consensus! please take it off for running pbft
     #addBlockHeader(newBlock)
     return newBlock
@@ -108,12 +108,12 @@ def getGenesisBlock():
 MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAM39ONP614uHF5m3C7nEh6XrtEaAk2ys
 LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
 -----END PUBLIC KEY-----"""
-    inf = Transaction.Transaction(0, "0", "0", "0", '')
+    inf = Transaction.Transaction(0, "0", "0", "0", '', 0)
     blk = BlockHeader.BlockHeader(0, "0", 1465154705, inf,
-                                        "816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7", k,0)
+                                        "816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7", 0, k, "0000")
     return blk
 
-def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, consensus):
+def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus):
     """ Receive the information of a new block and create it\n
     @param blockData - information of the new block\n
     @param pubKey - public key of the device how wants to generate the new block\n
@@ -126,16 +126,16 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, consensus):
     nextTimestamp = time.time()
     previousBlockHash = CryptoFunctions.calculateHashForBlock(previousBlock)
     nonce = 0
-    nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp, pubKey, nonce)
+    nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp, nonce, pubKey, blockContext)
     if(consensus == 'PoW'):
         # PoW nonce difficulty
         difficulty_bits = 12 #2 bytes or 4 hex or 16 bits of zeros in the left of hash
         target = 2 ** (256 - difficulty_bits) #resulting value is lower when it has more 0 in the left of hash
         while ((long(nextHash,16) > target ) and (nonce < (2 ** 32))): #convert hash to long to verify when it achieve difficulty
           nonce=nonce+1
-          nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp, pubKey, nonce)
+          nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp, nonce, pubKey, blockContext)
     # print("####nonce = " + str(nonce))
     sign = CryptoFunctions.signInfo(gwPvtKey, nextHash)
-    inf = Transaction.Transaction(0, nextHash, nextTimestamp, blockData, sign)
+    inf = Transaction.Transaction(0, nextHash, nextTimestamp, blockData, sign, 0)
 
-    return BlockHeader.BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, nonce, pubKey)
+    return BlockHeader.BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, nonce, pubKey, blockContext)
