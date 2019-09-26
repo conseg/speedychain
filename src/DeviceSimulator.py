@@ -343,7 +343,7 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     global deviceName
     """ Load the URI of the connection  """
     # ----> Adicionado por Arruda
-    ns = Pyro4.locateNS(host=nameServerIP) #, port=nameServerPort)
+    ns = Pyro4.locateNS(host=nameServerIP, port=nameServerPort)
     gatewayURI = ns.lookup(gatewayName)
     # print(gatewayURI)
     global server
@@ -429,8 +429,12 @@ if __name__ == '__main__':
         # ---->
         # os.system("clear")
         # print("running automatically")
+    if len(sys.argv[1:])<4:
+        print("Command line syntax:")
+        print("  python DeviceSimulator.py <name server IP> <name server port> <gateway name> <device name>")
+    else:
         nameServerIP = sys.argv[1]
-        nameServerPort = sys.argv[2]
+        nameServerPort = int(sys.argv[2])
         gatewayName = sys.argv[3]
         deviceName = sys.argv[4]
         logger = Logger.configure(deviceName + ".log")
