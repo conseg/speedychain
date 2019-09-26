@@ -24,7 +24,11 @@ def configure(filename):
         except OSError as exc: # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
-    fileHandler = RotatingFileHandler(filename = os.path.join(logFolder, filename), maxBytes = 1 * 1024 * 1024, backupCount = 5)
+    fileHandler = ""
+    try:
+        fileHandler = RotatingFileHandler(filename = os.path.join(logFolder, filename), maxBytes = 1 * 1024 * 1024, backupCount = 5)
+    except IOError as err:
+        fileHandler = RotatingFileHandler(filename = os.path.join(".", filename), maxBytes = 1 * 1024 * 1024, backupCount = 5)    
     fileHandler.setLevel(logging.INFO)
     formatStr = "%(asctime)s;%(levelname)-8s;%(message)s;"
     dateFormat = "%Y-%m-%d %H:%M:%S"
