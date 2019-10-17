@@ -1,30 +1,25 @@
 import sys
 import os
-from os import listdir
-from os.path import isfile, join
 import time
 import threading
 import pickle
 import socket
-import traceback
 import thread
 import random
 import json
 
-from flask import Flask, request
-
 import Pyro4
 import merkle
-from Crypto.PublicKey import RSA
+from flask import Flask, request
 
 # SpeedCHAIN modules
-import Logger as Logger
-import CryptoFunctions
-import ChainFunctions
-import PeerInfo
-import DeviceInfo
-import DeviceKeyMapping
-import Transaction
+from ..model.Chain import ChainFunctions
+from ..model.Peer import PeerInfo
+from ..model.Transaction import Transaction
+from ..tools import CryptoFunctions
+from ..tools import DeviceInfo
+from ..tools import DeviceKeyMapping
+from ..tools import Logger
 
 
 def getMyIP():
@@ -2015,15 +2010,13 @@ def saveURItoFile(uri):
 """ Main function initiate the system"""
 
 
-def main():
+def main(nameServerIP, nameServerPort, local_gatewayName):
 
     global myURI
     global votesForNewOrchestrator
 
-    nameServerIP = sys.argv[1]
-    nameServerPort = int(sys.argv[2])
     global gatewayName
-    gatewayName = sys.argv[3]
+    gatewayName = local_gatewayName
 
     # initialize Logger
     global logger
