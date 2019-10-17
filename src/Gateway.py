@@ -739,6 +739,7 @@ class R2ac(object):
         """
         global gwPub
         global consensusLock
+        global orchestratorObject
         # print("addingblock... DevPubKey:" + devPubKey)
         # logger.debug("|---------------------------------------------------------------------|")
         # logger.info("Block received from device")
@@ -777,16 +778,18 @@ class R2ac(object):
                 self.lockForConsensus()
                 # print("ConsensusLocks acquired!")
                 self.electNewOrchestrator()
+                # print("New Orchestrator URI: " + str(orchestratorObject.exposedURI()))
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
                 if(orchestratorObject.runPBFT()==False):
                     orchestratorObject.removeBlockConsensusCandidate(pickedKey)
-                    print("$$$$$$$second trial")
+                    logger.info("second attmept for a block")
+                    # print("$$$$$$$second trial")
                     self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
                     return False
 
             if(consensus == "dBFT" or consensus == "Witness3"):
-                print("indo pro dbft")
+                # print("indo pro dbft")
                 # consensusLock.acquire(1) # only 1 consensus can be running at same time
                 # for p in peers:
                 #     obj=p.object
@@ -794,9 +797,9 @@ class R2ac(object):
                 self.lockForConsensus()
 
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                print("blockadded!")
+                # print("blockadded!")
                 orchestratorObject.rundBFT()
-                print("after rundbft")
+                # print("after rundbft")
             if(consensus == "PoW"):
                 # consensusLock.acquire(1) # only 1 consensus can be running at same time
                 # for p in peers:
@@ -988,7 +991,10 @@ class R2ac(object):
     def peerVoteNewOrchestrator(self):
         global myVoteForNewOrchestrator
         global votesForNewOrchestrator
+        global peers
+
         randomGw = random.randint(0, len(peers) - 1)
+        print("random GW??????? : "+ str(randomGw))
         # randomGw=1
         votedURI = peers[randomGw].peerURI
         # print("VotedURI: " + str(votedURI))
@@ -1002,16 +1008,19 @@ class R2ac(object):
         global votesForNewOrchestrator
         global orchestratorObject
         t1 = time.time()
+        votesForNewOrchestrator =[]
         for peer in peers:
             obj = peer.object
             # print("objeto criado")
             receivedVote = obj.peerVoteNewOrchestrator()
+
             votesForNewOrchestrator.append(pickle.loads(receivedVote))
+            logger.info("remote vote for: " + str(pickle.loads(receivedVote)))
         voteNewOrchestrator()
         # newOrchestratorURI = mode(votesForNewOrchestrator)
         newOrchestratorURI = max(
             set(votesForNewOrchestrator), key=votesForNewOrchestrator.count)
-        # print("Elected node was" + newOrchestratorURI)
+        logger.info("Elected node was" + str(newOrchestratorURI))
         orchestratorObject = Pyro4.Proxy(newOrchestratorURI)
         for peer in peers:
             obj = peer.object
@@ -1076,12 +1085,12 @@ class R2ac(object):
         blockContext = "0001"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
-        print("after blk, before consensus")
+        logger.info("after blk, before consensus")
         # logger.debug("Running dBFT function to block(" + str(blk.index) + ")")
         if((PBFTConsensus(blk, gwPub, devPubKey)) == False):
-            print("Consensus not finished")
+            logger.info("Consensus not finished")
             return False
-        print("Consensus finished")
+        logger.info("Consensus finished")
         t2 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with dBFT consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return True
@@ -1297,39 +1306,39 @@ class R2ac(object):
             transAtual['Tipo'], transAtual['Data'], transAtual['From'], transAtual['To'], ultimaTransJSON['Root'])
         # chamada =  '{"Tipo":"%s","Data":"%s","From":null,"To":null,"Root":"%s"}' % (transAtual['Tipo'], transAtual['Data'], ultimaTransJSON['Root'])
         chamadaJSON = json.loads(chamada)
-        print("antes do try")
+        # print("antes do try")
         # chamada = '{"Tipo":"Exec","Data":"YAFgQFNgAWBA8w==","From":null,"To":null,"Root":null}'  # Comentar
         # chamadaJSON = json.loads(chamada)  # Comentar
         try:
             # Tamanho maximo do JSON 6 caracteres
-            print("AQUI 00001")
+            # print("AQUI 00001")
             s.connect(('localhost', 6666))
-            print("AQUI 000016666")
+            #print("AQUI 000016666")
             tamanhoSmartContract = str(len(chamada))
             for i in range(6 - len(tamanhoSmartContract)):
                 tamanhoSmartContract = '0' + tamanhoSmartContract
             # print("Enviando tamanho " + tamanhoSmartContract + "\n")
             # Envia o SC
-            print("AQUI 00002")
+            # print("AQUI 00002")
             s.send(tamanhoSmartContract)
             time.sleep(1)
             # print(json.dumps(chamadaJSON))
             s.send(chamada)
-            print("AQUI 000003")
+            # print("AQUI 000003")
             # Recebe tamanho da resposta
             tamanhoResposta = s.recv(6)
             # print("Tamanho da resposta: " + tamanhoResposta)
             # Recebe resposta
             resposta = s.recv(int(tamanhoResposta))
             # print(resposta + "\n")
-            print("AQUI 1")
+            # print("AQUI 1")
             # Decodifica resposta
             respostaJSON = json.loads(resposta)
             # print(respsotaJSON['Ret'])
             if respostaJSON['Erro'] != "":
                 logger.Exception("Transacao nao inserida")
             elif chamadaJSON['Tipo'] == "Exec":
-                print("AQUI 2")
+                # print("AQUI 2")
                 logger.info("Execucao, sem insercao de dados na blockchain")
             else:
                 transacao = '{ "Tipo" : "%s", "Data": "%s", "From": "%s", "To" : "%s", "Root" : "%s" }' % (
@@ -1464,10 +1473,10 @@ def PBFTConsensus(newBlock, generatorGwPub, generatorDevicePub):
 
     # t = threading.Thread(target=commitBlockPBFT, args=(newBlock,generatorGwPub,generatorDevicePub,connectedPeers))
     # t.start()
-    print("inside PBFTConsensus, before commitblockpbft")
+    # print("inside PBFTConsensus, before commitblockpbft")
     commitBlockPBFT(newBlock, generatorGwPub,
                     generatorDevicePub, connectedPeers)
-    print("inside PBFTConsensus, after commitblockpbft")
+    # print("inside PBFTConsensus, after commitblockpbft")
     # threads.append(t)
     # for t in threads:
     #     t.join()
@@ -1500,9 +1509,9 @@ def commitBlockPBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
     nbc = ""
     pbftFinished = True
     i = 0
-    print("inside commitblockpbft")
+    # print("inside commitblockpbft")
     while (pbftFinished and i < 20):
-        print("inside commitblockpbft, inside while")
+        # print("inside commitblockpbft, inside while")
         pbftAchieved = handlePBFT(newBlock, generatorGwPub, generatorGwPub, alivePeers)
         if(not pbftAchieved):
             oldId = newBlock.index
@@ -1541,7 +1550,7 @@ def handlePBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
         @return boolean - True: block sended to all peers, False: fail to send the block
     """
     hashblk = CryptoFunctions.calculateHashForBlock(newBlock)
-    print("inside handlepbft")
+    # print("inside handlepbft")
     # logger.debug("Running commit function to block: "+str(hashblk))
     # print("######before handlePBFT first for")
     for p in alivePeers:
@@ -1551,7 +1560,7 @@ def handlePBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
         verifyRet = p.object.verifyBlockCandidateRemote(
             picked, generatorGwPub)
         # logger.debug("Answer received: "+str(verifyRet))
-        print("######inside handlePBFT first for")
+        # print("######inside handlePBFT first for")
         if(verifyRet):
             peerPubKey = p.object.getGwPubkey()
             # logger.debug("Pub Key from gateway that voted: "+str(peerPubKey))
@@ -1562,7 +1571,7 @@ def handlePBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
             if(calcRet):
                 # logger.info("Consensus was achieve, updating peers and finishing operation")
                 sendBlockToPeers(newBlock)
-                print("handlePBFT = true")
+                # print("handlePBFT = true")
                 return True
     # logger.info("Consesus was not Achieved!!! Block(" +
     #             str(newBlock.index)+") will not added")
@@ -1621,7 +1630,7 @@ def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeer
     # print ("Last Hash:"+str(block.previousHash))
 
     if (lastBlkHash != newBlock.previousHash):
-        print("validation lastblkhash")
+        # print("validation lastblkhash")
         logger.error("Failed to validate new block(" +
                         str(newBlock.index)+") HASH value")
         # logger.debug("lastBlkHash="+str(lastBlkHash))
@@ -1629,7 +1638,7 @@ def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeer
         blockValidation = False
         return blockValidation
     if (int(lastBlk.index+1) != int(newBlock.index)):
-        print("validation lastblkindex")
+        # print("validation lastblkindex")
         logger.error("Failed to validate new block(" +
                         str(newBlock.index)+") INDEX value")
         # logger.debug("lastBlk Index="+str(lastBlk.index))
@@ -1637,7 +1646,7 @@ def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeer
         blockValidation = False
         return blockValidation
     if (lastBlk.timestamp >= newBlock.timestamp):
-        print("validation lastblktime")
+        # print("validation lastblktime")
         logger.error("Failed to validate new block(" +
                         str(newBlock.index)+") TIME value")
         # logger.debug("lastBlk time:"+str(lastBlk.timestamp))
@@ -1657,7 +1666,7 @@ def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeer
         #     p.object.addVoteBlockPBFTRemote(newBlock, gwPub, voteSignature) #put its vote in the list of each peer
         # return True
     else:
-        print("Failed to validate new block")
+        # print("Failed to validate new block")
         logger.error("Failed to validate new block")
         return False
 
