@@ -51,8 +51,6 @@ blockConsensusCandidateList = []
 smartcontractLockList = []
 blockContext = "0001"
 
-
-
 # Enable/Disable the transaction validation when peer receives a transaction
 validatorClient = True
 
@@ -465,34 +463,10 @@ class R2ac(object):
 #################### method was overloaded
 #######################################################
     def addSCinLockList(self,devPublicKey):
-        global smartcontractLockList
-        print("@@Locking SC List")
-        ############# smartcontractLockList is a list of tuples composed by devpubkey and its lock
-        index=0
-        for x,y in smartcontractLockList:
-            if x == devPublicKey:
-                # return the attempt to lock the indexed devpublickley  [index] pubkey through its lock [1]
-                print("@@Keyfound")
-                return smartcontractLockList[index][1].acquire(False)
-            index = index+1
-        lockSC = thread.allocate_lock()
-        myLockTuple = (devPublicKey, lockSC)
-        smartcontractLockList.append(myLockTuple)
-        # return the attempt to lock the last inserted  [-1] pubkey through its lock [1]
-        print("@@Locking SC List after adding key")
-        return smartcontractLockList[-1][1].acquire(False)
-
-    def removeLockfromSC(self, devPublicKey):
-        global smartcontractLockList
-        ############# smartcontractLockList is a list of tuples composed by devpubkey and its lock
-        index = 0
-        for x, y in smartcontractLockList:
-            if x == devPublicKey:
-                # return the attempt to lock the indexed devpublickley  [index] pubkey through its lock [1]
-                smartcontractLockList[index][1].release()
-                return True
-            index = index + 1
-        return False
+        while(devPublicKey in smartcontractLockList):
+            time.sleep(0.01)
+        smartcontractLockList.append(devPublicKey)
+        return True
 
     def addTransactionSC2(self, transactionData,signedDatabyDevice,devPublicKey,devTime):
         """ Receive a new transaction to be add to the chain, add the transaction
@@ -510,7 +484,6 @@ class R2ac(object):
         global gwPub
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
-
 
         self.addSCinLockList(devPublicKey)
             #wait
@@ -567,18 +540,15 @@ class R2ac(object):
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done in transations")
-                    # smartcontractLockList.remove(devPublicKey)
-                    self.removeLockfromSC(devPublicKey)
+                    smartcontractLockList.remove(devPublicKey)
                     return "ok!"
                 else:
                     # print("Signature is not ok")
                     # logger.debug("--Transaction not appended--Transaction Invalid Signature")
-                    # smartcontractLockList.remove(devPublicKey)
-                    self.removeLockfromSC(devPublicKey)
+                    smartcontractLockList.remove(devPublicKey)
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
-        # smartcontractLockList.remove(devPublicKey)
-        self.removeLockfromSC(devPublicKey)
+        smartcontractLockList.remove(devPublicKey)
         return "key not found"
 
     def addTransactionSC(self, devPublicKey, encryptedObj):
