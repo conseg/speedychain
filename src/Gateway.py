@@ -699,6 +699,13 @@ class R2ac(object):
         # print("updating was done")
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
 
+    def removeBlockConsensusCandidate(self, devPubKey):
+        global blockConsensusCandidateList
+        devKey = pickle.loads(devPubKey)
+        if(devKey in blockConsensusCandidateList):
+            blockConsensusCandidateList.pop()
+
+
     def addBlockConsensusCandidate(self, devPubKey):
         # TODO
         global blockConsensusCandidateList
@@ -771,7 +778,13 @@ class R2ac(object):
                 # print("ConsensusLocks acquired!")
                 self.electNewOrchestrator()
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                orchestratorObject.runPBFT()
+                if(orchestratorObject.runPBFT()==False):
+                    orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                    print("$$$$$$$second trial")
+                    self.electNewOrchestrator()
+                    orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                    return False
+
             if(consensus == "dBFT" or consensus == "Witness3"):
                 print("indo pro dbft")
                 # consensusLock.acquire(1) # only 1 consensus can be running at same time
@@ -1044,9 +1057,12 @@ class R2ac(object):
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
 
-        PBFTConsensus(blk, gwPub, devPubKey)
+        if ((PBFTConsensus(blk, gwPub, devPubKey)) == False):
+            print("Consensus not finished")
+            return False
         t2 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        return True
         # print("Finish PBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
 
     def rundBFT(self):
@@ -1062,10 +1078,13 @@ class R2ac(object):
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         print("after blk, before consensus")
         # logger.debug("Running dBFT function to block(" + str(blk.index) + ")")
-        PBFTConsensus(blk, gwPub, devPubKey)
+        if((PBFTConsensus(blk, gwPub, devPubKey)) == False):
+            print("Consensus not finished")
+            return False
         print("Consensus finished")
         t2 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with dBFT consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        return True
         # print("Finish dBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
 
     def runPoW(self):
@@ -1495,7 +1514,10 @@ def commitBlockPBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
         else:
             pbftFinished = False
             # print("####pbftFinished")
-
+    if i == 20:
+        return False
+    else:
+        return True
     # if (hashblk in newBlockCandidate) and (newBlockCandidate[hashblk] == CryptoFunctions.signInfo(gwPvt, newBlock)):
         # if newBlockCandidate[CryptoFunctions.calculateHashForBlock(newBlock)][gwPub] == CryptoFunctions.signInfo(gwPvt, newBlock):#if it was already inserted a validation for the candidade block, abort
     #    print ("block already in consensus")
