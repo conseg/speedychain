@@ -440,22 +440,16 @@ if __name__ == '__main__':
         logger = Logger.configure(deviceName + ".log")
         logger.info("Running device " + deviceName + " in " + getMyIP())
 
+        gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
+        logger.info("Connected to gateway: " + gatewayURI.asString())
 
         if (len(sys.argv) < 6): #when it is not called with number of blocks/transactions and consensus, it is called interactive mode
-            consensus = "None"
-            gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
-
-            logger.info("Connected to gateway: " + gatewayURI.asString())
             InteractiveMain()
         else:
             blocks = sys.argv[5]
             transactions = sys.argv[6]
             consensus = sys.argv[7]
-
-            gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
-
-            logger.info("Connected to gateway: " + gatewayURI.asString())
 
             logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
             automa(int(blocks), int(transactions))

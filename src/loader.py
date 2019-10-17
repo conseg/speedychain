@@ -20,8 +20,8 @@ import traceback
 from Crypto.PublicKey import RSA
 
 # SpeedCHAIN modules
-from ..tools import Logger as Logger
-from ..tools import CryptoFunctions
+import Logger as Logger
+import CryptoFunctions
 
 from Crypto.PublicKey import RSA
 
@@ -127,7 +127,7 @@ argpaerser.add_argument('-file', type=str, help='file name', required=True)
 args = argpaerser.parse_args()
 
 #Connecting to server
-print ("Conectando " + args.ip + ":" + args.port )
+print "Conectando " + args.ip + ":" + args.port 
 nameServerIP = args.ip 
 nameServerPort = args.port 
 gatewayName = args.gn
@@ -136,7 +136,7 @@ gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
 
 #Loading csv
-print ("Carregando " + args.file)
+print "Carregando " + args.file 
 
 with open(args.file) as csvfile:
     reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
@@ -157,4 +157,4 @@ with open(args.file) as csvfile:
             #continue
 
 #Closing
-print ("Finalizando")
+print "Finalizando"

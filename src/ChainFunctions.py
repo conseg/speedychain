@@ -1,8 +1,8 @@
 import time
 
-from .BlockHeader import BlockHeader
-from ..Transaction import Transaction
-from ...tools import CryptoFunctions
+import BlockHeader
+import Transaction
+import CryptoFunctions
 
 BlockHeaderChain = []
 
@@ -109,7 +109,7 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAM39ONP614uHF5m3C7nEh6XrtEaAk2ys
 LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
 -----END PUBLIC KEY-----"""
     inf = Transaction.Transaction(0, "0", "0", "0", '', 0)
-    blk = BlockHeader(0, "0", 1465154705, inf,
+    blk = BlockHeader.BlockHeader(0, "0", 1465154705, inf,
                                         "816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7", 0, k, "0000")
     return blk
 
@@ -138,4 +138,4 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
     sign = CryptoFunctions.signInfo(gwPvtKey, nextHash)
     inf = Transaction.Transaction(0, nextHash, nextTimestamp, blockData, sign, 0)
 
-    return BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, nonce, pubKey, blockContext)
+    return BlockHeader.BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, nonce, pubKey, blockContext)
