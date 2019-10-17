@@ -510,9 +510,9 @@ class R2ac(object):
         global gwPub
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
-
-
         self.addSCinLockList(devPublicKey)
+
+        if (blk != False and blk.index > 0):
             #wait
 
         # if (consensus == "dBFT" or consensus == "Witness3"):
@@ -531,7 +531,7 @@ class R2ac(object):
         #at end...
 
 
-        if (blk != False and blk.index > 0):
+
 
                 isSigned = True #ToDo verify device signature
 
