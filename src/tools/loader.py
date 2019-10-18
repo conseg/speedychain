@@ -141,7 +141,7 @@ with open(args.file) as csvfile:
     reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
 
     for row in reader: #Starting Batch
-        time.sleep(5)
+        #time.sleep(5)
         if row['Command'] == "1":
             createBlockForSC2(row['SK'], row['PK'])
             #continue
