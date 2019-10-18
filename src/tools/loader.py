@@ -18,12 +18,11 @@ import requests
 import traceback
 
 from Crypto.PublicKey import RSA
+from Crypto.PublicKey import RSA
 
 # SpeedCHAIN modules
-from ..tools import Logger as Logger
-from ..tools import CryptoFunctions
-
-from Crypto.PublicKey import RSA
+import Logger as Logger
+import CryptoFunctions
 
 global server
 global privateKey
