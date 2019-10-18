@@ -389,6 +389,7 @@ def InteractiveMain():
     mode = -1
     while True:
         print("Choose your option [" + str(server) + "]")
+        print("#############################################################")
         print("0 - Exit")
         print("1 - Set Server Address[ex:PYRO:chain.server@blablabala:00000]")
         print("2 - Add Peer")
@@ -410,6 +411,7 @@ def InteractiveMain():
         print("15 - Call Smart Contract")
         # print("16 - EVM connector")
         # print("17 - execute EVM code")
+        print("#############################################################")
 
         try:
             mode = int(input('Input:'))
