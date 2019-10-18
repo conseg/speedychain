@@ -17,11 +17,11 @@ colorlog>=4.0.2
 The key folder is just a bunch of random public and private keys created for tests purpose.
 
 HOW-TO:
-1. run a instace of Pyro nameserver (ex: python -m Pyro4.naming -n 127.0.0.1 -p 9090)
+1. run a instance of Pyro nameserver (ex: python -m Pyro4.naming -n 127.0.0.1 -p 9090)
 2. run n instances of Gateways (ex: python [PATH]/speedychain/runner.py 127.0.0.1 9090 gwa) -> gwa is the chosen name
 3. run the user interface (ex: python [PATH]/speedychain/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a) -> dev-a is the chosen name
 4. in the user interface choose your consensus algorithm (option 12 -> "PBFT")
-4.1 run a bath of simuleted devices (option 9 -> 100 -> 1000)  -> 100 devices and 1000 transactions per device
+4.1 run a bath of simulated devices (option 9 -> 100 -> 1000)  -> 100 devices and 1000 transactions per device
 
 
 TODO List:
