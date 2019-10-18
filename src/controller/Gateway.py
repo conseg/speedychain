@@ -992,7 +992,7 @@ class R2ac(object):
         global peers
 
         randomGw = random.randint(0, len(peers) - 1)
-        print("random GW??????? : "+ str(randomGw))
+        # print("random GW??????? : "+ str(randomGw))
         # randomGw=1
         votedURI = peers[randomGw].peerURI
         # print("VotedURI: " + str(votedURI))
