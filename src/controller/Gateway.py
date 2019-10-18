@@ -1147,12 +1147,15 @@ class R2ac(object):
         global peers
 
         counter = 0
+        i =0
         while (counter < len(peers)):
-            while (consensusLock.acquire(
-                    False) == False):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
-                # logger.info("I can't lock my lock, waiting for it")
-                time.sleep(0.01)
+            while ((consensusLock.acquire(
+                    False) == False) and i<20):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
+                logger.info("$$$$$$$I can't lock my lock, waiting for it -> in lock for consensus")
+                time.sleep(0.001)
             # print("##Before for and after acquire my lock")
+            if (i==20):
+                return False
             for p in peers:
                 obj = p.object
                 thisPeerIsNotAvailableToLock = obj.acquireLockRemote()
@@ -1160,6 +1163,7 @@ class R2ac(object):
                 # print("On counter = "+str(counter)+" lock result was: "+str(thisPeerIsNotAvailableToLock))
                 if (thisPeerIsNotAvailableToLock == False):
                     counter = counter - 1  # I have to unlock the locked ones, the last was not locked
+                    logger.info("$$$$$$$I can't lock REMOTE lock, waiting for it -> in lockforconsensus")
                     # logger.info("Almost got a deadlock")
                     consensusLock.release()
                     if (counter > 0):
@@ -1369,6 +1373,7 @@ def addNewBlockToSyncList(devPubKey):
     while(not(lock.acquire(False)) and i<20):
         i=i+1
         logger.info("$$$$$$$$$ not possible to acquire a lock in addNewblocktosynclist")
+        time.sleep(0.001)
     if (i==20):
         return False
     # logger.debug("running critical was acquire")
@@ -1385,7 +1390,14 @@ def getBlockFromSyncList():
     """
     # logger.debug("running critical stuffff to get sync list......")
     global lock
-    lock.acquire(1)
+    # lock.acquire(1)
+    i=0
+    while (not(lock.acquire(False)) and i < 20):
+        i = i + 1
+        logger.info("$$$$$$$$$ not possible to acquire a lock in getblockfromsynclist")
+        time.sleep(0.001)
+    if (i == 20):
+        return False
     # logger.debug("lock aquired by get method......")
     global blockConsensusCandidateList
     if(len(blockConsensusCandidateList) > 0):
