@@ -64,7 +64,7 @@ gwPvt = ""
 gwPub = ""
 myOwnBlock = ""
 orchestratorObject = ""
-consensus = "None"  # it can be None, dBFT, PBFT, PoW, Witness3
+consensus = "PoW"  # it can be None, dBFT, PBFT, PoW, Witness3
 # list of votes for new orchestrator votes are: voter gwPub, voted gwPub, signature
 votesForNewOrchestrator = []
 myVoteForNewOrchestrator = []  # my gwPub, voted gwPub, my signed vote
@@ -412,11 +412,21 @@ class R2ac(object):
 
                 plainObject = CryptoFunctions.decryptAES(
                     encryptedObj, devAESKey)
-                signature = plainObject[:-20]  # remove the last 20 chars
+                # signature = plainObject[:-20]  # remove the last 20 chars
+                # # remove the 16 char of timestamp
+                # devTime = plainObject[-20:-4]
+                # # retrieve the las 4 chars which are the data
+                # deviceData = plainObject[-4:]
+
+                ##########################VIDEO METADATA#############################
+                signature = plainObject[:-126]  # remove the last 20 chars
                 # remove the 16 char of timestamp
-                devTime = plainObject[-20:-4]
+                devTime = plainObject[-126:-110]
                 # retrieve the las 4 chars which are the data
-                deviceData = plainObject[-4:]
+                deviceData = plainObject[-110:]
+                #fileHash = plainObject[-110:-46]
+                #ipfsFile = plainObject[-46:]
+                ##########################VIDEO METADATA#############################
 
                 d = devTime+deviceData
                 isSigned = CryptoFunctions.signVerify(
@@ -447,7 +457,8 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #             str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction " + str(transaction.index)+" in a block"+str(blk.index)+";" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.debug("gateway;" + gatewayName + ";" + consensus + ";T1;Block#"+str(blk.index)+";Transaction #" + str(transaction.index))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done")
@@ -536,7 +547,8 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #              str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction " + str(transaction.index)+" in a block"+str(blk.index)+";" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.debug("gateway;" + gatewayName + ";" + consensus + ";T1;Block#"+str(blk.index)+";Transaction #" + str(transaction.index))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done in transations")
@@ -614,7 +626,8 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #              str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction " + str(transaction.index)+" in a block"+str(blk.index)+";" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.debug("gateway;" + gatewayName + ";" + consensus + ";T1;Block#"+str(blk.index)+";Transaction #" + str(transaction.index))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done in transations")
@@ -645,7 +658,8 @@ class R2ac(object):
                     isTransactionValid(trans, pubKey)
                 ChainFunctions.addBlockTransaction(blk, trans)
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction " + str(trans.index)+" in a block"+str(blk.index)+" ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        #logger.debug("gateway;" + gatewayName + ";" + consensus + ";T2;Block#"+str(blk.index)+";Transaction #" + str(trans.index))
         return "done"
 
     def updateIOTBlockLedger(self, iotBlock, gwName):
@@ -668,6 +682,7 @@ class R2ac(object):
         t2 = time.time()
         # print("updating was done")
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        #logger.debug("gateway;" + gatewayName + ";" + consensus + ";T3;Block#"+str(b.index))
 
     def addBlockConsensusCandidate(self, devPubKey):
         # TODO
@@ -799,8 +814,8 @@ class R2ac(object):
         # print("Before encription of rsa2")
 
         t3 = time.time()
-        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
+        #logger.debug("gateway;" + gatewayName + ";" + consensus + ";T6;Block#"+str(blk.index))
         # logger.debug("|---------------------------------------------------------------------|")
         # print("block added")
         return encKey
@@ -948,7 +963,7 @@ class R2ac(object):
         randomGw = random.randint(0, len(peers) - 1)
         # randomGw=1
         votedURI = peers[randomGw].peerURI
-        # print("VotedURI: " + str(votedURI))
+        logger.debug("VotedURI: " + str(votedURI))
         # myVoteForNewOrchestrator = [gwPub, votedURI, CryptoFunctions.signInfo(gwPvt, votedURI)]  # not safe sign, just for test
         myVoteForNewOrchestrator = votedURI
         votesForNewOrchestrator.append(myVoteForNewOrchestrator)
@@ -956,6 +971,7 @@ class R2ac(object):
         return pickedVote
 
     def electNewOrchestrator(self):
+        logger.debug("running electNewOrchestrator")
         global votesForNewOrchestrator
         global orchestratorObject
         t1 = time.time()
@@ -976,7 +992,7 @@ class R2ac(object):
             obj.loadElectedOrchestrator(dat)
         t2 = time.time()
         # logger.info("gateway;" + gatewayName + ";" + consensus + ";T7;Time to execute new election block consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
-        # logger.info("New Orchestator loaded is: " + str(newOrchestratorURI))
+        logger.debug("New Orchestator loaded is: " + str(newOrchestratorURI))
         # orchestratorObject
 
     def loadElectedOrchestrator(self, data):
@@ -994,9 +1010,9 @@ class R2ac(object):
         global consensus
         if (receivedConsensus != consensus):
             consensus = receivedConsensus
-            # print("######")
-            # print("Changed my consensus to " + consensus)
+            print("Changed my consensus to " + consensus)
             for p in peers:
+                print("updating peers:"+str(p.object))
                 obj = p.object
                 obj.setConsensus(receivedConsensus)
         return True
@@ -1012,11 +1028,12 @@ class R2ac(object):
         blockContext = "0001"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
-        # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
+        logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
 
         PBFTConsensus(blk, gwPub, devPubKey)
         t2 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logger.debug("gateway;" + gatewayName + ";" + consensus + ";T5;Block#"+str(blk.index))
         # print("Finish PBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
 
     def rundBFT(self):
@@ -1036,6 +1053,7 @@ class R2ac(object):
         print("Consensus finished")
         t2 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with dBFT consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logger.debug("gateway;" + gatewayName + ";" + consensus + ";T5;Block#"+str(blk.index))
         # print("Finish dBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
 
     def runPoW(self):
@@ -1055,6 +1073,7 @@ class R2ac(object):
         if (PoWConsensus(blk, gwPub, devPubKey)):
             t2 = time.time()
             logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with PoW consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+            logger.debug("gateway;" + gatewayName + ";" + consensus + ";T5;Block#"+str(blk.index))
             # # print("Finish PoW consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
         else:
             t2 = time.time()
@@ -1081,6 +1100,7 @@ class R2ac(object):
         sendBlockToPeers(newBlock)
         t2 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logger.debug("gateway;" + gatewayName + ";" + consensus + ";T5;Block#"+str(newBlock.index))
         # print("Finish adding Block without consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
         return True
 
@@ -1094,37 +1114,37 @@ class R2ac(object):
         while (counter < len(peers)):
             while (consensusLock.acquire(
                     False) == False):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
-                # logger.info("I can't lock my lock, waiting for it")
+                logger.debug("I can't lock my lock, waiting for it")
                 time.sleep(0.01)
-            # print("##Before for and after acquire my lock")
+            logger.debug("##Before for and after acquire my lock")
             for p in peers:
                 obj = p.object
                 thisPeerIsNotAvailableToLock = obj.acquireLockRemote()
                 counter = counter + 1
-                # print("On counter = "+str(counter)+" lock result was: "+str(thisPeerIsNotAvailableToLock))
+                logger.debug("On counter = "+str(counter)+" lock result was: "+str(thisPeerIsNotAvailableToLock))
                 if (thisPeerIsNotAvailableToLock == False):
                     counter = counter - 1  # I have to unlock the locked ones, the last was not locked
-                    # logger.info("Almost got a deadlock")
+                    logger.debug("Almost got a deadlock")
                     consensusLock.release()
                     if (counter > 0):
                         for p in peers:
                             obj = p.object
                             obj.releaseLockRemote()
-                            # logger.info("released lock counter: " + str(counter))
+                            logger.debug("released lock counter: " + str(counter))
                             counter = counter - 1
                             if (counter == 0):
-                                # logger.info("released locks")
+                                logger.debug("released locks")
                                 break
                             # print("After first break PBFT")
-                            # logger.info("After first break PBFT")
-                    # logger.info("sleeping 0.01")
+                            logger.debug("After first break PBFT")
+                    logger.debug("sleeping 0.01")
                     time.sleep(0.01)
                     break
         return True
 
     def releaseLockForConsensus(self):
         """ lock the consensusLock without resulting in deadlocks """
-
+        logger.debug("Releasing consensusLock")
         global consensusLock
         consensusLock.release()
 
@@ -1880,8 +1900,9 @@ def loadOrchestratorFirstinPeers():
         # print("First peer is"+ peers[0].peerURI)
         # uri=peers[0].peerURI
         obj = peers[0].object
-        dat = pickle.loads(obj.getMyOrchestrator())
-        # print("##My Orchestrator orchestrator: "+str(dat))
+        #dat = pickle.loads(obj.getMyOrchestrator())
+        dat = obj.getMyOrchestrator()
+        print("##My Orchestrator orchestrator: "+str(dat))
         # logger.info("##My Orchestrator orchestrator: "+str(dat))
         orchestratorObject = dat
     # orchestratorObject = Pyro4.Proxy(uri)

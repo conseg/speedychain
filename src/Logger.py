@@ -13,7 +13,7 @@ except ImportError:
 def configure(filename):
     """ Setup the logging environment """
     log = logging.getLogger("speedychain")
-    log.setLevel(logging.INFO)
+    log.setLevel(logging.DEBUG)
     # logging in file
     # Dev local
     # logFolder = os.path.join(os.getcwd(), "log")
@@ -29,7 +29,7 @@ def configure(filename):
         fileHandler = RotatingFileHandler(filename = os.path.join(logFolder, filename), maxBytes = 1 * 1024 * 1024, backupCount = 5)
     except IOError as err:
         fileHandler = RotatingFileHandler(filename = os.path.join(".", filename), maxBytes = 1 * 1024 * 1024, backupCount = 5)    
-    fileHandler.setLevel(logging.INFO)
+    fileHandler.setLevel(logging.DEBUG)
     formatStr = "%(asctime)s;%(levelname)-8s;%(message)s;"
     dateFormat = "%Y-%m-%d %H:%M:%S"
     fileFormatter = logging.Formatter(formatStr, dateFormat)
@@ -47,7 +47,7 @@ def configure(filename):
     else:
         consoleFormatter = logging.Formatter(formatStr, dateFormat)
     streamHandler = logging.StreamHandler(sys.stdout)
-    streamHandler.setLevel(logging.INFO)
+    streamHandler.setLevel(logging.DEBUG)
     streamHandler.setFormatter(consoleFormatter)
     log.addHandler(streamHandler)
     return log
