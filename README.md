@@ -21,7 +21,21 @@ HOW-TO:
 2. run n instances of Gateways (ex: python [PATH]/speedychain/runner.py 127.0.0.1 9090 gwa) -> gwa is the chosen name
 3. run the user interface (ex: python [PATH]/speedychain/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a) -> dev-a is the chosen name
 4. in the user interface choose your consensus algorithm (option 12 -> "PBFT")
-4.1 run a bath of simulated devices (option 9 -> 100 -> 1000)  -> 100 devices and 1000 transactions per device
+4.1. run a bath of simulated devices (option 9 -> 100 -> 1000)  -> 100 devices and 1000 transactions per device
+
+
+The Ethereum Virtual Machine (evm) use golang, installation instructions available on: https://golang.org/doc/install
+
+To compile the EVM after installing the Golang
+
+    - Run "go get github.com/ethereum/go-ethereum"
+    - Access the EVM folder
+    - Run "go build"
+
+QUICK START:
+
+    - Run the quickstart.sh
+    If an EVM is necessary for testing, uncomment the EVM line in quickstart.sh script
 
 
 TODO List:
