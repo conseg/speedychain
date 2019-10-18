@@ -1130,8 +1130,8 @@ class R2ac(object):
         newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers)
         if (signature == False):
-            # logger.info("Consesus was not achieved: block #" +
-            #             str(newBlock.index) + " will not be added")
+            logger.info("Consesus was not achieved: block #" +
+                        str(newBlock.index) + " will not be added")
             return False
         ChainFunctions.addBlockHeader(newBlock)
         sendBlockToPeers(newBlock)
@@ -1364,9 +1364,15 @@ def addNewBlockToSyncList(devPubKey):
     # logger.debug("running critical stuffff......")
     # print("Inside addNewBlockToSyncLIst")
     global lock
-    lock.acquire(1)
-    # logger.debug("running critical was acquire")
     global blockConsensusCandidateList
+    i=0
+    while(not(lock.acquire(False)) and i<20):
+        i=i+1
+        logger.info("$$$$$$$$$ not possible to acquire a lock in addNewblocktosynclist")
+    if (i==20):
+        return False
+    # logger.debug("running critical was acquire")
+
     # logger.debug("Appending block to list :")#+srt(len(blockConsensusCandidateList)))
     # print("Inside Lock")
     blockConsensusCandidateList.append(devPubKey)
