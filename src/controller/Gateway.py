@@ -779,8 +779,8 @@ class R2ac(object):
                 # print("New Orchestrator URI: " + str(orchestratorObject.exposedURI()))
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
                 if(orchestratorObject.runPBFT()==False):
+                    logger.info("##### second attmept for a block")
                     orchestratorObject.removeBlockConsensusCandidate(pickedKey)
-                    logger.info("second attmept for a block")
                     # print("$$$$$$$second trial")
                     self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
@@ -1013,12 +1013,12 @@ class R2ac(object):
             receivedVote = obj.peerVoteNewOrchestrator()
 
             votesForNewOrchestrator.append(pickle.loads(receivedVote))
-            logger.info("remote vote for: " + str(pickle.loads(receivedVote)))
+            # logger.info("remote vote for: " + str(pickle.loads(receivedVote)))
         voteNewOrchestrator()
         # newOrchestratorURI = mode(votesForNewOrchestrator)
         newOrchestratorURI = max(
             set(votesForNewOrchestrator), key=votesForNewOrchestrator.count)
-        logger.info("Elected node was" + str(newOrchestratorURI))
+        # logger.info("Elected node was" + str(newOrchestratorURI))
         orchestratorObject = Pyro4.Proxy(newOrchestratorURI)
         for peer in peers:
             obj = peer.object
@@ -1150,11 +1150,11 @@ class R2ac(object):
         i =0
         while (counter < len(peers)):
             while ((consensusLock.acquire(
-                    False) == False) and i<20):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
+                    False) == False) and i<30):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
                 logger.info("$$$$$$$I can't lock my lock, waiting for it -> in lock for consensus")
-                time.sleep(0.001)
+                time.sleep(0.01)
             # print("##Before for and after acquire my lock")
-            if (i==20):
+            if (i==30):
                 return False
             for p in peers:
                 obj = p.object
@@ -1370,11 +1370,11 @@ def addNewBlockToSyncList(devPubKey):
     global lock
     global blockConsensusCandidateList
     i=0
-    while(not(lock.acquire(False)) and i<20):
+    while(not(lock.acquire(False)) and i<30):
         i=i+1
         logger.info("$$$$$$$$$ not possible to acquire a lock in addNewblocktosynclist")
-        time.sleep(0.001)
-    if (i==20):
+        time.sleep(0.01)
+    if (i==30):
         return False
     # logger.debug("running critical was acquire")
 
@@ -1392,11 +1392,11 @@ def getBlockFromSyncList():
     global lock
     # lock.acquire(1)
     i=0
-    while (not(lock.acquire(False)) and i < 20):
+    while (not(lock.acquire(False)) and i < 30):
         i = i + 1
         logger.info("$$$$$$$$$ not possible to acquire a lock in getblockfromsynclist")
-        time.sleep(0.001)
-    if (i == 20):
+        time.sleep(0.01)
+    if (i == 30):
         return False
     # logger.debug("lock aquired by get method......")
     global blockConsensusCandidateList
@@ -1490,8 +1490,11 @@ def PBFTConsensus(newBlock, generatorGwPub, generatorDevicePub):
     # t = threading.Thread(target=commitBlockPBFT, args=(newBlock,generatorGwPub,generatorDevicePub,connectedPeers))
     # t.start()
     # print("inside PBFTConsensus, before commitblockpbft")
-    commitBlockPBFT(newBlock, generatorGwPub,
-                    generatorDevicePub, connectedPeers)
+    if(commitBlockPBFT(newBlock, generatorGwPub,
+                    generatorDevicePub, connectedPeers)):
+        return True
+
+    return False
     # print("inside PBFTConsensus, after commitblockpbft")
     # threads.append(t)
     # for t in threads:
@@ -1526,7 +1529,7 @@ def commitBlockPBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
     pbftFinished = True
     i = 0
     # print("inside commitblockpbft")
-    while (pbftFinished and i < 20):
+    while (pbftFinished and i < 30):
         # print("inside commitblockpbft, inside while")
         pbftAchieved = handlePBFT(newBlock, generatorGwPub, generatorGwPub, alivePeers)
         if(not pbftAchieved):
@@ -1535,11 +1538,12 @@ def commitBlockPBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
             newBlock = ChainFunctions.createNewBlock(generatorDevicePub, gwPvt, blockContext, consensus)
             # logger.info("Block Recriated ID was:("+str(oldId)+") new:("+str(newBlock.index)+")")
             i = i + 1
+            time.sleep(0.01)
             # print("####not pbftAchieved")
         else:
             pbftFinished = False
             # print("####pbftFinished")
-    if i == 20:
+    if i == 30:
         return False
     else:
         return True
