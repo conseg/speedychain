@@ -457,6 +457,8 @@ class R2ac(object):
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
             return "key not found"
+        logger.error("key not found when adding transaction")
+        return "key not found"
 
 ##############################
 ################ To add an Smart Contract transaction can be done in 2 ways
@@ -746,11 +748,11 @@ class R2ac(object):
         blk = ChainFunctions.findBlock(devPubKey)
         if (blk != False and blk.index > 0):
             # print("inside first if")
+            logger.error("It may be already be registered, generating another aeskey")
             aesKey = findAESKey(devPubKey)
-
             if aesKey == False:
                 # print("inside second if")
-                # logger.info("Using existent block data")
+                logger.error("aeskey had a problem...")
                 aesKey = generateAESKey(blk.publicKey)
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
                 t2 = time.time()
@@ -787,7 +789,7 @@ class R2ac(object):
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
                     counter_fails = counter_fails + 1
                     if (counter_fails > 20):
-                        return False
+                        return -1
 
             if(consensus == "dBFT" or consensus == "Witness3"):
                 # print("indo pro dbft")
@@ -804,12 +806,11 @@ class R2ac(object):
                     logger.info("##### second attempt for a block")
                     orchestratorObject.removeBlockConsensusCandidate(pickedKey)
                     logger.error("Consensus not achieved, trying another one")
-                    # print("$$$$$$$second trial")
                     self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
                     counter_fails = counter_fails +1
                     if (counter_fails > 20):
-                        return False
+                        return -1
                 # print("after rundbft")
             if(consensus == "PoW"):
                 # consensusLock.acquire(1) # only 1 consensus can be running at same time

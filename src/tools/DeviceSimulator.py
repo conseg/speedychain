@@ -70,8 +70,8 @@ def addBlockOnChain():
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
     serverAESEncKey = server.addBlock(publicKey)
-    if (serverAESEncKey==False):
-        logger.error("it was not possible to add block")
+    if (len(str(serverAESEncKey))<10):
+        logger.error("it was not possible to add block - problem in the key")
         return False
     # print("###addBlockonChain in devicesimulator, serverAESEncKey")
     # print(serverAESEncKey)
@@ -103,8 +103,16 @@ def sendData():
     signedData = CryptoFunctions.signInfo(privateKey, data)
     toSend = signedData + timeStr + temperature
     logger.debug("ServeAESKEY = " + serverAESKey)
-    encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
-    server.addTransaction(publicKey, encobj)
+    try:
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+    except:
+        logger.error("was not possible to encrypt... verify aeskey")
+        addBlockOnChain() # this will force gateway to recreate the aes key
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+    if(server.addTransaction(publicKey, encobj)=="ok!"):
+        return True
+    else:
+        logger.error("something went wrong when sending data")
 
 def sendDataSC(stringSC):
     t = ((time.time() * 1000) * 1000)
@@ -187,7 +195,8 @@ def bruteSend(retry):
             logger.error("*** print_exception:\n" + str(traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2, file=sys.stdout)))
             #global serverAESKey
             # print("the size of the serverAESKey is: "+str(len(serverAESKey)))
-            return  # addBlockConsensusCandiate
+            # time.sleep(0.001)
+            return False # addBlockConsensusCandiate
 
 def defineAutomaNumbers():
     """ Ask for the user to input how many blocks and transaction he wants and calls the function automa()"""
