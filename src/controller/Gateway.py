@@ -2028,7 +2028,7 @@ def loadOrchestrator():
 
 
 def runMasterThread():
-    """ initialize the PBFT of the peer """
+    """ DEPRECATED - initialize the PBFT of the peer """
     # @Roben atualizacao para definir dinamicamente quem controla a votacao - o orchestrator -
     # global currentOrchestrator
     # while(currentOrchestrator == myURI):
