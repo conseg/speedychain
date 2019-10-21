@@ -70,11 +70,15 @@ def addBlockOnChain():
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
     serverAESEncKey = server.addBlock(publicKey)
+    if (serverAESEncKey==False):
+        logger.error("it was not possible to add block")
+        return False
     # print("###addBlockonChain in devicesimulator, serverAESEncKey")
     # print(serverAESEncKey)
     # while len(serverAESEncKey) < 10:
     #    serverAESEncKey = server.addBlock(publicKey)
     decryptAESKey(serverAESEncKey)
+    return True
     # print("###after decrypt aes")
 
 def sendDataTest():
@@ -165,7 +169,7 @@ def brutePairAuth(retry):
         except KeyboardInterrupt:
             sys.exit()
         except:
-            logger.error("failed to execute:"+str(retry))
+            logger.error("failed to execute pairauth:"+str(retry))
             isOk = True
 
 def bruteSend(retry):
@@ -178,7 +182,7 @@ def bruteSend(retry):
         except KeyboardInterrupt:
             sys.exit()
         except:
-            logger.error("failed to execute:"+str(retry))
+            logger.error("failed to execute send tr:"+str(retry))
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.error("*** print_exception:\n" + str(traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2, file=sys.stdout)))
             #global serverAESKey
@@ -199,12 +203,20 @@ def automa(blocks, trans):
     for blk in range(0, blocks):
         logger.info("Adding block #" + str(blk) + "...")
         newKeyPair()
-        addBlockOnChain()
+        counter = 0
+        while(addBlockOnChain()==False):
+            logger.error("ERROR: creating a new key pair and trying to create a new block")
+            newKeyPair()
+            counter= counter + 1
+            if (counter > 10):
+                break
+
         # brutePairAuth(blk)
         for tr in range(0, trans):
             logger.info("Sending transaction #" + str(tr) + "...")
             # sendData()
             while (not (server.isBlockInTheChain(publicKey))):
+                time.sleep(0.0001)
                 continue
                 # time.sleep(1)
             bruteSend(tr)
@@ -223,8 +235,11 @@ def newElection():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ###WHAT???###
 
 def defineInteractiveConsensus():
-    receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
-    print("after receiving consensus string: "+receivedConsensus)
+    receivedConsensus = str(input('Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
+    # print("after receiving consensus string: "+receivedConsensus)
+    while(not(receivedConsensus == "None" or receivedConsensus == "PBFT" or receivedConsensus == "dBFT" or receivedConsensus == "PoW" or receivedConsensus == "Witness3")):
+        receivedConsensus = str(
+            input('Not a consensus, type again... Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
     server.setConsensus(receivedConsensus)
     return True
 

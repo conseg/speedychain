@@ -778,13 +778,16 @@ class R2ac(object):
                 self.electNewOrchestrator()
                 # print("New Orchestrator URI: " + str(orchestratorObject.exposedURI()))
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                if(orchestratorObject.runPBFT()==False):
+                counter_fails = 0
+                while(orchestratorObject.runPBFT()==False):
                     logger.info("##### second attmept for a block")
                     orchestratorObject.removeBlockConsensusCandidate(pickedKey)
                     # print("$$$$$$$second trial")
                     self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                    return False
+                    counter_fails = counter_fails + 1
+                    if (counter_fails > 20):
+                        return False
 
             if(consensus == "dBFT" or consensus == "Witness3"):
                 # print("indo pro dbft")
@@ -796,14 +799,17 @@ class R2ac(object):
 
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
                 # print("blockadded!")
-
-                if (orchestratorObject.rundBFT() == False):
-                    logger.info("##### second attmept for a block")
+                counter_fails = 0
+                while (orchestratorObject.rundBFT() == False):
+                    logger.info("##### second attempt for a block")
                     orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                    logger.error("Consensus not achieved, trying another one")
                     # print("$$$$$$$second trial")
                     self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                    return False
+                    counter_fails = counter_fails +1
+                    if (counter_fails > 20):
+                        return False
                 # print("after rundbft")
             if(consensus == "PoW"):
                 # consensusLock.acquire(1) # only 1 consensus can be running at same time
