@@ -796,7 +796,14 @@ class R2ac(object):
 
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
                 # print("blockadded!")
-                orchestratorObject.rundBFT()
+
+                if (orchestratorObject.rundBFT() == False):
+                    logger.info("##### second attmept for a block")
+                    orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                    # print("$$$$$$$second trial")
+                    self.electNewOrchestrator()
+                    orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                    return False
                 # print("after rundbft")
             if(consensus == "PoW"):
                 # consensusLock.acquire(1) # only 1 consensus can be running at same time
@@ -1892,7 +1899,7 @@ def calcTransactionPBFT(block, newTransaction, alivePeers):
 #         print("I finished runPoW - Wrong")
 
 def PoWConsensus(newBlock, generatorGwPub, generatorDevicePub):
-    """ Make the configurations needed to run consensus and call the method runPBFT()\n
+    """ Make the configurations needed to run consensus trying to generate a block with a specific nonce\n
         @param newBlock - BlockHeader object\n
         @param generatorGwPub - Public key from the peer who want to generate the block\n
         @param generatorDevicePub - Public key from the device who want to generate the block\n
