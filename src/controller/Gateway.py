@@ -750,18 +750,26 @@ class R2ac(object):
             # print("inside first if")
             logger.error("It may be already be registered, generating another aeskey")
             aesKey = findAESKey(devPubKey)
-            if aesKey == False:
+            logger.error("passed by findAESKEY")
+            if ((aesKey == False) or (len(aesKey) != 32)):
+
                 # print("inside second if")
                 logger.error("aeskey had a problem...")
                 aesKey = generateAESKey(blk.publicKey)
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
                 t2 = time.time()
+            logger.error("actually it didn't had problem with the key")
+            aesKey = generateAESKey(blk.publicKey)
+            encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
+            t2 = time.time()
         else:
             # print("inside else")
             # logger.debug("***** New Block: Chain size:" +
             #              str(ChainFunctions.getBlockchainSize()))
             pickedKey = pickle.dumps(devPubKey)
             aesKey = generateAESKey(devPubKey)
+            if(len(aesKey) != 32):
+                logger.error("Badly generated aesKey")
             # print("pickedKey: ")
             # print(pickedKey)
 
@@ -1097,12 +1105,12 @@ class R2ac(object):
         blockContext = "0001"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
-        logger.info("after blk, before consensus")
+        # logger.info("after blk, before consensus")
         # logger.debug("Running dBFT function to block(" + str(blk.index) + ")")
         if((PBFTConsensus(blk, gwPub, devPubKey)) == False):
-            logger.info("Consensus not finished")
+            logger.error("Consensus not finished")
             return False
-        logger.info("Consensus finished")
+        # logger.info("Consensus finished")
         t2 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with dBFT consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return True

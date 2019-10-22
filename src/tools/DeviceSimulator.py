@@ -102,17 +102,27 @@ def sendData():
     logger.debug("data = "+data)
     signedData = CryptoFunctions.signInfo(privateKey, data)
     toSend = signedData + timeStr + temperature
-    logger.debug("ServeAESKEY = " + serverAESKey)
+
     try:
+
         encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
     except:
         logger.error("was not possible to encrypt... verify aeskey")
+        newKeyPair()
         addBlockOnChain() # this will force gateway to recreate the aes key
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        toSend = signedData + timeStr + temperature
         encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
-    if(server.addTransaction(publicKey, encobj)=="ok!"):
-        return True
-    else:
-        logger.error("something went wrong when sending data")
+        logger.error("passed through sendData except")
+    try:
+        if(server.addTransaction(publicKey, encobj)=="ok!"):
+            # logger.error("everything good now")
+            return True
+        else:
+            logger.error("something went wrong when sending data")
+    except:
+        logger.error("some exception with addTransaction now...")
+
 
 def sendDataSC(stringSC):
     t = ((time.time() * 1000) * 1000)
@@ -129,7 +139,10 @@ def sendDataSC(stringSC):
 def decryptAESKey(data):
     """ Receive a encrypted data, decrypt it and put it in the global var 'serverAESKey' """
     global serverAESKey
-    serverAESKey = CryptoFunctions.decryptRSA2(privateKey, data)
+    try:
+        serverAESKey = CryptoFunctions.decryptRSA2(privateKey, data)
+    except:
+        logger.error("problem decrypting the AES key")
 
 def readSensorTemperature():
     """ Generates random data like '23 C' """
