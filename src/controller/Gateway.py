@@ -1687,7 +1687,7 @@ def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeer
         # logger.debug("newBlock Index="+str(newBlock.index))
         blockValidation = False
         return blockValidation
-    if (lastBlk.timestamp >= newBlock.timestamp):
+    if (lastBlk.timestamp > newBlock.timestamp): # @TODO this timestamp contraint can be hard -> global time
         # print("validation lastblktime")
         logger.error("Failed to validate new block(" +
                         str(newBlock.index)+") TIME value")
