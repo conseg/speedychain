@@ -646,6 +646,7 @@ class R2ac(object):
             @param transaction - Data to be insert on the block\n
             @return "done" - method done (the block are not necessarily inserted)
         """
+        logger.debug("updating lbokc ledger")
         trans = pickle.loads(transaction)
         t1 = time.time()
         # logger.info("Received transaction #" + (str(trans.index)))
@@ -669,11 +670,11 @@ class R2ac(object):
             @param gwName - sender peer's name
         """
         # print("Updating IoT Block Ledger, in Gw: "+str(gwName))
-        # logger.debug("updateIoTBlockLedger Function")
+        logger.debug("updateIoTBlockLedger Function")
         b = pickle.loads(iotBlock)
         # print("picked....")
         t1 = time.time()
-        # logger.debug("Received block #" + (str(b.index)))
+        logger.debug("Received block #" + (str(b.index)))
         # logger.info("Received block #" + str(b.index) +
         #             " from gateway " + str(gwName))
         if isBlockValid(b):
@@ -719,12 +720,12 @@ class R2ac(object):
         global consensusLock
         # print("addingblock... DevPubKey:" + devPubKey)
         # logger.debug("|---------------------------------------------------------------------|")
-        # logger.info("Block received from device")
+        logger.debug("Block received from device")
         aesKey = ''
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPubKey)
         if (blk != False and blk.index > 0):
-            # print("inside first if")
+            logger.debug("inside first if")
             aesKey = findAESKey(devPubKey)
 
             if aesKey == False:
@@ -735,11 +736,11 @@ class R2ac(object):
                 t2 = time.time()
         else:
             # print("inside else")
-            # logger.debug("***** New Block: Chain size:" +
-            #              str(ChainFunctions.getBlockchainSize()))
+            logger.debug("***** New Block: Chain size:" +
+                         str(ChainFunctions.getBlockchainSize()))
             pickedKey = pickle.dumps(devPubKey)
             aesKey = generateAESKey(devPubKey)
-            # print("pickedKey: ")
+            logger.debug("pickedKey: ")
             # print(pickedKey)
 
             encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
@@ -747,7 +748,7 @@ class R2ac(object):
             # Old No Consensus
             # bl = ChainFunctions.createNewBlock(devPubKey, gwPvt)
             # sendBlockToPeers(bl)
-            # logger.debug("starting block consensus")
+            logger.debug("starting block consensus")
             #############LockCONSENSUS STARTS HERE###############
             if(consensus == "PBFT"):
                 # PBFT elect new orchestator every time that a new block should be inserted
@@ -779,6 +780,7 @@ class R2ac(object):
                 self.addBlockConsensusCandidate(pickedKey)
                 self.runPoW()
             if(consensus == "None"):
+                logger.debug("No consensus")
                 self.addBlockConsensusCandidate(pickedKey)
                 self.runNoConsesus()
 
@@ -803,15 +805,17 @@ class R2ac(object):
             # except:
             #     print "thread not working..."
 
+	    #if(consensus is not None):
             if(consensus == "PBFT" or consensus == "dBFT" or consensus == "Witness3" or consensus == "PoW"):
+                logger.debug("realising consensus")
                 self.releaseLockForConsensus()
                 for p in peers:
                     obj = p.object
                     obj.releaseLockRemote()
-                # print("ConsensusLocks released!")
+                logger.debug("ConsensusLocks released!")
             ######end of lock consensus################
 
-        # print("Before encription of rsa2")
+        logger.debug("Before encription of rsa2")
 
         t3 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
@@ -1012,7 +1016,7 @@ class R2ac(object):
             consensus = receivedConsensus
             print("Changed my consensus to " + consensus)
             for p in peers:
-                print("updating peers:"+str(p.object))
+		#print(" updating peers"+str(p.object) )
                 obj = p.object
                 obj.setConsensus(receivedConsensus)
         return True
