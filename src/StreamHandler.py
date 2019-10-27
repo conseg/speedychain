@@ -373,11 +373,11 @@ def sendMetadataTransactions(fileHash, ipfsName):
     # f.close()
 
 def sentToIPFSFake():
-    cmdIPFS = "ipfs add ./out/output.avi"
+    #cmdIPFS = "ipfs add ./out/output.avi"
     #ret = subprocess.Popen(cmdIPFS, shell=True, stdout=subprocess.PIPE).stdout.read()
-    #fileNameIPFS = ret[6:52]
+    fileNameIPFS = "e28e4b6cfa6c64471ceec4e206066674a5af446da5b7527ca50f6ebb78d32937"
     #fileOriginalName = ret[53:]
-    return cmdIPFS
+    return fileNameIPFS
 
 def sentToIPFS():
     cmdIPFS = "ipfs add ./out/output.avi"
