@@ -321,7 +321,7 @@ def saveStream():
             if(currentFrame >= 40):
                 i = i +1
                 out.release()
-                ipfsName=sentToIPFS()             
+                ipfsName=sentToIPFSFake()
                 s = makeTransaction(ipfsName)
                 saveFile(i,s, ipfsName)
                 currentFrame = 0
@@ -371,6 +371,13 @@ def sendMetadataTransactions(fileHash, ipfsName):
     # f.write("\n")
     # f.write("ipfs="+str(ipfs))    
     # f.close()
+
+def sentToIPFSFake():
+    cmdIPFS = "ipfs add ./out/output.avi"
+    #ret = subprocess.Popen(cmdIPFS, shell=True, stdout=subprocess.PIPE).stdout.read()
+    #fileNameIPFS = ret[6:52]
+    #fileOriginalName = ret[53:]
+    return cmdIPFS
 
 def sentToIPFS():
     cmdIPFS = "ipfs add ./out/output.avi"
