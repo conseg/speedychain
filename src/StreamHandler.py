@@ -315,7 +315,7 @@ def saveStream():
             # Saves for video
             out.write(frame)
             # Display the resulting frame
-            cv2.imshow('frame',frame)
+            #cv2.imshow('frame',frame)
             currentFrame += 1
             print(str(currentFrame))
             if(currentFrame >= 40):

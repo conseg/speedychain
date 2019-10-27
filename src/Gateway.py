@@ -64,7 +64,7 @@ gwPvt = ""
 gwPub = ""
 myOwnBlock = ""
 orchestratorObject = ""
-consensus = "PoW"  # it can be None, dBFT, PBFT, PoW, Witness3
+consensus = "None"  # it can be None, dBFT, PBFT, PoW, Witness3
 # list of votes for new orchestrator votes are: voter gwPub, voted gwPub, signature
 votesForNewOrchestrator = []
 myVoteForNewOrchestrator = []  # my gwPub, voted gwPub, my signed vote
@@ -1900,9 +1900,9 @@ def loadOrchestratorFirstinPeers():
         # print("First peer is"+ peers[0].peerURI)
         # uri=peers[0].peerURI
         obj = peers[0].object
-        #dat = pickle.loads(obj.getMyOrchestrator())
-        dat = obj.getMyOrchestrator()
-        print("##My Orchestrator orchestrator: "+str(dat))
+        dat = pickle.loads(obj.getMyOrchestrator())
+        #dat = obj.getMyOrchestrator()
+        #print("##My Orchestrator orchestrator: "+str(dat))
         # logger.info("##My Orchestrator orchestrator: "+str(dat))
         orchestratorObject = dat
     # orchestratorObject = Pyro4.Proxy(uri)
