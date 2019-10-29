@@ -457,6 +457,8 @@ class R2ac(object):
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
             return "key not found"
+        logger.error("key not found when adding transaction")
+        return "key not found"
 
 ##############################
 ################ To add an Smart Contract transaction can be done in 2 ways
@@ -746,20 +748,28 @@ class R2ac(object):
         blk = ChainFunctions.findBlock(devPubKey)
         if (blk != False and blk.index > 0):
             # print("inside first if")
+            logger.error("It may be already be registered, generating another aeskey")
             aesKey = findAESKey(devPubKey)
+            logger.error("passed by findAESKEY")
+            if ((aesKey == False) or (len(aesKey) != 32)):
 
-            if aesKey == False:
                 # print("inside second if")
-                # logger.info("Using existent block data")
+                logger.error("aeskey had a problem...")
                 aesKey = generateAESKey(blk.publicKey)
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
                 t2 = time.time()
+            logger.error("actually it didn't had problem with the key")
+            aesKey = generateAESKey(blk.publicKey)
+            encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
+            t2 = time.time()
         else:
             # print("inside else")
             # logger.debug("***** New Block: Chain size:" +
             #              str(ChainFunctions.getBlockchainSize()))
             pickedKey = pickle.dumps(devPubKey)
             aesKey = generateAESKey(devPubKey)
+            if(len(aesKey) != 32):
+                logger.error("Badly generated aesKey")
             # print("pickedKey: ")
             # print(pickedKey)
 
@@ -778,13 +788,16 @@ class R2ac(object):
                 self.electNewOrchestrator()
                 # print("New Orchestrator URI: " + str(orchestratorObject.exposedURI()))
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                if(orchestratorObject.runPBFT()==False):
+                counter_fails = 0
+                while(orchestratorObject.runPBFT()==False):
+                    logger.info("##### second attmept for a block")
                     orchestratorObject.removeBlockConsensusCandidate(pickedKey)
-                    logger.info("second attmept for a block")
                     # print("$$$$$$$second trial")
                     self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                    return False
+                    counter_fails = counter_fails + 1
+                    if (counter_fails > 20):
+                        return -1
 
             if(consensus == "dBFT" or consensus == "Witness3"):
                 # print("indo pro dbft")
@@ -796,7 +809,16 @@ class R2ac(object):
 
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
                 # print("blockadded!")
-                orchestratorObject.rundBFT()
+                counter_fails = 0
+                while (orchestratorObject.rundBFT() == False):
+                    logger.info("##### second attempt for a block")
+                    orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                    logger.error("Consensus not achieved, trying another one")
+                    self.electNewOrchestrator()
+                    orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                    counter_fails = counter_fails +1
+                    if (counter_fails > 20):
+                        return -1
                 # print("after rundbft")
             if(consensus == "PoW"):
                 # consensusLock.acquire(1) # only 1 consensus can be running at same time
@@ -992,7 +1014,7 @@ class R2ac(object):
         global peers
 
         randomGw = random.randint(0, len(peers) - 1)
-        print("random GW??????? : "+ str(randomGw))
+        # print("random GW??????? : "+ str(randomGw))
         # randomGw=1
         votedURI = peers[randomGw].peerURI
         # print("VotedURI: " + str(votedURI))
@@ -1013,12 +1035,12 @@ class R2ac(object):
             receivedVote = obj.peerVoteNewOrchestrator()
 
             votesForNewOrchestrator.append(pickle.loads(receivedVote))
-            logger.info("remote vote for: " + str(pickle.loads(receivedVote)))
+            # logger.info("remote vote for: " + str(pickle.loads(receivedVote)))
         voteNewOrchestrator()
         # newOrchestratorURI = mode(votesForNewOrchestrator)
         newOrchestratorURI = max(
             set(votesForNewOrchestrator), key=votesForNewOrchestrator.count)
-        logger.info("Elected node was" + str(newOrchestratorURI))
+        # logger.info("Elected node was" + str(newOrchestratorURI))
         orchestratorObject = Pyro4.Proxy(newOrchestratorURI)
         for peer in peers:
             obj = peer.object
@@ -1083,12 +1105,12 @@ class R2ac(object):
         blockContext = "0001"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
-        logger.info("after blk, before consensus")
+        # logger.info("after blk, before consensus")
         # logger.debug("Running dBFT function to block(" + str(blk.index) + ")")
         if((PBFTConsensus(blk, gwPub, devPubKey)) == False):
-            logger.info("Consensus not finished")
+            logger.error("Consensus not finished")
             return False
-        logger.info("Consensus finished")
+        # logger.info("Consensus finished")
         t2 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with dBFT consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return True
@@ -1130,8 +1152,8 @@ class R2ac(object):
         newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers)
         if (signature == False):
-            # logger.info("Consesus was not achieved: block #" +
-            #             str(newBlock.index) + " will not be added")
+            logger.info("Consesus was not achieved: block #" +
+                        str(newBlock.index) + " will not be added")
             return False
         ChainFunctions.addBlockHeader(newBlock)
         sendBlockToPeers(newBlock)
@@ -1147,12 +1169,15 @@ class R2ac(object):
         global peers
 
         counter = 0
+        i =0
         while (counter < len(peers)):
-            while (consensusLock.acquire(
-                    False) == False):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
-                # logger.info("I can't lock my lock, waiting for it")
+            while ((consensusLock.acquire(
+                    False) == False) and i<30):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
+                logger.info("$$$$$$$I can't lock my lock, waiting for it -> in lock for consensus")
                 time.sleep(0.01)
             # print("##Before for and after acquire my lock")
+            if (i==30):
+                return False
             for p in peers:
                 obj = p.object
                 thisPeerIsNotAvailableToLock = obj.acquireLockRemote()
@@ -1160,6 +1185,7 @@ class R2ac(object):
                 # print("On counter = "+str(counter)+" lock result was: "+str(thisPeerIsNotAvailableToLock))
                 if (thisPeerIsNotAvailableToLock == False):
                     counter = counter - 1  # I have to unlock the locked ones, the last was not locked
+                    logger.info("$$$$$$$I can't lock REMOTE lock, waiting for it -> in lockforconsensus")
                     # logger.info("Almost got a deadlock")
                     consensusLock.release()
                     if (counter > 0):
@@ -1364,9 +1390,16 @@ def addNewBlockToSyncList(devPubKey):
     # logger.debug("running critical stuffff......")
     # print("Inside addNewBlockToSyncLIst")
     global lock
-    lock.acquire(1)
-    # logger.debug("running critical was acquire")
     global blockConsensusCandidateList
+    i=0
+    while(not(lock.acquire(False)) and i<30):
+        i=i+1
+        logger.info("$$$$$$$$$ not possible to acquire a lock in addNewblocktosynclist")
+        time.sleep(0.01)
+    if (i==30):
+        return False
+    # logger.debug("running critical was acquire")
+
     # logger.debug("Appending block to list :")#+srt(len(blockConsensusCandidateList)))
     # print("Inside Lock")
     blockConsensusCandidateList.append(devPubKey)
@@ -1379,7 +1412,14 @@ def getBlockFromSyncList():
     """
     # logger.debug("running critical stuffff to get sync list......")
     global lock
-    lock.acquire(1)
+    # lock.acquire(1)
+    i=0
+    while (not(lock.acquire(False)) and i < 30):
+        i = i + 1
+        logger.info("$$$$$$$$$ not possible to acquire a lock in getblockfromsynclist")
+        time.sleep(0.01)
+    if (i == 30):
+        return False
     # logger.debug("lock aquired by get method......")
     global blockConsensusCandidateList
     if(len(blockConsensusCandidateList) > 0):
@@ -1472,8 +1512,11 @@ def PBFTConsensus(newBlock, generatorGwPub, generatorDevicePub):
     # t = threading.Thread(target=commitBlockPBFT, args=(newBlock,generatorGwPub,generatorDevicePub,connectedPeers))
     # t.start()
     # print("inside PBFTConsensus, before commitblockpbft")
-    commitBlockPBFT(newBlock, generatorGwPub,
-                    generatorDevicePub, connectedPeers)
+    if(commitBlockPBFT(newBlock, generatorGwPub,
+                    generatorDevicePub, connectedPeers)):
+        return True
+
+    return False
     # print("inside PBFTConsensus, after commitblockpbft")
     # threads.append(t)
     # for t in threads:
@@ -1508,7 +1551,7 @@ def commitBlockPBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
     pbftFinished = True
     i = 0
     # print("inside commitblockpbft")
-    while (pbftFinished and i < 20):
+    while (pbftFinished and i < 30):
         # print("inside commitblockpbft, inside while")
         pbftAchieved = handlePBFT(newBlock, generatorGwPub, generatorGwPub, alivePeers)
         if(not pbftAchieved):
@@ -1517,11 +1560,12 @@ def commitBlockPBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
             newBlock = ChainFunctions.createNewBlock(generatorDevicePub, gwPvt, blockContext, consensus)
             # logger.info("Block Recriated ID was:("+str(oldId)+") new:("+str(newBlock.index)+")")
             i = i + 1
+            time.sleep(0.01)
             # print("####not pbftAchieved")
         else:
             pbftFinished = False
             # print("####pbftFinished")
-    if i == 20:
+    if i == 30:
         return False
     else:
         return True
@@ -1643,7 +1687,7 @@ def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeer
         # logger.debug("newBlock Index="+str(newBlock.index))
         blockValidation = False
         return blockValidation
-    if (lastBlk.timestamp >= newBlock.timestamp):
+    if (lastBlk.timestamp > newBlock.timestamp): # @TODO this timestamp contraint can be hard -> global time
         # print("validation lastblktime")
         logger.error("Failed to validate new block(" +
                         str(newBlock.index)+") TIME value")
@@ -1870,7 +1914,7 @@ def calcTransactionPBFT(block, newTransaction, alivePeers):
 #         print("I finished runPoW - Wrong")
 
 def PoWConsensus(newBlock, generatorGwPub, generatorDevicePub):
-    """ Make the configurations needed to run consensus and call the method runPBFT()\n
+    """ Make the configurations needed to run consensus trying to generate a block with a specific nonce\n
         @param newBlock - BlockHeader object\n
         @param generatorGwPub - Public key from the peer who want to generate the block\n
         @param generatorDevicePub - Public key from the device who want to generate the block\n
@@ -1999,7 +2043,7 @@ def loadOrchestrator():
 
 
 def runMasterThread():
-    """ initialize the PBFT of the peer """
+    """ DEPRECATED - initialize the PBFT of the peer """
     # @Roben atualizacao para definir dinamicamente quem controla a votacao - o orchestrator -
     # global currentOrchestrator
     # while(currentOrchestrator == myURI):

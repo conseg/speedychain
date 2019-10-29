@@ -13,5 +13,6 @@ gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/runner.py 127.
 sleep 1
 #gnome-terminal -e "bash -c \"python ~/speedychain_varruda/speedychain-master/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a     50   10 PoW; exec bash\""
 gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a; exec bash\""
-gnome-terminal -e "bash -c \"go run ~/go/src/EVM/main.go; exec bash\""
+gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-b; exec bash\""
+gnome-terminal -e "bash -c \"~/PycharmProjects/speedychain/EVM/EVM; exec bash\""
 gnome-terminal -e "bash -c \"gedit ~/go/src/EVM/howto.txt; exec bash\""
