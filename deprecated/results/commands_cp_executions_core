@@ -1,2 +1,0 @@
-Sample of commands to make easy to copy temporary files from core (logs from execution)
-$ cp /tmp/pycore.*/Gw*.conf/10.* /home/core/
