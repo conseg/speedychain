@@ -41,6 +41,8 @@ if os.path.isfile(FILE_OUTPUT):
 cap = cv2.VideoCapture('http://129.94.175.139:5000/video_feed')
 currentFrame = 0
 
+totalChunk = 360 #360 = 1 hour considering 15 FPS
+
 outputFile = None
 lock = threading.Lock()
 out = None
@@ -306,7 +308,7 @@ def saveStream():
     addBlockOnChain()  
     newVideo()
     i=0
-    while True:
+    while i<totalChunk: #run the save video for a specific time
         ret, frame = cap.read()
         #printInfo(cap)
         if ret == True:
