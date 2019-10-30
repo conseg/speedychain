@@ -318,7 +318,7 @@ def saveStream():
             #cv2.imshow('frame',frame)
             currentFrame += 1
             print(str(currentFrame))
-            if(currentFrame >= 40):
+            if(currentFrame >= 150):
                 i = i +1
                 out.release()
                 ipfsName=sentToIPFSFake()
