@@ -315,13 +315,14 @@ def saveStream():
             # Saves for video
             out.write(frame)
             # Display the resulting frame
-            #cv2.imshow('frame',frame)
+            cv2.imshow('frame',frame)
             currentFrame += 1
             print(str(currentFrame))
             if(currentFrame >= 40):
                 i = i +1
                 out.release()
                 ipfsName=sentToIPFSFake()
+                #ipfsName=sentToIPFS()
                 s = makeTransaction(ipfsName)
                 saveFile(i,s, ipfsName)
                 currentFrame = 0
@@ -339,20 +340,42 @@ def sha256_checksum(filename, block_size=65536):
 #Generate  a new transaction for blockchain
 def makeTransaction(ipfsName):
     sha256 = sha256_checksum("./out/output.avi")
-    print(str(sha256))    
+    print(str(sha256)) 
+    logger.debug(str(sha256))
+    logger.debug(ipfsName)
     sendMetadataTransactions(sha256, ipfsName)
     return sha256
+
+#this function helps to evaluate possible problems when encripting data.
+def decryptStuff(pubkey, encryptedObj):
+    print("start decrypt")
+    plainObject = CryptoFunctions.decryptAES(encryptedObj, serverAESKey)
+    signature = plainObject[:-126]  # remove the last 20 chars
+    devTime = plainObject[-126:-110]
+    deviceData = plainObject[-110:]
+    d = devTime+deviceData
+    isSigned = CryptoFunctions.signVerify(
+                    d, signature, publicKey)
+    logger.debug("Signature validation:"+str(isSigned))
+
+
 
 def sendMetadataTransactions(fileHash, ipfsName):
     t = ((time.time() * 1000) * 1000)
     timeStr = "{:.0f}".format(t)
     data = timeStr + str(fileHash) + ipfsName
-
+    logger.debug("Data: "+data)
     signedData = CryptoFunctions.signInfo(privateKey, data)
     toSend = signedData + timeStr + str(fileHash) + ipfsName
     #logger.debug("ServeAESKEY = " + serverAESKey)
+    logger.debug("TimeStr:"+str(timeStr))
+    logger.debug("fileHash:"+str(fileHash))
+    logger.debug("ipfsname:"+str(ipfsName))
+    logger.debug("Sending transaction metadata")
     encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
     server.addTransaction(publicKey, encobj)
+    #decryptStuff(publicKey, encobj)
+    logger.debug("Sending transaction metadata DONE")
     ##################################DEBUG ONLY
     # toSend = signedData + timeStr + str(fileHash)+ipfsName
     # f = open("./"+str(fileHash),"w+")
@@ -375,8 +398,9 @@ def sendMetadataTransactions(fileHash, ipfsName):
 def sentToIPFSFake():
     #cmdIPFS = "ipfs add ./out/output.avi"
     #ret = subprocess.Popen(cmdIPFS, shell=True, stdout=subprocess.PIPE).stdout.read()
-    fileNameIPFS = "e28e4b6cfa6c64471ceec4e206066674a5af446da5b7527ca50f6ebb78d32937"
+    fileNameIPFS = "QmdyCgepLrJsT19nhsSdaBAFLY2PHQ4mH3vaJsjB4DnHiq"
     #fileOriginalName = ret[53:]
+    time.sleep(1)
     return fileNameIPFS
 
 def sentToIPFS():
