@@ -457,39 +457,27 @@ def InteractiveMain():
             break
         options[mode]()
 
-if __name__ == '__main__':
 
-    # if len(sys.argv[1:]) > 1:
-        # ----> Adicionado por Arruda
-        # print ("Command Line usage:")
-        # print (
-        #     "    python deviceSimulator.py <name server IP> <gateway name> <blocks> <transactions>")
-        # ---->
-        # os.system("clear")
-        # print("running automatically")
-    if len(sys.argv[1:])<4:
+def connectDeviceAndRun(arg1, arg2, arg3, dev, blocks=None, transactions=None, consensus=None):
+    if (arg1 == None or arg2 == None or arg3 == None or dev == None):
         print("Command line syntax:")
         print("  python DeviceSimulator.py <name server IP> <name server port> <gateway name> <device name>")
     else:
-        nameServerIP = sys.argv[1]
-        nameServerPort = int(sys.argv[2])
-        gatewayName = sys.argv[3]
-        deviceName = sys.argv[4]
+        nameServerIP = arg1
+        nameServerPort = arg2
+        gatewayName = arg3
+        deviceName = dev
         logger = Logger.configure(deviceName + ".log")
         logger.info("Running device " + deviceName + " in " + getMyIP())
 
-
-
-        if (len(sys.argv) < 6): #when it is not called with number of blocks/transactions and consensus, it is called interactive mode
+        if (
+                blocks == None or transactions == None or consensus == None):  # when it is not called with number of blocks/transactions and consensus, it is called interactive mode
             consensus = "None"
             gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
             logger.info("Connected to gateway: " + gatewayURI.asString())
             InteractiveMain()
         else:
-            blocks = sys.argv[5]
-            transactions = sys.argv[6]
-            consensus = sys.argv[7]
 
             gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
