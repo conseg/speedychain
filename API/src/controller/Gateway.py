@@ -2096,6 +2096,7 @@ def main(nameServerIP, nameServerPort, local_gatewayName):
     global gatewayName
     gatewayName = local_gatewayName
 
+
     # initialize Logger
     global logger
     logger = Logger.configure(gatewayName + ".log")

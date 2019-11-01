@@ -1,3 +1,4 @@
+"""
 import io
 import time
 
@@ -8,14 +9,25 @@ from .src.controller import Gateway
 from threading import Thread
 import Pyro4.naming
 
-def run(nameServerIP, nameServerPort, gatewayName):
-    pyro = Thread(target=runPyro4, args=(nameServerIP, nameServerPort)).start()
-    time.sleep(1)
-    runGateway(nameServerIP, nameServerPort, gatewayName)
+import sys
+
+from .src.controller import Gateway
+
 
 def runGateway(nameServerIP, nameServerPort, gatewayName):
     Gateway.main(nameServerIP, nameServerPort, gatewayName)
 
 def runPyro4(nameServerIP, nameServerPort):
     Pyro4.naming.startNSloop(nameServerIP, nameServerPort)
-    #subprocess.call(["bash -c \'python -m Pyro4.naming -n 127.0.0.1 -p 9090; exec bash\'"], shell=True)
+
+def runPyro(nameServerIP, nameServerPort):
+    pyro = Thread(target=runPyro4, args=(nameServerIP, nameServerPort)).start()
+"""
+import sys
+
+from src.controller import Gateway
+
+nameServerIP = sys.argv[1]
+nameServerPort = int(sys.argv[2])
+gatewayName = sys.argv[3]
+Gateway.main(nameServerIP, nameServerPort, gatewayName)

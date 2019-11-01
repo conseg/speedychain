@@ -14,7 +14,6 @@ import requests
 import traceback
 
 from Crypto.PublicKey import RSA
-
 # SpeedCHAIN modules
 from API.src.tools import Logger
 from API.src.tools import CryptoFunctions
@@ -35,7 +34,7 @@ publicKey = "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOz+gyp
 
 def getMyIP():
      """ Return the IP from the gateway
-     @return str
+     @return str 
      """
      s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
      s.connect(("8.8.8.8", 80))
@@ -70,11 +69,15 @@ def addBlockOnChain():
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
     serverAESEncKey = server.addBlock(publicKey)
+    if (len(str(serverAESEncKey))<10):
+        logger.error("it was not possible to add block - problem in the key")
+        return False
     # print("###addBlockonChain in devicesimulator, serverAESEncKey")
     # print(serverAESEncKey)
     # while len(serverAESEncKey) < 10:
     #    serverAESEncKey = server.addBlock(publicKey)
     decryptAESKey(serverAESEncKey)
+    return True
     # print("###after decrypt aes")
 
 def sendDataTest():
@@ -98,9 +101,27 @@ def sendData():
     logger.debug("data = "+data)
     signedData = CryptoFunctions.signInfo(privateKey, data)
     toSend = signedData + timeStr + temperature
-    logger.debug("ServeAESKEY = " + serverAESKey)
-    encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
-    server.addTransaction(publicKey, encobj)
+
+    try:
+
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+    except:
+        logger.error("was not possible to encrypt... verify aeskey")
+        newKeyPair()
+        addBlockOnChain() # this will force gateway to recreate the aes key
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        toSend = signedData + timeStr + temperature
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        logger.error("passed through sendData except")
+    try:
+        if(server.addTransaction(publicKey, encobj)=="ok!"):
+            # logger.error("everything good now")
+            return True
+        else:
+            logger.error("something went wrong when sending data")
+    except:
+        logger.error("some exception with addTransaction now...")
+
 
 def sendDataSC(stringSC):
     t = ((time.time() * 1000) * 1000)
@@ -117,7 +138,10 @@ def sendDataSC(stringSC):
 def decryptAESKey(data):
     """ Receive a encrypted data, decrypt it and put it in the global var 'serverAESKey' """
     global serverAESKey
-    serverAESKey = CryptoFunctions.decryptRSA2(privateKey, data)
+    try:
+        serverAESKey = CryptoFunctions.decryptRSA2(privateKey, data)
+    except:
+        logger.error("problem decrypting the AES key")
 
 def readSensorTemperature():
     """ Generates random data like '23 C' """
@@ -165,7 +189,7 @@ def brutePairAuth(retry):
         except KeyboardInterrupt:
             sys.exit()
         except:
-            logger.error("failed to execute:"+str(retry))
+            logger.error("failed to execute pairauth:"+str(retry))
             isOk = True
 
 def bruteSend(retry):
@@ -178,12 +202,13 @@ def bruteSend(retry):
         except KeyboardInterrupt:
             sys.exit()
         except:
-            logger.error("failed to execute:"+str(retry))
+            logger.error("failed to execute send tr:"+str(retry))
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.error("*** print_exception:\n" + str(traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2, file=sys.stdout)))
             #global serverAESKey
             # print("the size of the serverAESKey is: "+str(len(serverAESKey)))
-            return  # addBlockConsensusCandiate
+            # time.sleep(0.001)
+            return False # addBlockConsensusCandiate
 
 def defineAutomaNumbers():
     """ Ask for the user to input how many blocks and transaction he wants and calls the function automa()"""
@@ -196,17 +221,23 @@ def automa(blocks, trans):
         @param blocks - int number of blocks\n
         @param trans - int number of transactions
     """
-    print(blocks)
-    print(trans)
     for blk in range(0, blocks):
         logger.info("Adding block #" + str(blk) + "...")
         newKeyPair()
-        addBlockOnChain()
+        counter = 0
+        while(addBlockOnChain()==False):
+            logger.error("ERROR: creating a new key pair and trying to create a new block")
+            newKeyPair()
+            counter= counter + 1
+            if (counter > 10):
+                break
+
         # brutePairAuth(blk)
         for tr in range(0, trans):
             logger.info("Sending transaction #" + str(tr) + "...")
             # sendData()
             while (not (server.isBlockInTheChain(publicKey))):
+                time.sleep(0.0001)
                 continue
                 # time.sleep(1)
             bruteSend(tr)
@@ -225,8 +256,11 @@ def newElection():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ###WHAT???###
 
 def defineInteractiveConsensus():
-    receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
-    print("after receiving consensus string: "+receivedConsensus)
+    receivedConsensus = str(input('Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
+    # print("after receiving consensus string: "+receivedConsensus)
+    while(not(receivedConsensus == "None" or receivedConsensus == "PBFT" or receivedConsensus == "dBFT" or receivedConsensus == "PoW" or receivedConsensus == "Witness3")):
+        receivedConsensus = str(
+            input('Not a consensus, type again... Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
     server.setConsensus(receivedConsensus)
     return True
 
@@ -414,6 +448,7 @@ def InteractiveMain():
         # print("16 - EVM connector")
         # print("17 - execute EVM code")
         print("#############################################################")
+
         try:
             mode = int(input('Input:'))
         except ValueError:
@@ -422,39 +457,48 @@ def InteractiveMain():
             break
         options[mode]()
 
+if __name__ == '__main__':
+
+    # if len(sys.argv[1:]) > 1:
+        # ----> Adicionado por Arruda
+        # print ("Command Line usage:")
+        # print (
+        #     "    python deviceSimulator.py <name server IP> <gateway name> <blocks> <transactions>")
+        # ---->
+        # os.system("clear")
+        # print("running automatically")
+    if len(sys.argv[1:])<4:
+        print("Command line syntax:")
+        print("  python DeviceSimulator.py <name server IP> <name server port> <gateway name> <device name>")
+    else:
+        nameServerIP = sys.argv[1]
+        nameServerPort = int(sys.argv[2])
+        gatewayName = sys.argv[3]
+        deviceName = sys.argv[4]
+        logger = Logger.configure(deviceName + ".log")
+        logger.info("Running device " + deviceName + " in " + getMyIP())
 
 
 
-def connectDeviceAndRun(arg1, arg2, arg3, dev, blocks = None, transactions = None, consensus = None):
+        if (len(sys.argv) < 6): #when it is not called with number of blocks/transactions and consensus, it is called interactive mode
+            consensus = "None"
+            gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
-        if (arg1 == None or arg2 == None or arg3 == None or dev == None):
-            print("Command line syntax:")
-            print("  python DeviceSimulator.py <name server IP> <name server port> <gateway name> <device name>")
+            logger.info("Connected to gateway: " + gatewayURI.asString())
+            InteractiveMain()
         else:
-            nameServerIP = arg1
-            nameServerPort = arg2
-            gatewayName = arg3
-            deviceName = dev
-            logger = Logger.configure(deviceName + ".log")
-            logger.info("Running device " + deviceName + " in " + getMyIP())
+            blocks = sys.argv[5]
+            transactions = sys.argv[6]
+            consensus = sys.argv[7]
 
-            if (blocks == None or transactions == None or consensus == None):  # when it is not called with number of blocks/transactions and consensus, it is called interactive mode
-                consensus = "None"
-                gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
+            gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
-                logger.info("Connected to gateway: " + gatewayURI.asString())
-                InteractiveMain()
-            else:
+            logger.info("Connected to gateway: " + gatewayURI.asString())
 
-                gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
+            logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
+            automa(int(blocks), int(transactions))
 
-                logger.info("Connected to gateway: " + gatewayURI.asString())
-
-                logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
-                automa(int(blocks), int(transactions))
-
-            # else:
-            # os.system("clear")
-            # loadConnection()
-            # main()
-
+        # else:
+        # os.system("clear")
+        # loadConnection()
+        # main()
