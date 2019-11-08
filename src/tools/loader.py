@@ -130,14 +130,15 @@ argpaerser.add_argument('-gn', type=str, help='Gateway Name', required=True)
 argpaerser.add_argument('-file', type=str, help='file name', required=True)
 args = argpaerser.parse_args()
 
-logger = Logger.configure(str(args.file) + ".log")
-logger.info("Running SC files " + args.file)
 
 #Connecting to server
 print ("Conectando " + args.ip + ":" + args.port )
 nameServerIP = args.ip 
 nameServerPort = args.port 
 gatewayName = args.gn
+
+logger = Logger.configure("SC" + gatewayName + ".log")
+logger.info("Running SC files " + args.file)
 
 gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
