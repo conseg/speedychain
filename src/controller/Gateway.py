@@ -450,6 +450,8 @@ class R2ac(object):
                     logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
+                    t3 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T7;Time to add a new transaction in all gateways;" + '{0:.12f}'.format((t3 - t1) * 1000))
                     # print("all done")
                     return "ok!"
                 else:
@@ -566,6 +568,8 @@ class R2ac(object):
                     logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
+                    t3 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T7;Time to add a new transaction in all gateways;" + '{0:.12f}'.format((t3 - t1) * 1000))
                     # print("all done in transations")
                     # smartcontractLockList.remove(devPublicKey)
                     self.removeLockfromSC(devPublicKey)
@@ -647,6 +651,8 @@ class R2ac(object):
                     logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
+                    t3 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T7;Time to add a new transaction in all gateways;" + '{0:.12f}'.format((t3 - t1) * 1000))
                     # print("all done in transations")
                     return "ok!"
                 else:
