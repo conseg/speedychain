@@ -37,6 +37,9 @@ QUICK START:
     - Run the quickstart.sh
     If an EVM is necessary for testing, uncomment the EVM line in quickstart.sh script
 
+SMART CONTRACTS automated:
+
+"python src/tools/loader.py -ip localhost -port 9090 -gn gwa -file EVM/gpsTracker2.csv"
 
 TODO List:
 - improve the REST methods
