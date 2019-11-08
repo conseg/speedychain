@@ -24,11 +24,16 @@ from Crypto.PublicKey import RSA
 import Logger as Logger
 import CryptoFunctions
 
+
 global server
 global privateKey
 global publicKey
 global serverAESEncKey
+global consensus
 
+consensus = "PBFT"
+
+logger = Logger.logging.getLogger("speedychain")
 
 #Functions
 def defineConsensus(receivedConsensus):
@@ -114,7 +119,7 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     # text_file.close()
     # os.remove(fname)
     # ---->
-    defineConsensus("PBFT")
+    defineConsensus(consensus)
     return gatewayURI
 
 #Loading args
@@ -124,6 +129,9 @@ argpaerser.add_argument('-port', type=str, help='Server Port', required=True)
 argpaerser.add_argument('-gn', type=str, help='Gateway Name', required=True)
 argpaerser.add_argument('-file', type=str, help='file name', required=True)
 args = argpaerser.parse_args()
+
+logger = Logger.configure(args.file + ".log")
+logger.info("Running SC files " + args.file)
 
 #Connecting to server
 print ("Conectando " + args.ip + ":" + args.port )
@@ -143,16 +151,29 @@ with open(args.file) as csvfile:
     for row in reader: #Starting Batch
         #time.sleep(5)
         if row['Command'] == "1":
+            t1 = time.time()
             createBlockForSC2(row['SK'], row['PK'])
+            t2 = time.time()
+            logger.info("Operation;" + "Create Block" + ";" + consensus + ";T11;Time to create a block for SC;" + '{0:.12f}'.format((t2 - t1) * 1000))
             #continue
         elif row['Command'] == "2":
+            t1 = time.time()
             callEVMInterface(row['SK'], row['PK'], "Exec", row['Data'], row['From'], row['To'])
+            t2 = time.time()
+            logger.info("Operation;" + "Execute" + ";" + consensus + ";T12;Time to execute SC;" + '{0:.12f}'.format((t2 - t1) * 1000))
             #continue
         elif row['Command'] == "3":
+            t1 = time.time()
             callEVMInterface(row['SK'], row['PK'], "Criar", row['Data'], row['From'], row['To'])
+            t2 = time.time()
+            logger.info("Operation;" + "Create Data" + ";" + consensus + ";T13;Time to create data SC;" + '{0:.12f}'.format((t2 - t1) * 1000))
             #continue
         elif row['Command'] == "4":
+            t1 = time.time()
             callEVMInterface(row['SK'], row['PK'], "Cham", row['Data'], row['From'], row['To'])
+            t2 = time.time()
+            logger.info(
+                "Operation;" + "CallSC" + ";" + consensus + ";T14;Time to call SC;" + '{0:.12f}'.format((t2 - t1) * 1000))
             #continue
 
 #Closing
