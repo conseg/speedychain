@@ -114,7 +114,7 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     # text_file.close()
     # os.remove(fname)
     # ---->
-    defineConsensus("dBFT")
+    defineConsensus("PBFT")
     return gatewayURI
 
 #Loading args
