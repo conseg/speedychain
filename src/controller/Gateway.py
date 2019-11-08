@@ -1351,7 +1351,7 @@ class R2ac(object):
             # Envia o SC
             # print("AQUI 00002")
             s.send(tamanhoSmartContract)
-            time.sleep(1)
+            time.sleep(0.01)
             # print(json.dumps(chamadaJSON))
             s.send(chamada)
             # print("AQUI 000003")
