@@ -412,11 +412,19 @@ class R2ac(object):
 
                 plainObject = CryptoFunctions.decryptAES(
                     encryptedObj, devAESKey)
-                signature = plainObject[:-20]  # remove the last 20 chars
-                # remove the 16 char of timestamp
-                devTime = plainObject[-20:-4]
-                # retrieve the las 4 chars which are the data
-                deviceData = plainObject[-4:]
+                # signature = plainObject[:-20]  # remove the last 20 chars
+                # # remove the 16 char of timestamp
+                # devTime = plainObject[-20:-4]
+                # # retrieve the las 4 chars which are the data
+                # deviceData = plainObject[-4:]
+
+                ##########################VIDEO METADATA#############################
+                signature = plainObject[:-126]  
+                devTime = plainObject[-126:-110]
+                deviceData = plainObject[-110:]
+                #fileHash = plainObject[-110:-46]
+                #ipfsFile = plainObject[-46:]
+                ##########################VIDEO METADATA#############################
 
                 d = devTime+deviceData
                 isSigned = CryptoFunctions.signVerify(
