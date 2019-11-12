@@ -539,8 +539,8 @@ if __name__ == '__main__':
             InteractiveMain()
         else:
             print(" nothing to do")
-            blocks = sys.argv[5]
-            transactions = sys.argv[6]
+            #blocks = sys.argv[5]
+            #transactions = sys.argv[6]
             #consensus = sys.argv[7]
             #saveStream()
             #logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
