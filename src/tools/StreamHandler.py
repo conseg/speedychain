@@ -41,7 +41,15 @@ if os.path.isfile(FILE_OUTPUT):
 cap = cv2.VideoCapture('http://129.94.175.139:5000/video_feed')
 currentFrame = 0
 
-totalChunk = 360 #360 = 1 hour considering 15 FPS
+#totalChunk = 360 #360 = 1 hour considering 15 FPS
+totalChunk = 180 #180 = 30 min considering 15 FPS
+
+# 15 frames per second
+num_fps = 15
+
+# video chunk length in seconds
+video_chunk_length = 10 
+
 
 outputFile = None
 lock = threading.Lock()
@@ -320,7 +328,7 @@ def saveStream():
             #cv2.imshow('frame',frame)
             currentFrame += 1
             print(str(currentFrame))
-            if(currentFrame >= 150):
+            if(currentFrame >= (video_chunk_length*num_fps) :
                 i = i +1
                 out.release()
                 ipfsName=sentToIPFSFake()
