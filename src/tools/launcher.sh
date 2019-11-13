@@ -1,6 +1,9 @@
 #!/bin/bash
-gnome-terminal -e "bash -c \"python StreamHandler.py 129.94.175.201 12666 R1 dev-a true; exec bash\""
-sleep 1
-gnome-terminal -e "bash -c \"python StreamHandler.py 129.94.175.201 12666 R2 dev-b true; exec bash\""
-sleep 1
-gnome-terminal -e "bash -c \"python StreamHandler.py 129.94.175.201 12666 R3 dev-c true; exec bash\""
+INSTANCES=2
+for ((i=0; $i<$INSTANCES; i++))
+do
+	n=$(($i%4))
+	echo $n
+	python StreamHandler.py 129.94.175.201 12666 R$n dev-$i x > x$i.txt&
+	sleep 1
+done
