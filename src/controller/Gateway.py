@@ -455,7 +455,7 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #             str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction " + str(transaction.index)+" in a block"+str(blk.index)+";" + '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     t3 = time.time()
@@ -573,7 +573,7 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #              str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction " + str(transaction.index)+" in a block"+str(blk.index)+";" + '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     t3 = time.time()
@@ -656,7 +656,7 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #              str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction " + str(transaction.index)+" in a block"+str(blk.index)+";" + '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     t3 = time.time()
@@ -689,7 +689,7 @@ class R2ac(object):
                     isTransactionValid(trans, pubKey)
                 ChainFunctions.addBlockTransaction(blk, trans)
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction " + str(trans.index)+" in a block"+str(blk.index)+" ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return "done"
 
     def updateIOTBlockLedger(self, iotBlock, gwName):
