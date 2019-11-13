@@ -328,13 +328,13 @@ def saveStream():
             #cv2.imshow('frame',frame)
             currentFrame += 1
             print(str(currentFrame))
-            if(currentFrame >= (video_chunk_length*num_fps) :
+            if(currentFrame >= (video_chunk_length*num_fps)) :
                 i = i +1
                 out.release()
                 ipfsName=sentToIPFSFake()
                 #ipfsName=sentToIPFS()
                 s = makeTransaction(ipfsName)
-                saveFile(i,s, ipfsName)
+                #saveFile(i,s, ipfsName)
                 currentFrame = 0
                 newVideo()
 
