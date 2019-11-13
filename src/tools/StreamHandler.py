@@ -341,7 +341,7 @@ def sha256_checksum(filename, block_size=65536):
 
 #Generate  a new transaction for blockchain
 def makeTransaction(ipfsName):
-    sha256 = sha256_checksum("./out/output.avi")
+    sha256 = sha256_checksum(FILE_OUTPUT)
     print(str(sha256)) 
     logger.debug(str(sha256))
     logger.debug(ipfsName)
@@ -406,7 +406,7 @@ def sentToIPFSFake():
     return fileNameIPFS
 
 def sentToIPFS():
-    cmdIPFS = "ipfs add ./out/output.avi"
+    cmdIPFS = "ipfs add "+FILE_OUTPUT
     ret = subprocess.Popen(cmdIPFS, shell=True, stdout=subprocess.PIPE).stdout.read()
     fileNameIPFS = ret[6:52]
     #fileOriginalName = ret[53:]
@@ -414,8 +414,11 @@ def sentToIPFS():
 
 #Create a bkp
 def saveFile(i, shaFileValue, ipfsAdd):
-    os.rename("./out/output.avi", "../x/output"+str(i)+".avi")
-    f = open("../x/output"+str(i)+".sha256","w+")
+    
+    if not os.path.exists("../"+deviceName):
+            os.mkdir("../"+deviceName)
+    os.rename(FILE_OUTPUT, "../"+deviceName+"/"+deviceName+str(i)+".avi")
+    f = open("../"+deviceName+"/"+deviceName+str(i)+".sha256","w+")
     f.write(str(shaFileValue))
     f.write("\n")
     f.write(str(ipfsAdd))
@@ -528,7 +531,11 @@ if __name__ == '__main__':
         deviceName = sys.argv[4]
         logger = Logger.configure(deviceName + ".log")
         logger.info("Running device " + deviceName + " in " + getMyIP())
-
+        FILE_OUTPUT = "./"+deviceName+"/"
+        if not os.path.exists(FILE_OUTPUT):
+            os.mkdir(FILE_OUTPUT)
+        FILE_OUTPUT = "./"+deviceName+"/"+deviceName+".avi"
+        
         gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
         logger.info("Connected to gateway: " + gatewayURI.asString())
@@ -539,6 +546,7 @@ if __name__ == '__main__':
             InteractiveMain()
         else:
             print(" nothing to do")
+            saveStream()
             #blocks = sys.argv[5]
             #transactions = sys.argv[6]
             #consensus = sys.argv[7]
