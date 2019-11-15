@@ -38,7 +38,8 @@ if os.path.isfile(FILE_OUTPUT):
 # cap = cv2.VideoCapture('vtest.avi')
 # Capturing video from webcam:
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('http://129.94.175.139:5000/video_feed')
+#cap = cv2.VideoCapture('http://129.94.175.139:5000/video_feed')
+cap = ""
 currentFrame = 0
 
 #totalChunk = 360 #360 = 1 hour considering 15 FPS
@@ -57,10 +58,12 @@ out = None
 
 def newVideo():
     global cap, out, cv2
-    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)   # float
-    print("Video width ="+str(width))
-    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT) # float
-    print("Video height ="+str(height))
+    #width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)   # float
+    width = 640
+    #print("Video width ="+str(width))
+    #height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT) # float
+    height = 480
+    #print("Video height ="+str(height))
     fourcc=cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(FILE_OUTPUT, fourcc, 20.0, (int(width),int(height)))
 ##########################################################################
@@ -309,6 +312,9 @@ def evmConnector():
 def executeEVM():
     return True
 
+def imagem():
+    img = cv2.imread(filename)
+
 def saveStream():
     global cap, outputFile, lock, out
     currentFrame = 0
@@ -317,7 +323,10 @@ def saveStream():
     newVideo()
     i=0
     while i<totalChunk: #run the save video for a specific time
-        ret, frame = cap.read()
+        #ret, frame = cap.read()
+        ret = True
+        frame = cv2.imread('./pic.jpg')
+
         #printInfo(cap)
         if ret == True:
             # Handles the mirroring of the current frame
@@ -325,7 +334,7 @@ def saveStream():
             # Saves for video
             out.write(frame)
             # Display the resulting frame
-            #cv2.imshow('frame',frame)
+            cv2.imshow('frame',frame)
             currentFrame += 1
             print(str(currentFrame))
             if(currentFrame >= (video_chunk_length*num_fps)) :
@@ -353,7 +362,7 @@ def makeTransaction(ipfsName):
     print(str(sha256)) 
     logger.debug(str(sha256))
     logger.debug(ipfsName)
-    sendMetadataTransactions(sha256, ipfsName)
+    #sendMetadataTransactions(sha256, ipfsName)
     return sha256
 
 #this function helps to evaluate possible problems when encripting data.
