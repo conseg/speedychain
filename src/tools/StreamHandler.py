@@ -417,7 +417,7 @@ def sentToIPFSFake():
     #cmdIPFS = "ipfs add ./out/output.avi"
     #ret = subprocess.Popen(cmdIPFS, shell=True, stdout=subprocess.PIPE).stdout.read()
     #fileNameIPFS = "QmdyCgepLrJsT19nhsSdaBAFLY2PHQ4mH3vaJsjB4DnHiq"
-    fileNameIPFS = "QmdyCgepLrJsT19nhsSdaBAFLY2PHQ4mH"+str(time.time())
+    fileNameIPFS = "QmdyCgepLrJsT19nhsSdaBAFLY2PHQ4mH3va"+str(time.time())[:10]
     #fileOriginalName = ret[53:]
     time.sleep(1)
     return fileNameIPFS
