@@ -378,8 +378,6 @@ def decryptStuff(pubkey, encryptedObj):
                     d, signature, publicKey)
     logger.debug("Signature validation:"+str(isSigned))
 
-
-
 def sendMetadataTransactions(fileHash, ipfsName):
     t = ((time.time() * 1000) * 1000)
     timeStr = "{:.0f}".format(t)
@@ -418,7 +416,8 @@ def sendMetadataTransactions(fileHash, ipfsName):
 def sentToIPFSFake():
     #cmdIPFS = "ipfs add ./out/output.avi"
     #ret = subprocess.Popen(cmdIPFS, shell=True, stdout=subprocess.PIPE).stdout.read()
-    fileNameIPFS = "QmdyCgepLrJsT19nhsSdaBAFLY2PHQ4mH3vaJsjB4DnHiq"
+    #fileNameIPFS = "QmdyCgepLrJsT19nhsSdaBAFLY2PHQ4mH3vaJsjB4DnHiq"
+    fileNameIPFS = "QmdyCgepLrJsT19nhsSdaBAFLY2PHQ4mH"+str(time.time())
     #fileOriginalName = ret[53:]
     time.sleep(1)
     return fileNameIPFS
