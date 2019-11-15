@@ -334,10 +334,11 @@ def saveStream():
             # Saves for video
             out.write(frame)
             # Display the resulting frame
-            cv2.imshow('frame',frame)
+            #cv2.imshow('frame',frame)
             currentFrame += 1
-            print(str(currentFrame))
+            #print(str(currentFrame))
             if(currentFrame >= (video_chunk_length*num_fps)) :
+                print(str(i))
                 i = i +1
                 out.release()
                 ipfsName=sentToIPFSFake()
@@ -362,7 +363,7 @@ def makeTransaction(ipfsName):
     print(str(sha256)) 
     logger.debug(str(sha256))
     logger.debug(ipfsName)
-    #sendMetadataTransactions(sha256, ipfsName)
+    sendMetadataTransactions(sha256, ipfsName)
     return sha256
 
 #this function helps to evaluate possible problems when encripting data.
