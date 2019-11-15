@@ -64,7 +64,7 @@ gwPvt = ""
 gwPub = ""
 myOwnBlock = ""
 orchestratorObject = ""
-consensus = "None"  # it can be None, dBFT, PBFT, PoW, Witness3
+consensus = "PBFT"  # it can be None, dBFT, PBFT, PoW, Witness3
 # list of votes for new orchestrator votes are: voter gwPub, voted gwPub, signature
 votesForNewOrchestrator = []
 myVoteForNewOrchestrator = []  # my gwPub, voted gwPub, my signed vote
