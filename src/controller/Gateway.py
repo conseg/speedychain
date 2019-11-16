@@ -961,7 +961,7 @@ class R2ac(object):
         blk = ChainFunctions.getBlockByIndex(blkIndex)
         size = len(blk.transactions)
         for t in blk.transactions:
-            if(t.index == transactionIndex)
+            if(t.index == transactionIndex):
                 t2 = time.time()
                 logger.info("gateway;" + gatewayName + ";" + consensus + ";T4;Time to find Transaction # ("+str(transactionIndex)+") in Block # ("+str(blkIndex)+"));" + '{0:.12f}'.format((t2 - t1) * 1000))
                 return True
