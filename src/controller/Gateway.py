@@ -956,6 +956,19 @@ class R2ac(object):
             print("-------")
         return "ok"
 
+    def getTransaction(self, blkIndex, transactionIndex):
+        t1 = time.time()
+        blk = ChainFunctions.getBlockByIndex(blkIndex)
+        size = len(blk.transactions)
+        for t in blk.transactions:
+            if(t.index == transactionIndex)
+                t2 = time.time()
+                logger.info("gateway;" + gatewayName + ";" + consensus + ";T4;Time to find Transaction # ("+str(transactionIndex)+") in Block # ("+str(blkIndex)+"));" + '{0:.12f}'.format((t2 - t1) * 1000))
+                return True
+        t2 = time.time()
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";T4;TRANSACTIO NOT FOUND!!Time to find Transaction # ("+str(transactionIndex)+") in Block # ("+str(blkIndex)+"));" + '{0:.12f}'.format((t2 - t1) * 1000))
+        return False
+
     def listPeer(self):
         """ Log all peers in the network\n
             @return "ok" - done

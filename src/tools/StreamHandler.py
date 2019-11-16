@@ -441,7 +441,12 @@ def saveFile(i, shaFileValue, ipfsAdd):
     f.write(str(ipfsAdd))
     f.close()
 
-    
+def getTransaction():
+    """ Ask for the user to input an index and show all transaction of the block with that index """
+    blockId = input("Which Block do you want to get the transaction?")
+    transactionId = input("Which Transaction do you want fetch?")
+    server.getTransaction(int(index), int(transactionId))
+
 
 def loadConnection(nameServerIP, nameServerPort, gatewayName):
     global deviceName
@@ -490,7 +495,8 @@ def InteractiveMain():
         15: callEVMInterface,
         16: evmConnector,
         17: executeEVM,
-        18: saveStream
+        18: saveStream,
+        19: getTransaction
     }
 
     mode = -1
@@ -518,6 +524,7 @@ def InteractiveMain():
         # print("16 - EVM connector")
         # print("17 - execute EVM code")
         print("18 - Run Save Stream Handler ")
+        print("19 - get traction by index")
 
         try:
             mode = int(input('Input:'))
