@@ -445,7 +445,7 @@ def getTransaction():
     """ Ask for the user to input an index and show all transaction of the block with that index """
     blockId = input("Which Block do you want to get the transaction?")
     transactionId = input("Which Transaction do you want fetch?")
-    server.getTransaction(int(index), int(transactionId))
+    server.getTransaction(int(blockId), int(transactionId))
 
 
 def loadConnection(nameServerIP, nameServerPort, gatewayName):
