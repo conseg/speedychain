@@ -21,7 +21,7 @@ from API.src.tools import CryptoFunctions
 logger = Logger.logging.getLogger("speedychain")
 deviceName = ""
 consensus = ""
-
+running = True;
 fname = socket.gethostname()
 
 server = "localhost"
@@ -65,20 +65,25 @@ def setServer():
 
 def addBlockOnChain():
     """ Take the value of 'publicKey' var, and add it to the chain as a block"""
-    global serverAESEncKey
-    # print("###addBlockonChain in devicesimulator, publicKey")
-    # print(publicKey)
-    serverAESEncKey = server.addBlock(publicKey)
-    if (len(str(serverAESEncKey))<10):
-        logger.error("it was not possible to add block - problem in the key")
-        return False
-    # print("###addBlockonChain in devicesimulator, serverAESEncKey")
-    # print(serverAESEncKey)
-    # while len(serverAESEncKey) < 10:
-    #    serverAESEncKey = server.addBlock(publicKey)
-    decryptAESKey(serverAESEncKey)
-    return True
-    # print("###after decrypt aes")
+    try:
+        global serverAESEncKey
+        # print("###addBlockonChain in devicesimulator, publicKey")
+        # print(publicKey)
+        serverAESEncKey = server.addBlock(publicKey)
+        if (len(str(serverAESEncKey))<10):
+            logger.error("it was not possible to add block - problem in the key")
+            return False
+        # print("###addBlockonChain in devicesimulator, serverAESEncKey")
+        # print(serverAESEncKey)
+        # while len(serverAESEncKey) < 10:
+        #    serverAESEncKey = server.addBlock(publicKey)
+        decryptAESKey(serverAESEncKey)
+        return True
+        # print("###after decrypt aes")
+    except:
+        print("An exception occurred");
+        print("Not adding block to the Blockchain...");
+        print("Returning to the main menu...");
 
 def sendDataTest():
     """ Send fake data to test the system """
@@ -152,8 +157,13 @@ def addPeer():
     """ Ask for the user to inform a peer URI and add it to the server """
     # if sys.version_info < (3, 0):
     #     input = raw_input
-    uri = input("Enter the PEER uri: ").strip()
-    server.addPeer(uri, True)
+    try:
+        uri = input("Enter the PEER uri: ").strip()
+        server.addPeer(uri, True);
+    except:
+        print("An exception occurred");
+        print("Not adding peer...");
+        print("Returning to the main menu...");
 
 def listBlockHeader():
     """ Log all blocks """
@@ -244,11 +254,16 @@ def automa(blocks, trans):
 
 def merkle():
     """ Calculates the hash markle tree of the block """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    blk = int(input("Which block you want to create the merkle tree:"))
-    server.calcMerkleTree(blk)  # addBlockConsensusCandiate
-    # print ("done")
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        blk = int(input("Which block you want to create the merkle tree:"))
+        server.calcMerkleTree(blk)  # addBlockConsensusCandiate
+        # print ("done")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    except:
+        print("An exception occurred");
+        print("Not creating the merkle  tree..");
+        print("Returning to the main menu...");
 
 def newElection():
     server.electNewOrchestrator()
@@ -256,13 +271,18 @@ def newElection():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ###WHAT???###
 
 def defineInteractiveConsensus():
-    receivedConsensus = str(input('Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
-    # print("after receiving consensus string: "+receivedConsensus)
-    while(not(receivedConsensus == "None" or receivedConsensus == "PBFT" or receivedConsensus == "dBFT" or receivedConsensus == "PoW" or receivedConsensus == "Witness3")):
-        receivedConsensus = str(
-            input('Not a consensus, type again... Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
-    server.setConsensus(receivedConsensus)
-    return True
+    try:
+        receivedConsensus = str(input('Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
+        # print("after receiving consensus string: "+receivedConsensus)
+        while(not(receivedConsensus == "None" or receivedConsensus == "PBFT" or receivedConsensus == "dBFT" or receivedConsensus == "PoW" or receivedConsensus == "Witness3")):
+            receivedConsensus = str(
+                input('Not a consensus, type again... Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
+        server.setConsensus(receivedConsensus);
+        return True;
+    except:
+        print("An exception occurred");
+        print("Not setting any Consensus...");
+        print("Returning to the main menu...");
 
 def defineConsensus(receivedConsensus):
     #receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
@@ -399,10 +419,18 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
 ######################          Main         ################################
 #############################################################################
 #############################################################################
+def exitApplication():
+    print("See you soon, Thanks for using SpeedyChain =) ");
+    print("Powered by CONSEG group");
+    global running;
+    running = False;
+
+
 def InteractiveMain():
     """ Creates an interactive screen for the user with all option of a device"""
     global server
     options = {
+        0: exitApplication,
         1: setServer,
         2: addPeer,
         3: addBlockOnChain,
@@ -423,7 +451,7 @@ def InteractiveMain():
     }
 
     mode = -1
-    while True:
+    while running:
         print("Choose your option [" + str(server) + "]")
         print("#############################################################")
         print("0 - Exit")
@@ -451,11 +479,15 @@ def InteractiveMain():
 
         try:
             mode = int(input('Input:'))
-        except ValueError:
+        except:
             print ("Not a number")
+
         if (mode == 0):
             break
-        options[mode]()
+        try:
+            options[mode]()
+        except:
+            print("Not a valid input, try again")
 
 
 def connectDeviceAndRun(arg1, arg2, arg3, dev, blocks=None, transactions=None, consensus=None):
