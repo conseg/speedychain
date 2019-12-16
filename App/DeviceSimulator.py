@@ -481,6 +481,7 @@ def InteractiveMain():
             mode = int(input('Input:'))
         except:
             print ("Not a number")
+            mode = -1
 
         if (mode == 0):
             break
@@ -488,6 +489,7 @@ def InteractiveMain():
             options[mode]()
         except:
             print("Not a valid input, try again")
+            mode = -1
 
 
 def connectDeviceAndRun(arg1, arg2, arg3, dev, blocks=None, transactions=None, consensus=None):

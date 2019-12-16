@@ -6,7 +6,7 @@ import time
 import threading
 import pickle
 import socket
-import thread
+import _thread as thread
 import random
 import json
 
