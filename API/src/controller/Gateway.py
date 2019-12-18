@@ -6,7 +6,10 @@ import time
 import threading
 import pickle
 import socket
+#import for python 3 or above
 import _thread as thread
+#import for python 2
+#import thread
 import random
 import json
 
