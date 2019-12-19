@@ -21,7 +21,7 @@ from API.src.tools import CryptoFunctions
 logger = Logger.logging.getLogger("speedychain")
 deviceName = ""
 consensus = ""
-
+running = True;
 fname = socket.gethostname()
 
 server = "localhost"
@@ -61,7 +61,11 @@ def setServer():
     global server
     #server = raw_input('Gateway IP:')
     uri = input("Enter the uri of the gateway: ").strip()
-    server = Pyro4.Proxy(uri)
+    try:
+        server = Pyro4.Proxy(uri)
+    except:
+        print("Failed to set a new Server")
+        print("Returning to main menu")
 
 def addBlockOnChain():
     """ Take the value of 'publicKey' var, and add it to the chain as a block"""
@@ -79,6 +83,7 @@ def addBlockOnChain():
     decryptAESKey(serverAESEncKey)
     return True
     # print("###after decrypt aes")
+
 
 def sendDataTest():
     """ Send fake data to test the system """
@@ -152,31 +157,57 @@ def addPeer():
     """ Ask for the user to inform a peer URI and add it to the server """
     # if sys.version_info < (3, 0):
     #     input = raw_input
-    uri = input("Enter the PEER uri: ").strip()
-    server.addPeer(uri, True)
+    try:
+        uri = input("Enter the PEER uri: ").strip()
+        server.addPeer(uri, True);
+    except:
+        print("An exception occurred");
+        print("Not adding peer...");
+        print("Returning to the main menu...");
 
 def listBlockHeader():
     """ Log all blocks """
-    server.showIoTLedger()
+    try:
+        server.showIoTLedger()
+    except:
+        print("Failed to show list of Blocks")
+        print("Returning to main menu...")
 
 def listTransactions():
     """ Ask for the user to input an index and show all transaction of the block with that index """
     index = input("Which IoT Block do you want to print?")
-    server.showBlockLedger(int(index))
-
+    try:
+        server.showBlockLedger(int(index))
+    except:
+        print("Failed to show transactions of the requested block...")
+        print("Returning to main menu...")
 
 def listPeers():
     """ List all peers in the network """
     logger.debug("calling server...")
-    server.listPeer()
+    try:
+        server.listPeer()
+    except:
+        print("Failed to list peers")
+        print("Returning to main menu...")
 
 def newKeyPair():
     """ Generates a new pair of keys and put is on global vars 'privateKey' and 'publicKey' """
     global privateKey
     global publicKey
-    publicKey, privateKey = generateRSAKeyPair()
-    while len(publicKey) < 10 or len(privateKey) < 10:
+    oldPrK = privateKey
+    oldPuK = publicKey
+    try:
         publicKey, privateKey = generateRSAKeyPair()
+        while len(publicKey) < 10 or len(privateKey) < 10:
+            publicKey, privateKey = generateRSAKeyPair()
+    except:
+        privateKey = oldPrK
+        publicKey = oldPuK
+        print("Failed to generate a new pair of keys...")
+        print("No changes made...")
+        print("Returning to main menu... ")
+
 
 def brutePairAuth(retry):
     """ Add a block on the chain with brute force until it's add"""
@@ -214,7 +245,12 @@ def defineAutomaNumbers():
     """ Ask for the user to input how many blocks and transaction he wants and calls the function automa()"""
     blocks = int(input('How many Blocks:'))
     trans = int(input('How many Transactions:'))
-    automa(blocks, trans)
+    try:
+        automa(blocks, trans)
+    except:
+        print("An exception occurred");
+        print("Not adding block to the Blockchain...");
+        print("Returning to the main menu...");
 
 def automa(blocks, trans):
     """ Adds a specifc number of blocks and transaction to the chain\n
@@ -244,25 +280,40 @@ def automa(blocks, trans):
 
 def merkle():
     """ Calculates the hash markle tree of the block """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    blk = int(input("Which block you want to create the merkle tree:"))
-    server.calcMerkleTree(blk)  # addBlockConsensusCandiate
-    # print ("done")
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        blk = int(input("Which block you want to create the merkle tree:"))
+        server.calcMerkleTree(blk)  # addBlockConsensusCandiate
+        # print ("done")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    except:
+        print("An exception occurred");
+        print("Not creating the merkle  tree..");
+        print("Returning to the main menu...");
 
 def newElection():
-    server.electNewOrchestrator()
-    return True
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ###WHAT???###
+    try:
+        server.electNewOrchestrator()
+        return True
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ###WHAT???###
+    except:
+        print("An exception occurred");
+        print("Failed to elect a new Orchestrator...");
+        print("Returning to the main menu...");
 
 def defineInteractiveConsensus():
-    receivedConsensus = str(input('Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
-    # print("after receiving consensus string: "+receivedConsensus)
-    while(not(receivedConsensus == "None" or receivedConsensus == "PBFT" or receivedConsensus == "dBFT" or receivedConsensus == "PoW" or receivedConsensus == "Witness3")):
-        receivedConsensus = str(
-            input('Not a consensus, type again... Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
-    server.setConsensus(receivedConsensus)
-    return True
+    try:
+        receivedConsensus = str(input('Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
+        # print("after receiving consensus string: "+receivedConsensus)
+        while(not(receivedConsensus == "None" or receivedConsensus == "PBFT" or receivedConsensus == "dBFT" or receivedConsensus == "PoW" or receivedConsensus == "Witness3")):
+            receivedConsensus = str(
+                input('Not a consensus, type again... Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
+        server.setConsensus(receivedConsensus);
+        return True;
+    except:
+        print("An exception occurred");
+        print("Not setting any Consensus...");
+        print("Returning to the main menu...");
 
 def defineConsensus(receivedConsensus):
     #receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
@@ -283,8 +334,12 @@ def createBlockForSC():
 
 def showLastTransactionData():
     blockIndex = int(input('Type the index to show the last transaction data: '))
-    lastDataTransactionData = server.showLastTransactionData(blockIndex)
-    return lastDataTransactionData
+    try:
+        lastDataTransactionData = server.showLastTransactionData(blockIndex)
+        return lastDataTransactionData
+    except:
+        print("Failed to show last transaction data...")
+        print("Returning to main menu...")
 
 def callEVMInterface():
     # Create a TCP
@@ -399,31 +454,39 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
 ######################          Main         ################################
 #############################################################################
 #############################################################################
+def exitApplication():
+    print("See you soon, Thanks for using SpeedyChain =) ");
+    print("Powered by CONSEG group");
+    global running;
+    running = False;
+
+
 def InteractiveMain():
     """ Creates an interactive screen for the user with all option of a device"""
     global server
     options = {
-        1: setServer,
-        2: addPeer,
+        0: exitApplication, #Done
+        1: setServer, #Done
+        2: addPeer, #Done
         3: addBlockOnChain,
         4: sendData,
-        5: listBlockHeader,
-        6: listTransactions,
-        7: listPeers,
-        8: newKeyPair,
-        9: defineAutomaNumbers,
-        10: merkle,
-        11: newElection,
-        12: defineInteractiveConsensus,
+        5: listBlockHeader, #Done
+        6: listTransactions, #Done
+        7: listPeers, #Done
+        8: newKeyPair, #Done
+        9: defineAutomaNumbers, #Done
+        10: merkle, #Done
+        11: newElection, #Done
+        12: defineInteractiveConsensus, #Done
         13: createBlockForSC,
-        14: showLastTransactionData,
+        14: showLastTransactionData, #Done
         15: callEVMInterface,
         16: evmConnector,
         17: executeEVM
     }
 
     mode = -1
-    while True:
+    while running:
         print("Choose your option [" + str(server) + "]")
         print("#############################################################")
         print("0 - Exit")
@@ -451,11 +514,17 @@ def InteractiveMain():
 
         try:
             mode = int(input('Input:'))
-        except ValueError:
+        except:
             print ("Not a number")
+            mode = -1
+
         if (mode == 0):
             break
-        options[mode]()
+        try:
+            options[mode]()
+        except:
+            print("Not a valid input, try again")
+            mode = -1
 
 
 def connectDeviceAndRun(arg1, arg2, arg3, dev, blocks=None, transactions=None, consensus=None):
