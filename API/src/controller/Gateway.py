@@ -7,9 +7,9 @@ import threading
 import pickle
 import socket
 #import for python 3 or above
-import _thread as thread
+#import _thread as thread
 #import for python 2
-#import thread
+import thread
 import random
 import json
 
@@ -1084,7 +1084,7 @@ class R2ac(object):
         global blockContext
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
-        blockContext = "0001"
+        #vblockContext = "0001"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
@@ -1105,7 +1105,7 @@ class R2ac(object):
         global blockContext
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
-        blockContext = "0001"
+        #vblockContext = "0001"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # logger.info("after blk, before consensus")
@@ -1128,7 +1128,7 @@ class R2ac(object):
         global blockContext
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
-        blockContext = "0001"
+        #vblockContext = "0001"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # print("Device PubKey (insire runPoW): " + str(devPubKey))
@@ -1150,7 +1150,7 @@ class R2ac(object):
         global blockContext
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
-        blockContext = "0001"
+        #vblockContext = "0001"
         #@TODO define somehow a device is in a context
         newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers)
@@ -2091,14 +2091,16 @@ def saveURItoFile(uri):
 """ Main function initiate the system"""
 
 
-def main(nameServerIP, nameServerPort, local_gatewayName):
+def main(nameServerIP, nameServerPort, local_gatewayName, gatewayContext):
 
     global myURI
     global votesForNewOrchestrator
 
     global gatewayName
+    global blockContext
     gatewayName = local_gatewayName
 
+    blockContext =gatewayContext
 
     # initialize Logger
     global logger
