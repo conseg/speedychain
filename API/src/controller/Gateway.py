@@ -47,9 +47,12 @@ def getTime():
 
 
 lock = thread.allocate_lock()
+transListlock  = thread.allocate_lock()
 consensusLock = thread.allocate_lock()
 blockConsensusCandidateList = []
-smartcontractLockList = []
+transactionConsensusCandidateList =[]
+transactionLockList = []
+contextLockList =[]
 blockContext = "0001"
 
 
@@ -392,6 +395,87 @@ class R2ac(object):
         """ Init the R2AC chain on the peer"""
         logger.info("SpeedyCHAIN Gateway initialized")
 
+    def performTransactionConsensus(self):
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        return
+
+    def addNewTransactionToSyncList(self,transaction,context):
+        """ Add a new block to a syncronized list through the peers\n
+            @param transaction - transaction sent by device
+            @param context - devices context
+        """
+        # logger.debug("running critical stuffff......")
+        # print("Inside addNewBlockToSyncLIst")
+        global contextLockList
+        global transactionConsensusCandidateList
+        i = 0
+        while (not (transListlock.acquire(False)) and i < 100):
+            i = i + 1
+            logger.info("$$$$$$$$$ not possible to acquire a lock in addNewTransaciontosynclist")
+            time.sleep(0.01)
+        if (i == 100):
+            return False
+
+
+        transactionConsensusCandidateList.append(transaction)
+        transListlock.release()
+        return True
+        # print("Unlocked")
+
+    def getTransactionFromSyncList(self):
+        """ Get the first block at a syncronized list through the peers\n
+            @return devPubKey - Public key from the block
+        """
+        # logger.debug("running critical stuffff to get sync list......")
+        global transListlock
+        global transactionConsensusCandidateList
+
+        i = 0
+        while (not (transListlock.acquire(False)) and i < 100):
+            i = i + 1
+            logger.info("$$$$$$$$$ not possible to acquire a lock in getblockfromsynclist")
+            time.sleep(0.01)
+        if (i == 100):
+            return False
+        # logger.debug("lock aquired by get method......")
+
+        if (len(transactionConsensusCandidateList) > 0):
+            # logger.debug("there is a candidade, pop it!!!")
+            transaction = transactionConsensusCandidateList.pop(0)
+        transListlock.release()
+        # logger.debug("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
+        return transaction
+
+    def addContextinLockList(self,context):
+        global contextLockList
+        ############# transactionLockList is a list of tuples composed by context and its lock
+        index=0
+        ############# 1 lock per block -> 1 consensus per block
+        for x,y in contextLockList:
+            if x == context:
+                # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
+                print("@@Contextfound")
+                return contextLockList[index][1].acquire(False)
+            index = index+1
+        lockContext = thread.allocate_lock()
+        myLockTuple = (context, lockContext)
+        contextLockList.append(myLockTuple)
+        # return the attempt to lock the last inserted  [-1] context through its lock [1]
+        print("@@Context List after adding context to lock list")
+        return contextLockList[-1][1].acquire(False)
+
+    def removeLockfromContext(self, context):
+        global contextLockList
+        ############# transactionLockList is a list of tuples composed by devpubkey and its lock
+        index = 0
+        for x, y in contextLockList:
+            if x == context:
+                # return the attempt to lock the indexed devpublickley  [index] pubkey through its lock [1]
+                contextLockList[index][1].release()
+                return True
+            index = index + 1
+        return False
+
     def addTransaction(self, devPublicKey, encryptedObj):
         """ Receive a new transaction to be add to the chain, add the transaction
             to a block and send it to all peers\n
@@ -406,6 +490,8 @@ class R2ac(object):
         global gwPub
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
+
+        self.addContextinLockList(devPublicKey)
         if (blk != False and blk.index > 0):
             devAESKey = findAESKey(devPublicKey)
             if (devAESKey != False):
@@ -454,49 +540,55 @@ class R2ac(object):
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done")
+                    self.removeLockfromContext(devPublicKey)
                     return "ok!"
                 else:
                     # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    self.removeLockfromContext(devPublicKey)
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
+            self.removeLockfromContext(devPublicKey)
             return "key not found"
         logger.error("key not found when adding transaction")
-        return "key not found"
+        self.removeLockfromContext(devPublicKey)
+        return "block false"
 
-##############################
-################ To add an Smart Contract transaction can be done in 2 ways
-#################### method was overloaded
-#######################################################
-    def addSCinLockList(self,devPublicKey):
-        global smartcontractLockList
+
+    def addTinLockList(self,devPublicKey):
+        global transactionLockList
         print("@@Locking SC List")
-        ############# smartcontractLockList is a list of tuples composed by devpubkey and its lock
+        ############# transactionLockList is a list of tuples composed by devpubkey and its lock
         index=0
-        for x,y in smartcontractLockList:
+        ############# 1 lock per block -> 1 consensus per block
+        for x,y in transactionLockList:
             if x == devPublicKey:
                 # return the attempt to lock the indexed devpublickley  [index] pubkey through its lock [1]
                 print("@@Keyfound")
-                return smartcontractLockList[index][1].acquire(False)
+                return transactionLockList[index][1].acquire(False)
             index = index+1
         lockSC = thread.allocate_lock()
         myLockTuple = (devPublicKey, lockSC)
-        smartcontractLockList.append(myLockTuple)
+        transactionLockList.append(myLockTuple)
         # return the attempt to lock the last inserted  [-1] pubkey through its lock [1]
         print("@@Locking SC List after adding key")
-        return smartcontractLockList[-1][1].acquire(False)
+        return transactionLockList[-1][1].acquire(False)
 
-    def removeLockfromSC(self, devPublicKey):
-        global smartcontractLockList
-        ############# smartcontractLockList is a list of tuples composed by devpubkey and its lock
+    def removeLockfromT(self, devPublicKey):
+        global transactionLockList
+        ############# transactionLockList is a list of tuples composed by devpubkey and its lock
         index = 0
-        for x, y in smartcontractLockList:
+        for x, y in transactionLockList:
             if x == devPublicKey:
                 # return the attempt to lock the indexed devpublickley  [index] pubkey through its lock [1]
-                smartcontractLockList[index][1].release()
+                transactionLockList[index][1].release()
                 return True
             index = index + 1
         return False
 
+    ##############################
+    ################ To add an Smart Contract transaction can be done in 2 ways
+    #################### addTransaction SC2 
+    #######################################################
     def addTransactionSC2(self, transactionData,signedDatabyDevice,devPublicKey,devTime):
         """ Receive a new transaction to be add to the chain, add the transaction
             to a block and send it to all peers\n
@@ -508,12 +600,12 @@ class R2ac(object):
         """
         # logger.debug("Transaction received")
 
-        global smartcontractLockList
+        global transactionLockList
         global gwPvt
         global gwPub
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
-        self.addSCinLockList(devPublicKey)
+        self.addTinLockList(devPublicKey)
 
         if (blk != False and blk.index > 0):
             #wait
@@ -570,18 +662,18 @@ class R2ac(object):
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done in transations")
-                    # smartcontractLockList.remove(devPublicKey)
-                    self.removeLockfromSC(devPublicKey)
+                    # transactionLockList.remove(devPublicKey)
+                    self.removeLockfromT(devPublicKey)
                     return "ok!"
                 else:
                     # print("Signature is not ok")
                     # logger.debug("--Transaction not appended--Transaction Invalid Signature")
-                    # smartcontractLockList.remove(devPublicKey)
-                    self.removeLockfromSC(devPublicKey)
+                    # transactionLockList.remove(devPublicKey)
+                    self.removeLockfromT(devPublicKey)
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
-        # smartcontractLockList.remove(devPublicKey)
-        self.removeLockfromSC(devPublicKey)
+        # transactionLockList.remove(devPublicKey)
+        self.removeLockfromT(devPublicKey)
         return "key not found"
 
     def addTransactionSC(self, devPublicKey, encryptedObj):
@@ -710,7 +802,7 @@ class R2ac(object):
 
 
     def addBlockConsensusCandidate(self, devPubKey):
-        # TODO
+
         global blockConsensusCandidateList
         # logger.debug("================================================")
         # print("Inside addBlockConsensusCandidate, devPubKey: ")

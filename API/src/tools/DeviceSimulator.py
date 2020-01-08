@@ -12,6 +12,7 @@ import Pyro4
 import json
 import requests
 import traceback
+import threading
 
 from Crypto.PublicKey import RSA
 
@@ -217,11 +218,19 @@ def defineAutomaNumbers():
     trans = int(input('How many Transactions:'))
     automa(blocks, trans)
 
+
+def consensusTrans():
+    # for i in range(1,100):
+    #     print("Hello - I am a test message for the thread")
+    #     time.sleep(1)
+    server.performTransactionConsensus()
+
 def automa(blocks, trans):
     """ Adds a specifc number of blocks and transaction to the chain\n
         @param blocks - int number of blocks\n
         @param trans - int number of transactions
     """
+    threading.Thread(target=consensusTrans).start()
     for blk in range(0, blocks):
         logger.info("Adding block #" + str(blk) + "...")
         newKeyPair()
