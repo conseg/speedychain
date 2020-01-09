@@ -505,10 +505,11 @@ class R2ac(object):
                         # logger.debug("there is a candidade, pop it!!!")
                         transactionTuple = transactionConsensusCandidateList.pop(0)
                     transactionLockList[index][1].release()
-                    print("VVVVVV Transaction Tuple: ")
-                    print(transactionTuple[0])
-                    print("second part: ")
-                    print(transactionTuple[1])
+                    # print("VVVVVV Transaction Tuple: ")
+                    # print(transactionTuple[0])
+                    # print("second part: ")
+                    # print(transactionTuple[1])
+                    # transaction tuple is formed by devPubKey and devInfo
                     return transactionTuple
                 index = index + 1
 
