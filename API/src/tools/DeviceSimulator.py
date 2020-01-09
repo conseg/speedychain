@@ -223,7 +223,9 @@ def consensusTrans():
     # for i in range(1,100):
     #     print("Hello - I am a test message for the thread")
     #     time.sleep(1)
-    server.performTransactionConsensus()
+    while(True):
+        server.performTransactionConsensus()
+        time.sleep(0.001)
 
 def automa(blocks, trans):
     """ Adds a specifc number of blocks and transaction to the chain\n

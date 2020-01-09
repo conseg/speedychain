@@ -47,7 +47,7 @@ def getTime():
 
 
 lock = thread.allocate_lock()
-transListlock  = thread.allocate_lock()
+transListLock  = thread.allocate_lock()
 consensusLock = thread.allocate_lock()
 blockConsensusCandidateList = []
 transactionConsensusCandidateList =[]
@@ -395,56 +395,126 @@ class R2ac(object):
         """ Init the R2AC chain on the peer"""
         logger.info("SpeedyCHAIN Gateway initialized")
 
+    # arguments just for test... it should verify context
     def performTransactionConsensus(self):
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        # blockContext is being used for testing
+        candidateTransaction = self.getTransactionFromSyncList(blockContext)
+        # print(candidateTransaction)
+        if(candidateTransaction != False):
+            # print("AAAAAAAAAAAAAAAA passed the if")
+            devPublicKey = candidateTransaction[0]
+            deviceInfo= candidateTransaction[1]
+            blk = ChainFunctions.findBlock(devPublicKey)
+            # print("passed the blk")
+            nextInt = blk.transactions[len(
+                blk.transactions) - 1].index + 1
+            signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+            # print("BBBBBBBBBBBBB passed the devinfo")
+            gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+            # code responsible to create the hash between Info nodes.
+            prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                ChainFunctions.getLatestBlockTransaction(blk))
+
+            transaction = Transaction.Transaction(
+                nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+
+            ChainFunctions.addBlockTransaction(blk, transaction)
+            # logger.debug("Block #" + str(blk.index) + " added locally")
+            # logger.debug("Sending block #" +
+            #             str(blk.index) + " to peers...")
+
+            # --->> this function should be run in a different thread.
+            sendTransactionToPeers(devPublicKey, transaction)
         return
 
-    def addNewTransactionToSyncList(self,transaction,context):
+    def addNewTransactionToSyncList(self, devPubKey, devInfo, context):
         """ Add a new block to a syncronized list through the peers\n
             @param transaction - transaction sent by device
             @param context - devices context
         """
         # logger.debug("running critical stuffff......")
         # print("Inside addNewBlockToSyncLIst")
-        global contextLockList
+        global transactionLockList
         global transactionConsensusCandidateList
-        i = 0
-        while (not (transListlock.acquire(False)) and i < 100):
-            i = i + 1
-            logger.info("$$$$$$$$$ not possible to acquire a lock in addNewTransaciontosynclist")
-            time.sleep(0.01)
-        if (i == 100):
-            return False
+        # print("TTTTTTTTTTTT inside addNewTransactionToSyncList")
+        index =0
+        candidateTransactionTuple = (devPubKey, devInfo)
 
+        for x,y in transactionLockList:
+            if x == context:
+                # print("X = ", x)
+                # print("context = ", context)
+                # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
+                # print("@@Contextfound")
+                i = 0
+                while (not (transactionLockList[index][1].acquire(False)) and i < 100):
+                    i = i + 1
+                    print("$$$$$$$$$ not possible to acquire a lock in addNewTransaciontosynclist")
+                    time.sleep(0.01)
+                if (i == 100):
+                    return False
+                # if it got the lock, insert a new transaction into the list
 
-        transactionConsensusCandidateList.append(transaction)
-        transListlock.release()
+                transactionConsensusCandidateList.append(candidateTransactionTuple)
+                transactionLockList[index][1].release()
+                # print("VVVVVV Lock released in addnewtransactionsynclist")
+                return True
+            index = index+1
+
+        # TODO review this part -> if 2 devices try to create a new lock at same time, crazy thing can happen
+        lockContext = thread.allocate_lock()
+        myLockTuple = (context, lockContext)
+        transactionLockList.append(myLockTuple)
+        # return the attempt to lock the last inserted  [-1] context through its lock [1]
+        print("@@Context List after adding context to lock list")
+        transactionLockList[-1][1].acquire(False)
+
+        transactionConsensusCandidateList.append(candidateTransactionTuple)
+        transactionLockList[-1][1].release()
+        # print("VVVVVV Lock released in addnewtransactionsynclist")
         return True
         # print("Unlocked")
 
-    def getTransactionFromSyncList(self):
+    def getTransactionFromSyncList(self,context):
         """ Get the first block at a syncronized list through the peers\n
             @return devPubKey - Public key from the block
         """
         # logger.debug("running critical stuffff to get sync list......")
-        global transListlock
+        global transactionLockList
         global transactionConsensusCandidateList
+        # print("ENTERED in get transaction")
+        if (len(transactionConsensusCandidateList)>0):
+            index=0
+            for x, y in transactionLockList:
+                if x == context:
+                    # print("X = ", x)
+                    # print("context = ", context)
+                    # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
+                    # print("@@Contextfound")
+                    i = 0
+                    while (not (transactionLockList[index][1].acquire(False)) and i < 100):
+                        i = i + 1
+                        print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
+                        time.sleep(0.01)
+                    if (i == 100):
+                        return False
+                    # if it got the lock, insert a new transaction into the list
 
-        i = 0
-        while (not (transListlock.acquire(False)) and i < 100):
-            i = i + 1
-            logger.info("$$$$$$$$$ not possible to acquire a lock in getblockfromsynclist")
-            time.sleep(0.01)
-        if (i == 100):
-            return False
-        # logger.debug("lock aquired by get method......")
+                    if (len(transactionConsensusCandidateList) > 0):
+                        # logger.debug("there is a candidade, pop it!!!")
+                        transactionTuple = transactionConsensusCandidateList.pop(0)
+                    transactionLockList[index][1].release()
+                    print("VVVVVV Transaction Tuple: ")
+                    print(transactionTuple[0])
+                    print("second part: ")
+                    print(transactionTuple[1])
+                    return transactionTuple
+                index = index + 1
 
-        if (len(transactionConsensusCandidateList) > 0):
-            # logger.debug("there is a candidade, pop it!!!")
-            transaction = transactionConsensusCandidateList.pop(0)
-        transListlock.release()
+        # print("end of get transaction")
         # logger.debug("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
-        return transaction
+        return False
 
     def addContextinLockList(self,context):
         global contextLockList
@@ -476,6 +546,7 @@ class R2ac(object):
             index = index + 1
         return False
 
+
     def addTransaction(self, devPublicKey, encryptedObj):
         """ Receive a new transaction to be add to the chain, add the transaction
             to a block and send it to all peers\n
@@ -491,7 +562,8 @@ class R2ac(object):
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
 
-        self.addContextinLockList(devPublicKey)
+
+        # self.addContextinLockList(devPublicKey)
         if (blk != False and blk.index > 0):
             devAESKey = findAESKey(devPublicKey)
             if (devAESKey != False):
@@ -501,11 +573,20 @@ class R2ac(object):
 
                 plainObject = CryptoFunctions.decryptAES(
                     encryptedObj, devAESKey)
-                signature = plainObject[:-20]  # remove the last 20 chars
+
+                # retrieve the last chars, excluding timestamp - 16 bytes and signature - 172 bytes
+                deviceData = plainObject[(172+16):]
+                # remove the last 20 chars
+                signature = plainObject[:-(16+len(deviceData))]
+                # print("###Signature after receiving: "+signature)
+                # print("###Device Data: "+deviceData)
                 # remove the 16 char of timestamp
-                devTime = plainObject[-20:-4]
-                # retrieve the las 4 chars which are the data
-                deviceData = plainObject[-4:]
+                devTime = plainObject[-(16+len(deviceData)):-len(deviceData)]
+                # print("###devTime: "+devTime)
+                t2 = time.time()
+                logger.info(
+                    "gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format(
+                        (t2 - t1) * 1000))
 
                 d = devTime+deviceData
                 isSigned = CryptoFunctions.signVerify(
@@ -514,44 +595,105 @@ class R2ac(object):
                 if isSigned:
                     deviceInfo = DeviceInfo.DeviceInfo(
                         signature, devTime, deviceData)
-                    nextInt = blk.transactions[len(
-                        blk.transactions) - 1].index + 1
-                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
-                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
-                    # code responsible to create the hash between Info nodes.
-                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
-                        ChainFunctions.getLatestBlockTransaction(blk))
 
-                    transaction = Transaction.Transaction(
-                        nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
+                    # send to consensus here
+                    devContext = blk.blockContext
+                    # print("SSSSSSSS my Context: ")
+                    # print(devContext)
+                    self.addNewTransactionToSyncList(devPublicKey, deviceInfo, devContext)
 
-                    # send to consensus
-                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
-                    #    return "Not Approved"
-                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
-                    #     return "Consensus Not Reached"
+                    # after context
 
-                    ChainFunctions.addBlockTransaction(blk, transaction)
-                    # logger.debug("Block #" + str(blk.index) + " added locally")
-                    # logger.debug("Sending block #" +
-                    #             str(blk.index) + " to peers...")
-                    t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
-                    # --->> this function should be run in a different thread.
-                    sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done")
-                    self.removeLockfromContext(devPublicKey)
+                    # self.removeLockfromContext(devPublicKey)
                     return "ok!"
                 else:
                     # logger.debug("--Transaction not appended--Transaction Invalid Signature")
-                    self.removeLockfromContext(devPublicKey)
+                    # self.removeLockfromContext(devPublicKey)
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
-            self.removeLockfromContext(devPublicKey)
+            # self.removeLockfromContext(devPublicKey)
             return "key not found"
         logger.error("key not found when adding transaction")
-        self.removeLockfromContext(devPublicKey)
+        # self.removeLockfromContext(devPublicKey)
         return "block false"
+
+    # def addTransaction(self, devPublicKey, encryptedObj):
+    #     """ Receive a new transaction to be add to the chain, add the transaction
+    #         to a block and send it to all peers\n
+    #         @param devPublicKey - Public key from the sender device\n
+    #         @param encryptedObj - Info of the transaction encrypted with AES 256\n
+    #         @return "ok!" - all done\n
+    #         @return "Invalid Signature" - an invalid key are found\n
+    #         @return "Key not found" - the device's key are not found
+    #     """
+    #     # logger.debug("Transaction received")
+    #     global gwPvt
+    #     global gwPub
+    #     t1 = time.time()
+    #     blk = ChainFunctions.findBlock(devPublicKey)
+    #
+    #     self.addContextinLockList(devPublicKey)
+    #     if (blk != False and blk.index > 0):
+    #         devAESKey = findAESKey(devPublicKey)
+    #         if (devAESKey != False):
+    #             # logger.info("Appending transaction to block #" +
+    #             #             str(blk.index) + "...")
+    #             # plainObject contains [Signature + Time + Data]
+    #
+    #             plainObject = CryptoFunctions.decryptAES(
+    #                 encryptedObj, devAESKey)
+    #             signature = plainObject[:-20]  # remove the last 20 chars
+    #             # remove the 16 char of timestamp
+    #             devTime = plainObject[-20:-4]
+    #             # retrieve the las 4 chars which are the data
+    #             deviceData = plainObject[-4:]
+    #
+    #             d = devTime+deviceData
+    #             isSigned = CryptoFunctions.signVerify(
+    #                 d, signature, devPublicKey)
+    #
+    #             if isSigned:
+    #                 deviceInfo = DeviceInfo.DeviceInfo(
+    #                     signature, devTime, deviceData)
+    #                 nextInt = blk.transactions[len(
+    #                     blk.transactions) - 1].index + 1
+    #                 signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+    #                 gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+    #                 # code responsible to create the hash between Info nodes.
+    #                 prevInfoHash = CryptoFunctions.calculateTransactionHash(
+    #                     ChainFunctions.getLatestBlockTransaction(blk))
+    #
+    #                 transaction = Transaction.Transaction(
+    #                     nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
+    #
+    #                 # send to consensus
+    #                 # if not consensus(newBlockLedger, gwPub, devPublicKey):
+    #                 #    return "Not Approved"
+    #                 # if not PBFTConsensus(blk, gwPub, devPublicKey):
+    #                 #     return "Consensus Not Reached"
+    #
+    #                 ChainFunctions.addBlockTransaction(blk, transaction)
+    #                 # logger.debug("Block #" + str(blk.index) + " added locally")
+    #                 # logger.debug("Sending block #" +
+    #                 #             str(blk.index) + " to peers...")
+    #                 t2 = time.time()
+    #                 logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+    #                 # --->> this function should be run in a different thread.
+    #                 sendTransactionToPeers(devPublicKey, transaction)
+    #                 # print("all done")
+    #                 self.removeLockfromContext(devPublicKey)
+    #                 return "ok!"
+    #             else:
+    #                 # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+    #                 self.removeLockfromContext(devPublicKey)
+    #                 return "Invalid Signature"
+    #         # logger.debug("--Transaction not appended--Key not found")
+    #         self.removeLockfromContext(devPublicKey)
+    #         return "key not found"
+    #     logger.error("key not found when adding transaction")
+    #     self.removeLockfromContext(devPublicKey)
+    #     return "block false"
 
 
     def addTinLockList(self,devPublicKey):
