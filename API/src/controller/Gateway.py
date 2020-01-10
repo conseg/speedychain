@@ -53,6 +53,7 @@ blockConsensusCandidateList = []
 transactionConsensusCandidateList =[]
 transactionLockList = []
 contextLockList =[]
+transactionPoolGlobal = []
 blockContext = "0001"
 
 
@@ -395,7 +396,7 @@ class R2ac(object):
         """ Init the R2AC chain on the peer"""
         logger.info("SpeedyCHAIN Gateway initialized")
 
-    # arguments just for test... it should verify context
+    #  it should verify context
     def performTransactionConsensus(self):
         # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         # blockContext is being used for testing
@@ -426,6 +427,46 @@ class R2ac(object):
 
             # --->> this function should be run in a different thread.
             sendTransactionToPeers(devPublicKey, transaction)
+        return
+
+    def performTransactionPoolConsensus(self):
+        # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        # blockContext is being used for testing
+        candidatePool = self.getLocalTransactionPool(blockContext)
+        i=0
+        if(candidatePool != False):
+            while(len(candidatePool)>0):
+                print("inside transaction pool i= ")
+                print(i)
+                i=i+1
+                candidateTransaction = candidatePool.pop(0)
+                print("popped element from Pool")
+                # print(candidateTransaction)
+                if(candidateTransaction != False):
+                    # print("AAAAAAAAAAAAAAAA passed the if")
+                    devPublicKey = candidateTransaction[0]
+                    deviceInfo= candidateTransaction[1]
+                    blk = ChainFunctions.findBlock(devPublicKey)
+                    # print("passed the blk")
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    # print("BBBBBBBBBBBBB passed the devinfo")
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                        ChainFunctions.getLatestBlockTransaction(blk))
+
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
         return
 
     def addNewTransactionToSyncList(self, devPubKey, devInfo, context):
@@ -496,8 +537,8 @@ class R2ac(object):
                     while (not (transactionLockList[index][1].acquire(False)) and i < 100):
                         i = i + 1
                         print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
-                        time.sleep(0.01)
-                    if (i == 100):
+                        time.sleep(0.001)
+                    if (i == 1000):
                         return False
                     # if it got the lock, insert a new transaction into the list
 
@@ -511,6 +552,51 @@ class R2ac(object):
                     # print(transactionTuple[1])
                     # transaction tuple is formed by devPubKey and devInfo
                     return transactionTuple
+                index = index + 1
+
+        # print("end of get transaction")
+        # logger.debug("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
+        return False
+
+
+    def getLocalTransactionPool(self, context):
+        """ Get the first block at a syncronized list through the peers\n
+            @return devPubKey - Public key from the block
+        """
+        # logger.debug("running critical stuffff to get sync list......")
+        global transactionLockList
+        global transactionConsensusCandidateList
+        # print("ENTERED in get Pool")
+        transactionPool = []
+        if (len(transactionConsensusCandidateList) > 0):
+            index = 0
+            for x, y in transactionLockList:
+                if x == context:
+                    # print("X = ", x)
+                    # print("context = ", context)
+                    # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
+                    # print("@@Contextfound")
+                    i = 0
+                    while (not (transactionLockList[index][1].acquire(False)) and i < 1000):
+                        i = i + 1
+                        print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
+                        time.sleep(0.001)
+                    if (i == 1000):
+                        return False
+                    # if it got the lock, insert a new transaction into the list
+
+                    if (len(transactionConsensusCandidateList) > 0):
+                        # logger.debug("there is a candidade, pop it!!!")
+                        transactionPool = transactionConsensusCandidateList
+                        print("there is a candidade, pop it!!!")
+                        transactionConsensusCandidateList = []
+                    transactionLockList[index][1].release()
+                    # print("VVVVVV Transaction Tuple: ")
+                    # print(transactionTuple[0])
+                    # print("second part: ")
+                    # print(transactionTuple[1])
+                    # transaction tuple is formed by devPubKey and devInfo
+                    return transactionPool
                 index = index + 1
 
         # print("end of get transaction")
