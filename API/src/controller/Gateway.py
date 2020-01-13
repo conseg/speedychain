@@ -431,10 +431,11 @@ class R2ac(object):
 
     def performTransactionPoolConsensus(self):
         # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-        # blockContext is being used for testing
+
         candidatePool = self.getLocalTransactionPool(blockContext)
-        i=0
+
         if(candidatePool != False):
+            i = 0
             while(len(candidatePool)>0):
                 print("inside transaction pool i= ")
                 print(i)
@@ -471,7 +472,8 @@ class R2ac(object):
 
     def addNewTransactionToSyncList(self, devPubKey, devInfo, context):
         """ Add a new block to a syncronized list through the peers\n
-            @param transaction - transaction sent by device
+            @param devPubKey - PubKey from the devices transaction
+            @param devInfo - transaction sent by device
             @param context - devices context
         """
         # logger.debug("running critical stuffff......")
@@ -1077,28 +1079,30 @@ class R2ac(object):
             logger.error("passed by findAESKEY")
             if ((aesKey == False) or (len(aesKey) != 32)):
 
-                # print("inside second if")
+                logger.info("ERROR Problem minside second if")
                 logger.error("aeskey had a problem...")
                 aesKey = generateAESKey(blk.publicKey)
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
-                t2 = time.time()
+                return encKey
+                # t2 = time.time()
             logger.error("actually it didn't had problem with the key")
             aesKey = generateAESKey(blk.publicKey)
             encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
-            t2 = time.time()
+            # t2 = time.time()
         else:
             # print("inside else")
             # logger.debug("***** New Block: Chain size:" +
             #              str(ChainFunctions.getBlockchainSize()))
             pickedKey = pickle.dumps(devPubKey)
             aesKey = generateAESKey(devPubKey)
-            if(len(aesKey) != 32):
+            while(len(aesKey) != 32):
                 logger.error("Badly generated aesKey")
+                aesKey = generateAESKey(devPubKey)
             # print("pickedKey: ")
             # print(pickedKey)
 
             encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
-            t2 = time.time()
+            # t2 = time.time()
             # Old No Consensus
             # bl = ChainFunctions.createNewBlock(devPubKey, gwPvt)
             # sendBlockToPeers(bl)
