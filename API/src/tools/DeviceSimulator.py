@@ -314,7 +314,7 @@ def simDevBlockAndTrans(blk, trans):
         logger.info("Sending transaction blk #" + str(blk) +"tr #"+ str(tr) + "...")
         # sendData()
         while (not (server.isBlockInTheChain(devPubK))):
-            time.sleep(0.001)
+            time.sleep(0.0001)
             continue
             # time.sleep(1)
         multSend(devPubK, devPrivK, AESKey, tr)
@@ -351,7 +351,8 @@ def automa(blocks, trans):
         logger.info("Adding block #" + str(blk) + "...")
         # for parallel devices use threading option
         threading.Thread(target=simDevBlockAndTrans, args=(blk, trans)).start()
-        # for sequential devices insertion use seqDevSim()
+        # for sequential devices insertion use method seqDevSim()
+
         # newKeyPair()
         # counter = 0
         # while(addBlockOnChain()==False):
