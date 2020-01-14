@@ -649,9 +649,13 @@ class R2ac(object):
         global gwPvt
         global gwPub
         t1 = time.time()
+
+        # loading key and encryptedObj from from pickle serialization
+        devPublicKey=pickle.loads(devPublicKey)
+        # print("DevPubKey= " + str(devPublicKey))
+        encryptedObj=pickle.loads(encryptedObj)
+
         blk = ChainFunctions.findBlock(devPublicKey)
-
-
         # self.addContextinLockList(devPublicKey)
         if (blk != False and blk.index > 0):
             devAESKey = findAESKey(devPublicKey)
@@ -1071,7 +1075,9 @@ class R2ac(object):
         # logger.info("Block received from device")
         aesKey = ''
         t1 = time.time()
+        # print("Adding block, PubKey= " + str(devPubKey))
         blk = ChainFunctions.findBlock(devPubKey)
+
         if (blk != False and blk.index > 0):
             # print("inside first if")
             logger.error("It may be already be registered, generating another aeskey")
@@ -1190,7 +1196,7 @@ class R2ac(object):
                 # print("ConsensusLocks released!")
             ######end of lock consensus################
 
-        # print("Before encription of rsa2")
+        # print("Before encryption of rsa2")
 
         t3 = time.time()
         # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))

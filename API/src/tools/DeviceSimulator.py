@@ -234,13 +234,13 @@ def bruteSend(retry):
             # time.sleep(0.001)
             return False # addBlockConsensusCandiate
 
-def multSend(devPubK, devPrivateK, AESKey, retry):
+def multSend(devPubK, devPrivateK, AESKey, retry, blk):
     try:
-        sendDataArgs(devPubK, devPrivateK, AESKey)
+        sendDataArgs(devPubK, devPrivateK, AESKey, retry, blk)
     except KeyboardInterrupt:
         sys.exit()
     except:
-        logger.error("failed to execute send tr:" + str(retry))
+        logger.error("failed to execute send tr:" + str(retry)+"from Blk: "+ str(blk))
         exc_type, exc_value, exc_traceback = sys.exc_info()
         logger.error("*** print_exception:\n" + str(
             traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2, file=sys.stdout)))
@@ -249,7 +249,7 @@ def multSend(devPubK, devPrivateK, AESKey, retry):
         # time.sleep(0.001)
         return False  # addBlockConsensusCandiate
 
-def sendDataArgs(devPubK, devPrivateK, AESKey):
+def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
     """ Read the sensor data, encrypt it and send it as a transaction to be validated by the peers """
     temperature = readSensorTemperature()
     t = ((time.time() * 1000) * 1000)
@@ -263,7 +263,7 @@ def sendDataArgs(devPubK, devPrivateK, AESKey):
 
         encobj = CryptoFunctions.encryptAES(toSend, AESKey)
     except:
-        logger.error("was not possible to encrypt... verify aeskey")
+        logger.error("was not possible to encrypt... verify aeskey in blk: " + str(blk) + "tr: " + str(trans))
         newKeyPair()
         AESKey = addBlockOnChainv2(devPubK, devPrivateK) # this will force gateway to recreate the aes key
         signedData = CryptoFunctions.signInfo(devPrivateK, data)
@@ -271,15 +271,17 @@ def sendDataArgs(devPubK, devPrivateK, AESKey):
         encobj = CryptoFunctions.encryptAES(toSend, AESKey)
         logger.error("passed through sendData except")
     try:
+        encobj=pickle.dumps(encobj)
+        devPubK = pickle.dumps(devPubK)
         transactionStatus= server.addTransaction(devPubK, encobj)
         if(transactionStatus=="ok!"):
             # logger.error("everything good now")
             return True
         else:
-            logger.error("something went wrong when sending data")
+            logger.error("something went wrong when sending data in blk: " + str(blk) + "tr: " + str(trans))
             logger.error("Transaction status problem: " + transactionStatus)
     except:
-        logger.error("some exception with addTransaction now...")
+        logger.error("some exception with addTransaction now...in blk: " + str(blk) + "tr: " + str(trans))
 
 
 def defineAutomaNumbers():
@@ -298,6 +300,8 @@ def consensusTrans():
         server.performTransactionPoolConsensus()
         time.sleep(0.01)
 
+
+# for parallel simulation of devices and insertions use this
 def simDevBlockAndTrans(blk, trans):
     numTrans=trans
     devPubK,devPrivK = generateRSAKeyPair()
@@ -317,10 +321,11 @@ def simDevBlockAndTrans(blk, trans):
             time.sleep(0.0001)
             continue
             # time.sleep(1)
-        multSend(devPubK, devPrivK, AESKey, tr)
+        multSend(devPubK, devPrivK, AESKey, tr, blk)
 
-
-def seqDevSim():
+# for sequential generation of blocks and transactions (sequential devices), use this
+def seqDevSim(blk,trans):
+    logger.info("Adding block #" + str(blk) + "...")
     newKeyPair()
     counter = 0
     while(addBlockOnChain()==False):
@@ -347,11 +352,16 @@ def automa(blocks, trans):
         @param trans - int number of transactions
     """
     threading.Thread(target=consensusTrans).start()
+    arrayDevicesThreads = []*blocks
     for blk in range(0, blocks):
         logger.info("Adding block #" + str(blk) + "...")
         # for parallel devices use threading option
-        threading.Thread(target=simDevBlockAndTrans, args=(blk, trans)).start()
+        arrayDevicesThreads.append(threading.Thread(target=simDevBlockAndTrans, args=(blk, trans)))
+        arrayDevicesThreads[blk].start()
         # for sequential devices insertion use method seqDevSim()
+    for blk in range(0, blocks):
+        arrayDevicesThreads[blk].join()
+
 
         # newKeyPair()
         # counter = 0
