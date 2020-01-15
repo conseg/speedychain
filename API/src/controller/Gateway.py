@@ -53,7 +53,8 @@ blockConsensusCandidateList = []
 transactionConsensusCandidateList =[]
 transactionLockList = []
 contextLockList =[]
-transactionPoolGlobal = []
+transactionSharedPool = []
+# transactionSharedPool could be understood as = [("0001", []),("0002",[]
 blockContext = "0001"
 
 
@@ -407,13 +408,14 @@ class R2ac(object):
     #  it should verify context
     def performTransactionConsensus(self):
         # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-        # blockContext is being used for testing
+
         candidateTransaction = self.getTransactionFromSyncList(blockContext)
         # print(candidateTransaction)
         if(candidateTransaction != False):
             # print("AAAAAAAAAAAAAAAA passed the if")
             devPublicKey = candidateTransaction[0]
             deviceInfo= candidateTransaction[1]
+            context = candidateTransaction[2]
             blk = ChainFunctions.findBlock(devPublicKey)
             # print("passed the blk")
             nextInt = blk.transactions[len(
@@ -490,7 +492,7 @@ class R2ac(object):
         global transactionConsensusCandidateList
         # print("TTTTTTTTTTTT inside addNewTransactionToSyncList")
         index =0
-        candidateTransactionTuple = (devPubKey, devInfo)
+        candidateTransactionTuple = (devPubKey, devInfo, context)
 
         for x,y in transactionLockList:
             if x == context:
@@ -537,7 +539,7 @@ class R2ac(object):
         # print("ENTERED in get transaction")
         if (len(transactionConsensusCandidateList)>0):
             index=0
-            for x, y in transactionLockList:
+            for x, y, z in transactionLockList:
                 if x == context:
                     # print("X = ", x)
                     # print("context = ", context)

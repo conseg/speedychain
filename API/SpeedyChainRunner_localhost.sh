@@ -14,5 +14,6 @@ sleep 1
 #gnome-terminal -e "bash -c \"python ~/speedychain_varruda/speedychain-master/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a     50   10 PoW; exec bash\""
 gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a; exec bash\""
 gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-b; exec bash\""
-gnome-terminal -e "bash -c \"~/PycharmProjects/speedychain/API/EVM/EVM; exec bash\""
-gnome-terminal -e "bash -c \"gedit ~/go/src/EVM/howto.txt; exec bash\""
+gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwb dev-c; exec bash\""
+#gnome-terminal -e "bash -c \"~/PycharmProjects/speedychain/API/EVM/EVM; exec bash\""
+#gnome-terminal -e "bash -c \"gedit ~/go/src/EVM/howto.txt; exec bash\""
