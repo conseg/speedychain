@@ -395,6 +395,14 @@ class R2ac(object):
     def __init__(self):
         """ Init the R2AC chain on the peer"""
         logger.info("SpeedyCHAIN Gateway initialized")
+        # thread to perform transaction consensus
+        threading.Thread(target=self.threadTransactionConsensus).start()
+
+    def threadTransactionConsensus(self):
+        while (True):
+            # server.performTransactionConsensus()
+            self.performTransactionPoolConsensus()
+            time.sleep(0.01)
 
     #  it should verify context
     def performTransactionConsensus(self):
@@ -536,7 +544,7 @@ class R2ac(object):
                     # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
                     # print("@@Contextfound")
                     i = 0
-                    while (not (transactionLockList[index][1].acquire(False)) and i < 100):
+                    while (not (transactionLockList[index][1].acquire(False)) and i < 1000):
                         i = i + 1
                         print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
                         time.sleep(0.001)
@@ -636,9 +644,9 @@ class R2ac(object):
         return False
 
 
-    def addTransaction(self, devPublicKey, encryptedObj):
-        """ Receive a new transaction to be add to the chain, add the transaction
-            to a block and send it to all peers\n
+    def addTransactionToPool(self, devPublicKey, encryptedObj):
+        """ Receive a new transaction to be add to the chain, a
+            send to the pool it to all peers\n
             @param devPublicKey - Public key from the sender device\n
             @param encryptedObj - Info of the transaction encrypted with AES 256\n
             @return "ok!" - all done\n
@@ -711,82 +719,82 @@ class R2ac(object):
         # self.removeLockfromContext(devPublicKey)
         return "block false"
 
-    # def addTransaction(self, devPublicKey, encryptedObj):
-    #     """ Receive a new transaction to be add to the chain, add the transaction
-    #         to a block and send it to all peers\n
-    #         @param devPublicKey - Public key from the sender device\n
-    #         @param encryptedObj - Info of the transaction encrypted with AES 256\n
-    #         @return "ok!" - all done\n
-    #         @return "Invalid Signature" - an invalid key are found\n
-    #         @return "Key not found" - the device's key are not found
-    #     """
-    #     # logger.debug("Transaction received")
-    #     global gwPvt
-    #     global gwPub
-    #     t1 = time.time()
-    #     blk = ChainFunctions.findBlock(devPublicKey)
-    #
-    #     self.addContextinLockList(devPublicKey)
-    #     if (blk != False and blk.index > 0):
-    #         devAESKey = findAESKey(devPublicKey)
-    #         if (devAESKey != False):
-    #             # logger.info("Appending transaction to block #" +
-    #             #             str(blk.index) + "...")
-    #             # plainObject contains [Signature + Time + Data]
-    #
-    #             plainObject = CryptoFunctions.decryptAES(
-    #                 encryptedObj, devAESKey)
-    #             signature = plainObject[:-20]  # remove the last 20 chars
-    #             # remove the 16 char of timestamp
-    #             devTime = plainObject[-20:-4]
-    #             # retrieve the las 4 chars which are the data
-    #             deviceData = plainObject[-4:]
-    #
-    #             d = devTime+deviceData
-    #             isSigned = CryptoFunctions.signVerify(
-    #                 d, signature, devPublicKey)
-    #
-    #             if isSigned:
-    #                 deviceInfo = DeviceInfo.DeviceInfo(
-    #                     signature, devTime, deviceData)
-    #                 nextInt = blk.transactions[len(
-    #                     blk.transactions) - 1].index + 1
-    #                 signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
-    #                 gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
-    #                 # code responsible to create the hash between Info nodes.
-    #                 prevInfoHash = CryptoFunctions.calculateTransactionHash(
-    #                     ChainFunctions.getLatestBlockTransaction(blk))
-    #
-    #                 transaction = Transaction.Transaction(
-    #                     nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
-    #
-    #                 # send to consensus
-    #                 # if not consensus(newBlockLedger, gwPub, devPublicKey):
-    #                 #    return "Not Approved"
-    #                 # if not PBFTConsensus(blk, gwPub, devPublicKey):
-    #                 #     return "Consensus Not Reached"
-    #
-    #                 ChainFunctions.addBlockTransaction(blk, transaction)
-    #                 # logger.debug("Block #" + str(blk.index) + " added locally")
-    #                 # logger.debug("Sending block #" +
-    #                 #             str(blk.index) + " to peers...")
-    #                 t2 = time.time()
-    #                 logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
-    #                 # --->> this function should be run in a different thread.
-    #                 sendTransactionToPeers(devPublicKey, transaction)
-    #                 # print("all done")
-    #                 self.removeLockfromContext(devPublicKey)
-    #                 return "ok!"
-    #             else:
-    #                 # logger.debug("--Transaction not appended--Transaction Invalid Signature")
-    #                 self.removeLockfromContext(devPublicKey)
-    #                 return "Invalid Signature"
-    #         # logger.debug("--Transaction not appended--Key not found")
-    #         self.removeLockfromContext(devPublicKey)
-    #         return "key not found"
-    #     logger.error("key not found when adding transaction")
-    #     self.removeLockfromContext(devPublicKey)
-    #     return "block false"
+    def addTransaction(self, devPublicKey, encryptedObj):
+        """ Receive a new transaction to be add to the chain, add the transaction
+            to a block and send it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+        blk = ChainFunctions.findBlock(devPublicKey)
+
+        self.addContextinLockList(devPublicKey)
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                # logger.info("Appending transaction to block #" +
+                #             str(blk.index) + "...")
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+                signature = plainObject[:-20]  # remove the last 20 chars
+                # remove the 16 char of timestamp
+                devTime = plainObject[-20:-4]
+                # retrieve the las 4 chars which are the data
+                deviceData = plainObject[-4:]
+
+                d = devTime+deviceData
+                isSigned = CryptoFunctions.signVerify(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                        ChainFunctions.getLatestBlockTransaction(blk))
+
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
+
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+                    # print("all done")
+                    self.removeLockfromContext(devPublicKey)
+                    return "ok!"
+                else:
+                    # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    self.removeLockfromContext(devPublicKey)
+                    return "Invalid Signature"
+            # logger.debug("--Transaction not appended--Key not found")
+            self.removeLockfromContext(devPublicKey)
+            return "key not found"
+        logger.error("key not found when adding transaction")
+        self.removeLockfromContext(devPublicKey)
+        return "block false"
 
 
     def addTinLockList(self,devPublicKey):
@@ -2173,7 +2181,7 @@ def verifyTransactionCandidate(block, newTransaction, generatorGwPub, generatorD
         transactionValidation = False
         return transactionValidation
 
-    #lastTransaction = ChainFunctions.getLatestBlockTransaction(block)
+    lastTransaction = ChainFunctions.getLatestBlockTransaction(block)
     # print("Index:"+str(lastBlk.index)+" prevHash:"+str(lastBlk.previousHash)+ " time:"+str(lastBlk.timestamp)+ " pubKey:")
     #lastTransactionHash = CryptoFunctions.calculateHash(lastTransaction.index, lastTransaction.previousHash, lastTransaction.timestamp, lastTransaction.data, lastTransaction.signature, lastTransaction.signature)
     lastTransactionHash = CryptoFunctions.calculateTransactionHash(ChainFunctions.getLatestBlockTransaction(block))
@@ -2419,6 +2427,7 @@ def saveURItoFile(uri):
     # text_file.close()
 
 
+
 """ Main function initiate the system"""
 
 
@@ -2493,6 +2502,7 @@ def main(nameServerIP, nameServerPort, local_gatewayName, gatewayContext):
     logger.info("Pyro name server: " + nameServerIP + ":" + str(nameServerPort))
 
     daemon.requestLoop()
+
 
 
 if __name__ == '__main__':

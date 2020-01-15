@@ -273,7 +273,7 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
     try:
         encobj=pickle.dumps(encobj)
         devPubK = pickle.dumps(devPubK)
-        transactionStatus= server.addTransaction(devPubK, encobj)
+        transactionStatus= server.addTransactionToPool(devPubK, encobj)
         if(transactionStatus=="ok!"):
             # logger.error("everything good now")
             return True
@@ -351,7 +351,7 @@ def automa(blocks, trans):
         @param blocks - int number of blocks\n
         @param trans - int number of transactions
     """
-    threading.Thread(target=consensusTrans).start()
+
     arrayDevicesThreads = []*blocks
     for blk in range(0, blocks):
         logger.info("Adding block #" + str(blk) + "...")
