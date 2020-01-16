@@ -54,7 +54,12 @@ transactionConsensusCandidateList =[]
 transactionLockList = []
 contextLockList =[]
 transactionSharedPool = []
-# transactionSharedPool could be understood as = [("0001", []),("0002",[]
+# transactionSharedPool could be understood as = [["0001", [(devKey1, tr1),(devKey2,tr2]],["0002",[]]]
+# i.e., print transactionSharedPool[0] is ["0001,  [(devKey1, tr1),(devKey2,tr2]]
+# i.e., print transactionSharedPool[0][1] is (devKey1,tr1), (devKey2, tr2)
+# i.e., print transactionSharedPool[0][1][1] is (devKey2, tr2)
+# i.e., transactionSharedPool[0][1].append((devKey3,tr3)) results in:
+# [["0001", [(devKey1, tr1),(devKey2,tr2], (devKey3,tr3)],["0002",[]]]
 blockContext = "0001"
 
 
@@ -66,6 +71,9 @@ myName = socket.gethostname()
 
 app = Flask(__name__)
 peers = []
+contextPeers = []
+# contextPeers = [["0001",[]]]
+# context peers is [[context, [peers]], [context2, [peers]], [context3, [peers]]]
 genKeysPars = []
 myURI = ""
 gwPvt = ""
@@ -125,9 +133,10 @@ def addBack(peer, isFirst):
         @param isFirst - Boolean condition to add only one time a peer
     """
     global myURI
+    global blockContext
     if(isFirst):
         obj = peer.object
-        obj.addPeer(myURI, isFirst)
+        obj.addPeer(myURI, isFirst, blockContext)
         # pickedUri = pickle.dumps(myURI)
         # print("Before gettin last chain blocks")
         # print("Picked URI in addback: " + str(pickedUri))
@@ -206,11 +215,37 @@ def connectToPeers(nameServer):
             # print ("adding new peer:"+peerURI)
             peerURI = nameServer.lookup(peerName)
             addPeer2(peerURI)
+            # addPeersToContextPeers()
             # orchestratorObject
         # else:
             # print ("nothing to do")
             # print (peerURI )
     # print ("finished connecting to all peers")
+
+
+def addPeersToContextPeers():
+    global peers
+    global contextPeers
+
+    for p in peers:
+        print("running add peer in addPeer in contextPeers")
+        obj = p.object
+        print("After creating obj in ADDpeer")
+        newPeerContext = obj.getRemoteContext()
+        print("after getting remote context")
+        foundContextPeer = False
+        for index in range(len(contextPeers)):
+            if (contextPeers[index][0] == newPeerContext):
+                print("Context found: " + newPeerContext)
+                contextPeers[index][1].append(p)
+                print("Peer added to context Peer"+str(contextPeers))
+                foundContextPeer = True
+        if(foundContextPeer==False):
+            print("did not find context in contextPeers, creating and appending")
+            contextPeers.append([newPeerContext, [p]])
+            print("CONTEXT and PEER added to context Peer"+str(contextPeers))
+
+    return
 
 
 def addPeer2(peerURI):
@@ -220,12 +255,32 @@ def addPeer2(peerURI):
         @return False - peer already in the network
     """
     global peers
+    global contextPeers
+
     if not (findPeer(peerURI)):
         # print ("peer not found. Create new node and add to list")
         # print ("[addPeer2]adding new peer:" + peerURI)
         newPeer = PeerInfo.PeerInfo(peerURI, Pyro4.Proxy(peerURI))
         peers.append(newPeer)
         # print("Runnin addback...")
+        print("running add peer in addPeer2 in contextPeers")
+        obj = newPeer.object
+        print("After creating obj in ADDpeer2")
+        newPeerContext = obj.getRemoteContext()
+        print("after getting remote context")
+        foundContextPeer = False
+        for index in range(len(contextPeers)):
+            if (contextPeers[index][0] == newPeerContext):
+                print("Context found: " + newPeerContext)
+                contextPeers[index][1].append(newPeer)
+                print("Peer added2 to context Peer" + str(contextPeers))
+                foundContextPeer = True
+        if (foundContextPeer == False):
+            print("2did not find context in contextPeers, creating and appending")
+            contextPeers.append([newPeerContext, [newPeer]])
+            print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
+
+
         addBack(newPeer, True)
         # syncChain(newPeer)
         # print ("finished addback...")
@@ -1095,7 +1150,7 @@ class R2ac(object):
             logger.error("passed by findAESKEY")
             if ((aesKey == False) or (len(aesKey) != 32)):
 
-                logger.info("ERROR Problem minside second if")
+                logger.info("ERROR Problem inside second if")
                 logger.error("aeskey had a problem...")
                 aesKey = generateAESKey(blk.publicKey)
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
@@ -1215,7 +1270,13 @@ class R2ac(object):
         # print("block added")
         return encKey
 
-    def addPeer(self, peerURI, isFirst):
+
+    def getRemoteContext(self):
+        global blockContext
+        return blockContext
+
+
+    def addPeer(self, peerURI, isFirst, context):
         """ Receive a peer URI add it to a list of peers.\n
             the var isFirst is used to ensure that the peer will only be added once.\n
             @param peerURI - peer URI\n
@@ -1224,13 +1285,36 @@ class R2ac(object):
             @return False - peer is already on the list
         """
         global peers
+        global contextPeers
+
         if not (findPeer(peerURI)):
             newPeer = PeerInfo.PeerInfo(peerURI, Pyro4.Proxy(peerURI))
             peers.append(newPeer)
+
+            # print("running add peer in addPeer in contextPeers")
+            obj = newPeer.object
+            # print("After creating obj in ADDpeer")
+            newPeerContext = context
+            # newPeerContext = obj.getRemoteContext()
+            # print("after getting remote context")
+            foundContextPeer = False
+            for index in range(len(contextPeers)):
+                if (contextPeers[index][0] == newPeerContext):
+                    print("Context found: " + newPeerContext)
+                    contextPeers[index][1].append(newPeer)
+                    print("Peer added to context Peer" + str(contextPeers))
+                    foundContextPeer = True
+            if (foundContextPeer == False):
+                # print("did not find context in contextPeers, creating and appending")
+                contextPeers.append([newPeerContext, [newPeer]])
+                print("CONTEXT and PEER added to context Peer" + str(contextPeers))
+
             if isFirst:
                 # after adding the original peer, send false to avoid loop
                 addBack(newPeer, False)
             syncChain(newPeer)
+
+
             return True
         else:
             # print("peer is already on the list")
