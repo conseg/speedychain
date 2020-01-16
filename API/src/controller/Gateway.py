@@ -61,6 +61,7 @@ transactionSharedPool = []
 # i.e., transactionSharedPool[0][1].append((devKey3,tr3)) results in:
 # [["0001", [(devKey1, tr1),(devKey2,tr2], (devKey3,tr3)],["0002",[]]]
 blockContext = "0001"
+gwContextConsensus = [("0001", "PoA"),("0002", "PBFT")]
 
 
 
@@ -452,13 +453,19 @@ class R2ac(object):
         """ Init the R2AC chain on the peer"""
         logger.info("SpeedyCHAIN Gateway initialized")
         # thread to perform transaction consensus
-        threading.Thread(target=self.threadTransactionConsensus).start()
+        for x,y in gwContextConsensus:
+            threading.Thread(target=self.threadTransactionConsensus, args=(x,y)).start()
+            # if (gwContextConsensus[0]) [("0001", "PoA"),("0002", "PBFT")]
 
-    def threadTransactionConsensus(self):
-        while (True):
-            # server.performTransactionConsensus()
-            self.performTransactionPoolConsensus()
-            time.sleep(0.01)
+
+    def threadTransactionConsensus(self, context, consensus):
+        if(consensus=="PoA"):
+            while (True):
+                # server.performTransactionConsensus()
+                self.performTransactionPoolConsensus(context)
+                time.sleep(0.001)
+        if(consensus=="PBFT"):
+            print("PBFT for transactions not implemented yet")
 
     #  it should verify context
     def performTransactionConsensus(self):
@@ -494,7 +501,7 @@ class R2ac(object):
             sendTransactionToPeers(devPublicKey, transaction)
         return
 
-    def performTransactionPoolConsensus(self):
+    def performTransactionPoolConsensus(self, context):
         # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         global contextPeers
         global blockContext
@@ -509,7 +516,7 @@ class R2ac(object):
                 print(i)
                 i=i+1
                 candidateTransaction = candidatePool.pop(0)
-                print("popped element from Pool")
+               # print("popped element from Pool")
                 # print(candidateTransaction)
                 if(candidateTransaction != False):
                     # print("AAAAAAAAAAAAAAAA passed the if")
@@ -536,13 +543,14 @@ class R2ac(object):
 
                     # --->> this function should be run in a different thread.
                     candidatePooltoSend.append((devPublicKey, transaction))
+                    # instead of sending transactions individually, it will be sent in batch
                     # sendTransactionToPeers(devPublicKey, transaction)
 
-            # TODO review how to select the context, maybe each consensus call should have one context
+
             # print("AAAAAAA After inserting local transactions")
             if(len(candidatePooltoSend)>0):
                 # print("BBBBB: "+str(candidatePooltoSend))
-                context = blockContext
+                # context = blockContext
                 dumpedSetTrans = pickle.dumps(candidatePooltoSend)
                 for index in range(len(contextPeers)):
                     if(contextPeers[index][0] == context):
@@ -1103,7 +1111,7 @@ class R2ac(object):
         # logger.info("Received transaction #" + (str(trans.index)))
         while (len(setTrans)>0):
             candidateTransaction = setTrans.pop(0)
-            print("popped element from Pool")
+            # print("popped element from Pool")
             # print(candidateTransaction)
             if (candidateTransaction != False):
                 # print("AAAAAAAAAAAAAAAA passed the if")
