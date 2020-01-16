@@ -137,7 +137,7 @@ def addBack(peer, isFirst):
     global blockContext
     if(isFirst):
         obj = peer.object
-        obj.addPeer(myURI, isFirst, blockContext)
+        obj.addPeer(myURI, isFirst, gwContextConsensus)
         # pickedUri = pickle.dumps(myURI)
         # print("Before gettin last chain blocks")
         # print("Picked URI in addback: " + str(pickedUri))
@@ -267,19 +267,32 @@ def addPeer2(peerURI):
         # print("running add peer in addPeer2 in contextPeers")
         obj = newPeer.object
         # print("After creating obj in ADDpeer2")
-        newPeerContext = obj.getRemoteContext()
+        # newPeerContext = obj.getRemoteContext()
+        newPeerContext = obj.getRemoteContexts()
         # print("after getting remote context")
-        foundContextPeer = False
-        for index in range(len(contextPeers)):
-            if (contextPeers[index][0] == newPeerContext):
-                print("Context found: " + newPeerContext)
-                contextPeers[index][1].append(newPeer)
-                print("Peer added2 to context Peer" + str(contextPeers))
-                foundContextPeer = True
-        if (foundContextPeer == False):
-            # print("2did not find context in contextPeers, creating and appending")
-            contextPeers.append([newPeerContext, [newPeer]])
-            print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
+        for x,y in newPeerContext:
+            foundContextPeer = False
+            for index in range(len(contextPeers)):
+                if (contextPeers[index][0] == x):
+                    print("Context found: " + x)
+                    contextPeers[index][1].append(newPeer)
+                    print("Peer added2 to context Peer" + str(contextPeers))
+                    foundContextPeer = True
+            if (foundContextPeer == False):
+                # print("2did not find context in contextPeers, creating and appending")
+                contextPeers.append([x, [newPeer]])
+                print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
+        # foundContextPeer = False
+        # for index in range(len(contextPeers)):
+        #     if (contextPeers[index][0] == newPeerContext):
+        #         print("Context found: " + newPeerContext)
+        #         contextPeers[index][1].append(newPeer)
+        #         print("Peer added2 to context Peer" + str(contextPeers))
+        #         foundContextPeer = True
+        # if (foundContextPeer == False):
+        #     # print("2did not find context in contextPeers, creating and appending")
+        #     contextPeers.append([newPeerContext, [newPeer]])
+        #     print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
 
 
         addBack(newPeer, True)
@@ -462,7 +475,7 @@ class R2ac(object):
         if(consensus=="PoA"):
             while (True):
                 # server.performTransactionConsensus()
-                self.performTransactionPoolConsensus(context)
+                self.performTransactionPoolPoAConsensus(context)
                 time.sleep(0.001)
         if(consensus=="PBFT"):
             print("PBFT for transactions not implemented yet")
@@ -501,7 +514,7 @@ class R2ac(object):
             sendTransactionToPeers(devPublicKey, transaction)
         return
 
-    def performTransactionPoolConsensus(self, context):
+    def performTransactionPoolPoAConsensus(self, context):
         # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         global contextPeers
         global blockContext
@@ -1327,8 +1340,12 @@ class R2ac(object):
         global blockContext
         return blockContext
 
+    def getRemoteContexts(self):
+        global gwContextConsensus
+        return gwContextConsensus
 
-    def addPeer(self, peerURI, isFirst, context):
+
+    def addPeer(self, peerURI, isFirst, contexts):
         """ Receive a peer URI add it to a list of peers.\n
             the var isFirst is used to ensure that the peer will only be added once.\n
             @param peerURI - peer URI\n
@@ -1346,20 +1363,32 @@ class R2ac(object):
             # print("running add peer in addPeer in contextPeers")
             obj = newPeer.object
             # print("After creating obj in ADDpeer")
-            newPeerContext = context
+            newPeerContext = contexts
             # newPeerContext = obj.getRemoteContext()
             # print("after getting remote context")
-            foundContextPeer = False
-            for index in range(len(contextPeers)):
-                if (contextPeers[index][0] == newPeerContext):
-                    print("Context found: " + newPeerContext)
-                    contextPeers[index][1].append(newPeer)
-                    print("Peer added to context Peer" + str(contextPeers))
-                    foundContextPeer = True
-            if (foundContextPeer == False):
-                # print("did not find context in contextPeers, creating and appending")
-                contextPeers.append([newPeerContext, [newPeer]])
-                print("CONTEXT and PEER added to context Peer" + str(contextPeers))
+            for x, y in newPeerContext:
+                foundContextPeer = False
+                for index in range(len(contextPeers)):
+                    if (contextPeers[index][0] == x):
+                        print("Context found: " + x)
+                        contextPeers[index][1].append(newPeer)
+                        print("Peer added2 to context Peer" + str(contextPeers))
+                        foundContextPeer = True
+                if (foundContextPeer == False):
+                    # print("2did not find context in contextPeers, creating and appending")
+                    contextPeers.append([x, [newPeer]])
+                    print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
+            # foundContextPeer = False
+            # for index in range(len(contextPeers)):
+            #     if (contextPeers[index][0] == newPeerContext):
+            #         print("Context found: " + newPeerContext)
+            #         contextPeers[index][1].append(newPeer)
+            #         print("Peer added to context Peer" + str(contextPeers))
+            #         foundContextPeer = True
+            # if (foundContextPeer == False):
+            #     # print("did not find context in contextPeers, creating and appending")
+            #     contextPeers.append([newPeerContext, [newPeer]])
+            #     print("CONTEXT and PEER added to context Peer" + str(contextPeers))
 
             if isFirst:
                 # after adding the original peer, send false to avoid loop
