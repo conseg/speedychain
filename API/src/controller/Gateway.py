@@ -263,11 +263,11 @@ def addPeer2(peerURI):
         newPeer = PeerInfo.PeerInfo(peerURI, Pyro4.Proxy(peerURI))
         peers.append(newPeer)
         # print("Runnin addback...")
-        print("running add peer in addPeer2 in contextPeers")
+        # print("running add peer in addPeer2 in contextPeers")
         obj = newPeer.object
-        print("After creating obj in ADDpeer2")
+        # print("After creating obj in ADDpeer2")
         newPeerContext = obj.getRemoteContext()
-        print("after getting remote context")
+        # print("after getting remote context")
         foundContextPeer = False
         for index in range(len(contextPeers)):
             if (contextPeers[index][0] == newPeerContext):
@@ -276,7 +276,7 @@ def addPeer2(peerURI):
                 print("Peer added2 to context Peer" + str(contextPeers))
                 foundContextPeer = True
         if (foundContextPeer == False):
-            print("2did not find context in contextPeers, creating and appending")
+            # print("2did not find context in contextPeers, creating and appending")
             contextPeers.append([newPeerContext, [newPeer]])
             print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
 
@@ -496,8 +496,11 @@ class R2ac(object):
 
     def performTransactionPoolConsensus(self):
         # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        global contextPeers
+        global blockContext
 
         candidatePool = self.getLocalTransactionPool(blockContext)
+        candidatePooltoSend = []
 
         if(candidatePool != False):
             i = 0
@@ -532,7 +535,21 @@ class R2ac(object):
                     #             str(blk.index) + " to peers...")
 
                     # --->> this function should be run in a different thread.
-                    sendTransactionToPeers(devPublicKey, transaction)
+                    candidatePooltoSend.append((devPublicKey, transaction))
+                    # sendTransactionToPeers(devPublicKey, transaction)
+
+            # TODO review how to select the context, maybe each consensus call should have one context
+            # print("AAAAAAA After inserting local transactions")
+            if(len(candidatePooltoSend)>0):
+                # print("BBBBB: "+str(candidatePooltoSend))
+                context = blockContext
+                dumpedSetTrans = pickle.dumps(candidatePooltoSend)
+                for index in range(len(contextPeers)):
+                    if(contextPeers[index][0] == context):
+                        for p in contextPeers[index][1]:
+                            obj=p.object
+                            obj.updateBlockLedgerSetTrans(dumpedSetTrans)
+
         return
 
     def addNewTransactionToSyncList(self, devPubKey, devInfo, context):
@@ -1072,6 +1089,33 @@ class R2ac(object):
         t2 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return "done"
+
+    def updateBlockLedgerSetTrans(self, candidatePool):
+        # update local bockchain adding a new transaction
+        """ Receive a new transaction and add it to the chain\n
+            @param pubKey - Block public key\n
+            @param transaction - Data to be insert on the block\n
+            @return "done" - method done (the block are not necessarily inserted)
+        """
+        setTrans = pickle.loads(candidatePool)
+        t1 = time.time()
+        # print("inside updateBlockLedgerSeTrans, setTrans: " + str(setTrans))
+        # logger.info("Received transaction #" + (str(trans.index)))
+        while (len(setTrans)>0):
+            candidateTransaction = setTrans.pop(0)
+            print("popped element from Pool")
+            # print(candidateTransaction)
+            if (candidateTransaction != False):
+                # print("AAAAAAAAAAAAAAAA passed the if")
+                devPublicKey = candidateTransaction[0]
+                deviceTrans = candidateTransaction[1]
+                blk = ChainFunctions.findBlock(devPublicKey)
+                ChainFunctions.addBlockTransaction(blk, deviceTrans)
+
+        t2 = time.time()
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        return "done"
+
 
     def updateIOTBlockLedger(self, iotBlock, gwName):
         # update local bockchain adding a new block
