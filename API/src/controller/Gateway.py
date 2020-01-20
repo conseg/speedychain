@@ -332,6 +332,24 @@ def findAESKey(devPubKey):
             return b.AESKey
     return False
 
+
+def removeAESKey(AESKey):
+    """ Receive the public key from a device and found the private key linked to it\n
+        @param devPubKey - device public key\n
+        @return AESkey - found the key\n
+        @return False - public key not found
+    """
+    global genKeysPars
+    for b in genKeysPars:
+        if (b.AESKey == AESKey):
+            logger.error("****************************************")
+            logger.error("****************************************")
+            logger.error("removing AES Key")
+            genKeysPars.remove(b)
+            logger.error("****************************************")
+            logger.error("****************************************")
+    return False
+
 #############################################################################
 #############################################################################
 #################    Consensus Algorithm Methods    #########################
@@ -1214,16 +1232,18 @@ class R2ac(object):
             aesKey = findAESKey(devPubKey)
             logger.error("passed by findAESKEY")
             if ((aesKey == False) or (len(aesKey) != 32)):
-
-                logger.info("ERROR Problem inside second if")
                 logger.error("aeskey had a problem...")
+                removeAESKey(aesKey)
                 aesKey = generateAESKey(blk.publicKey)
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
                 return encKey
                 # t2 = time.time()
             logger.error("actually it didn't had problem with the key")
+            logger.error("publick key received was: " + str(devPubKey) + "blk key was: " + str(blk.publicKey) + " ...")
+            removeAESKey(aesKey)
             aesKey = generateAESKey(blk.publicKey)
             encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
+            return encKey
             # t2 = time.time()
         else:
             # print("inside else")
@@ -1260,7 +1280,7 @@ class R2ac(object):
                     self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
                     counter_fails = counter_fails + 1
-                    if (counter_fails > 20):
+                    if (counter_fails > 200):
                         return -1
 
             if(consensus == "dBFT" or consensus == "Witness3"):
@@ -1281,7 +1301,7 @@ class R2ac(object):
                     self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
                     counter_fails = counter_fails +1
-                    if (counter_fails > 20):
+                    if (counter_fails > 200):
                         return -1
                 # print("after rundbft")
             if(consensus == "PoW"):

@@ -236,7 +236,7 @@ def bruteSend(retry):
 
 def multSend(devPubK, devPrivateK, AESKey, retry, blk):
     try:
-        sendDataArgs(devPubK, devPrivateK, AESKey, retry, blk)
+        return sendDataArgs(devPubK, devPrivateK, AESKey, retry, blk)
     except KeyboardInterrupt:
         sys.exit()
     except:
@@ -263,9 +263,10 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
 
         encobj = CryptoFunctions.encryptAES(toSend, AESKey)
     except:
-        logger.error("was not possible to encrypt... verify aeskey in blk: " + str(blk) + "tr: " + str(trans))
+        logger.error("was not possible to encrypt... verify aeskey: "+ str(AESKey) +" in blk: " + str(blk) + "tr: " + str(trans))
         newKeyPair()
         AESKey = addBlockOnChainv2(devPubK, devPrivateK) # this will force gateway to recreate the aes key
+        # logger.error("New aeskey is: "+ str(AESKey))
         signedData = CryptoFunctions.signInfo(devPrivateK, data)
         toSend = signedData + timeStr + temperature
         encobj = CryptoFunctions.encryptAES(toSend, AESKey)
@@ -276,12 +277,15 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
         transactionStatus= server.addTransactionToPool(devPubK, encobj)
         if(transactionStatus=="ok!"):
             # logger.error("everything good now")
-            return True
+            return AESKey
         else:
+            # logger.error("Used AESKey was: " + str(AESKey))
             logger.error("something went wrong when sending data in blk: " + str(blk) + "tr: " + str(trans))
             logger.error("Transaction status problem: " + transactionStatus)
+            return AESKey
     except:
         logger.error("some exception with addTransaction now...in blk: " + str(blk) + "tr: " + str(trans))
+        return AESKey
 
 
 def defineAutomaNumbers():
@@ -305,6 +309,7 @@ def consensusTrans():
 def simDevBlockAndTrans(blk, trans):
     numTrans=trans
     devPubK,devPrivK = generateRSAKeyPair()
+
     counter = 0
     AESKey = addBlockOnChainv2(devPubK,devPrivK)
     while (AESKey == False):
@@ -321,7 +326,7 @@ def simDevBlockAndTrans(blk, trans):
             time.sleep(0.0001)
             continue
             # time.sleep(1)
-        multSend(devPubK, devPrivK, AESKey, tr, blk)
+        AESKey = multSend(devPubK, devPrivK, AESKey, tr, blk)
 
 # for sequential generation of blocks and transactions (sequential devices), use this
 def seqDevSim(blk,trans):
