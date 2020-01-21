@@ -12,6 +12,7 @@ import Pyro4
 import json
 import requests
 import traceback
+import threading
 
 from Crypto.PublicKey import RSA
 
@@ -80,6 +81,27 @@ def addBlockOnChain():
     decryptAESKey(serverAESEncKey)
     return True
     # print("###after decrypt aes")
+
+def addBlockOnChainv2(devPubKey, devPrivKey):
+    """ Take the value of 'publicKey' var, and add it to the chain as a block"""
+    # print("###addBlockonChain in devicesimulator, publicKey")
+    # print(publicKey)
+    # pickedDevPubKey = pickle.dumps(devPubKey)
+    serverAESEncKey = server.addBlock(devPubKey)
+    if (len(str(serverAESEncKey))<10):
+        logger.error("it was not possible to add block - problem in the key")
+        return False
+    # print("###addBlockonChain in devicesimulator, serverAESEncKey")
+    # print(serverAESEncKey)
+    # while len(serverAESEncKey) < 10:
+    #    serverAESEncKey = server.addBlock(publicKey)
+    try:
+        AESKey = CryptoFunctions.decryptRSA2(devPrivKey, serverAESEncKey)
+    except:
+        logger.error("problem decrypting the AES key")
+        return False
+    return AESKey
+
 
 def sendDataTest():
     """ Send fake data to test the system """
@@ -179,6 +201,7 @@ def newKeyPair():
     while len(publicKey) < 10 or len(privateKey) < 10:
         publicKey, privateKey = generateRSAKeyPair()
 
+
 def brutePairAuth(retry):
     """ Add a block on the chain with brute force until it's add"""
     isOk = True
@@ -211,50 +234,174 @@ def bruteSend(retry):
             # time.sleep(0.001)
             return False # addBlockConsensusCandiate
 
+def multSend(devPubK, devPrivateK, AESKey, retry, blk):
+    try:
+        return sendDataArgs(devPubK, devPrivateK, AESKey, retry, blk)
+    except KeyboardInterrupt:
+        sys.exit()
+    except:
+        logger.error("failed to execute send tr:" + str(retry)+"from Blk: "+ str(blk))
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        logger.error("*** print_exception:\n" + str(
+            traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2, file=sys.stdout)))
+        # global serverAESKey
+        # print("the size of the serverAESKey is: "+str(len(serverAESKey)))
+        # time.sleep(0.001)
+        return False  # addBlockConsensusCandiate
+
+def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
+    """ Read the sensor data, encrypt it and send it as a transaction to be validated by the peers """
+    temperature = readSensorTemperature()
+    t = ((time.time() * 1000) * 1000)
+    timeStr = "{:.0f}".format(t)
+    data = timeStr + temperature
+    logger.debug("data = "+data)
+    signedData = CryptoFunctions.signInfo(devPrivateK, data)
+    toSend = signedData + timeStr + temperature
+
+    try:
+
+        encobj = CryptoFunctions.encryptAES(toSend, AESKey)
+    except:
+        logger.error("was not possible to encrypt... verify aeskey: "+ str(AESKey) +" in blk: " + str(blk) + "tr: " + str(trans))
+        newKeyPair()
+        AESKey = addBlockOnChainv2(devPubK, devPrivateK) # this will force gateway to recreate the aes key
+        # logger.error("New aeskey is: "+ str(AESKey))
+        signedData = CryptoFunctions.signInfo(devPrivateK, data)
+        toSend = signedData + timeStr + temperature
+        encobj = CryptoFunctions.encryptAES(toSend, AESKey)
+        logger.error("passed through sendData except")
+    try:
+        encobj=pickle.dumps(encobj)
+        devPubK = pickle.dumps(devPubK)
+        transactionStatus= server.addTransactionToPool(devPubK, encobj)
+        if(transactionStatus=="ok!"):
+            # logger.error("everything good now")
+            return AESKey
+        else:
+            # logger.error("Used AESKey was: " + str(AESKey))
+            logger.error("something went wrong when sending data in blk: " + str(blk) + "tr: " + str(trans))
+            logger.error("Transaction status problem: " + transactionStatus)
+            return AESKey
+    except:
+        logger.error("some exception with addTransaction now...in blk: " + str(blk) + "tr: " + str(trans))
+        return AESKey
+
+
 def defineAutomaNumbers():
     """ Ask for the user to input how many blocks and transaction he wants and calls the function automa()"""
     blocks = int(input('How many Blocks:'))
     trans = int(input('How many Transactions:'))
     automa(blocks, trans)
 
+
+def consensusTrans():
+    # for i in range(1,100):
+    #     print("Hello - I am a test message for the thread")
+    #     time.sleep(1)
+    while(True):
+        # server.performTransactionConsensus()
+        server.performTransactionPoolConsensus()
+        time.sleep(0.01)
+
+
+# for parallel simulation of devices and insertions use this
+def simDevBlockAndTrans(blk, trans):
+    numTrans=trans
+    devPubK,devPrivK = generateRSAKeyPair()
+
+    counter = 0
+    AESKey = addBlockOnChainv2(devPubK,devPrivK)
+    while (AESKey == False):
+        logger.error("ERROR: creating a new key pair and trying to create a new block")
+        newKeyPair()
+        counter = counter + 1
+        if (counter > 10):
+            break
+    # brutePairAuth(blk)
+    for tr in range(0, numTrans):
+        logger.info("Sending transaction blk #" + str(blk) +"tr #"+ str(tr) + "...")
+        # sendData()
+        while (not (server.isBlockInTheChain(devPubK))):
+            time.sleep(0.0001)
+            continue
+            # time.sleep(1)
+        AESKey = multSend(devPubK, devPrivK, AESKey, tr, blk)
+
+# for sequential generation of blocks and transactions (sequential devices), use this
+def seqDevSim(blk,trans):
+    logger.info("Adding block #" + str(blk) + "...")
+    newKeyPair()
+    counter = 0
+    while(addBlockOnChain()==False):
+        logger.error("ERROR: creating a new key pair and trying to create a new block")
+        newKeyPair()
+        counter= counter + 1
+        if (counter > 10):
+            break
+
+    # brutePairAuth(blk)
+    for tr in range(0, trans):
+        logger.info("Sending transaction #" + str(tr) + "...")
+        # sendData()
+        while (not (server.isBlockInTheChain(publicKey))):
+            time.sleep(0.0001)
+            continue
+            # time.sleep(1)
+        bruteSend(tr)
+
+
 def automa(blocks, trans):
     """ Adds a specifc number of blocks and transaction to the chain\n
         @param blocks - int number of blocks\n
         @param trans - int number of transactions
     """
+
+    arrayDevicesThreads = []*blocks
     for blk in range(0, blocks):
         logger.info("Adding block #" + str(blk) + "...")
-        newKeyPair()
-        counter = 0
-        while(addBlockOnChain()==False):
-            logger.error("ERROR: creating a new key pair and trying to create a new block")
-            newKeyPair()
-            counter= counter + 1
-            if (counter > 10):
-                break
+        # for parallel devices use threading option
+        arrayDevicesThreads.append(threading.Thread(target=simDevBlockAndTrans, args=(blk, trans)))
+        arrayDevicesThreads[blk].start()
+        # for sequential devices insertion use method seqDevSim()
+    for blk in range(0, blocks):
+        arrayDevicesThreads[blk].join()
 
-        # brutePairAuth(blk)
-        for tr in range(0, trans):
-            logger.info("Sending transaction #" + str(tr) + "...")
-            # sendData()
-            while (not (server.isBlockInTheChain(publicKey))):
-                time.sleep(0.0001)
-                continue
-                # time.sleep(1)
-            bruteSend(tr)
+
+        # newKeyPair()
+        # counter = 0
+        # while(addBlockOnChain()==False):
+        #     logger.error("ERROR: creating a new key pair and trying to create a new block")
+        #     newKeyPair()
+        #     counter= counter + 1
+        #     if (counter > 10):
+        #         break
+        #
+        # # brutePairAuth(blk)
+        # for tr in range(0, trans):
+        #     logger.info("Sending transaction #" + str(tr) + "...")
+        #     # sendData()
+        #     while (not (server.isBlockInTheChain(publicKey))):
+        #         time.sleep(0.0001)
+        #         continue
+        #         # time.sleep(1)
+        #     bruteSend(tr)
+
 
 def merkle():
     """ Calculates the hash markle tree of the block """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     blk = int(input("Which block you want to create the merkle tree:"))
     server.calcMerkleTree(blk)  # addBlockConsensusCandiate
     # print ("done")
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 
 def newElection():
     server.electNewOrchestrator()
     return True
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ###WHAT???###
+    # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ###WHAT???###
+
 
 def defineInteractiveConsensus():
     receivedConsensus = str(input('Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
@@ -265,12 +412,14 @@ def defineInteractiveConsensus():
     server.setConsensus(receivedConsensus)
     return True
 
+
 def defineConsensus(receivedConsensus):
     #receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
     # server will set its consensus and send it to all peers
     server.setConsensus(receivedConsensus)
     # print("Consensus " + receivedConsensus + " was defined")
     return True
+
 
 def createBlockForSC():
     newKeyPair()
@@ -282,10 +431,12 @@ def createBlockForSC():
     sendDataSC(firstTransactionSC)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+
 def showLastTransactionData():
     blockIndex = int(input('Type the index to show the last transaction data: '))
     lastDataTransactionData = server.showLastTransactionData(blockIndex)
     return lastDataTransactionData
+
 
 def callEVMInterface():
     # Create a TCP

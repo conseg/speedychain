@@ -120,6 +120,7 @@ def generateRSAKeyPair():
     """ Generate a pair of RSA keys using RSA 1024\n
         @return pub, prv - public and private key
     """
+
     private = RSA.generate(1024)
 
     pubKey = private.publickey()

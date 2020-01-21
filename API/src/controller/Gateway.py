@@ -7,9 +7,9 @@ import threading
 import pickle
 import socket
 #import for python 3 or above
-import _thread as thread
+#import _thread as thread
 #import for python 2
-#import thread
+import thread
 import random
 import json
 
@@ -47,10 +47,21 @@ def getTime():
 
 
 lock = thread.allocate_lock()
+transListLock  = thread.allocate_lock()
 consensusLock = thread.allocate_lock()
 blockConsensusCandidateList = []
-smartcontractLockList = []
+transactionConsensusCandidateList =[]
+transactionLockList = []
+contextLockList =[]
+transactionSharedPool = []
+# transactionSharedPool could be understood as = [["0001", [(devKey1, tr1),(devKey2,tr2]],["0002",[]]]
+# i.e., print transactionSharedPool[0] is ["0001,  [(devKey1, tr1),(devKey2,tr2]]
+# i.e., print transactionSharedPool[0][1] is (devKey1,tr1), (devKey2, tr2)
+# i.e., print transactionSharedPool[0][1][1] is (devKey2, tr2)
+# i.e., transactionSharedPool[0][1].append((devKey3,tr3)) results in:
+# [["0001", [(devKey1, tr1),(devKey2,tr2], (devKey3,tr3)],["0002",[]]]
 blockContext = "0001"
+gwContextConsensus = [("0001", "PoA"),("0002", "PBFT")]
 
 
 
@@ -61,6 +72,7 @@ myName = socket.gethostname()
 
 app = Flask(__name__)
 peers = []
+
 genKeysPars = []
 myURI = ""
 gwPvt = ""
@@ -71,6 +83,34 @@ consensus = "None"  # it can be None, dBFT, PBFT, PoW, Witness3
 # list of votes for new orchestrator votes are: voter gwPub, voted gwPub, signature
 votesForNewOrchestrator = []
 myVoteForNewOrchestrator = []  # my gwPub, voted gwPub, my signed vote
+
+
+
+contextPeers = []
+# contextPeers = [["0001",[]]]
+# context peers is [[context, [peers]], [context2, [peers]], [context3, [peers]]]
+transactionConsensusCandidateList =[]
+transactionLockList = []
+contextLockList =[]
+transactionSharedPool = []
+# transactionSharedPool could be understood as = [["0001", [(devKey1, tr1),(devKey2,tr2]],["0002",[]]]
+# i.e., print transactionSharedPool[0] is ["0001,  [(devKey1, tr1),(devKey2,tr2]]
+# i.e., print transactionSharedPool[0][1] is (devKey1,tr1), (devKey2, tr2)
+# i.e., print transactionSharedPool[0][1][1] is (devKey2, tr2)
+# i.e., transactionSharedPool[0][1].append((devKey3,tr3)) results in:
+# [["0001", [(devKey1, tr1),(devKey2,tr2], (devKey3,tr3)],["0002",[]]]
+blockContext = "0001"
+# should have all context here
+gwContextConsensus = [("0001", "PoA"),("0002", "PBFT")]
+
+# should have all context here
+orchestratorContextObject = []
+# [["0001", ""], ["0002", ""]]
+# transactionSharedPool could be understood as = [["0001", gwOrchestratorObj],["0002", gwOrchestratorObj]]
+
+# list of votes for new orchestrator votes are: voter gwPub, voted gwPub, signature
+votesForNewOrchestratorTransaction = []
+myVoteForNewOrchestratorTransaction = []  # my gwPub, voted gwPub, my signed vote
 
 
 def bootstrapChain2():
@@ -120,9 +160,10 @@ def addBack(peer, isFirst):
         @param isFirst - Boolean condition to add only one time a peer
     """
     global myURI
+    global blockContext
     if(isFirst):
         obj = peer.object
-        obj.addPeer(myURI, isFirst)
+        obj.addPeer(myURI, isFirst, gwContextConsensus)
         # pickedUri = pickle.dumps(myURI)
         # print("Before gettin last chain blocks")
         # print("Picked URI in addback: " + str(pickedUri))
@@ -201,11 +242,37 @@ def connectToPeers(nameServer):
             # print ("adding new peer:"+peerURI)
             peerURI = nameServer.lookup(peerName)
             addPeer2(peerURI)
+            # addPeersToContextPeers()
             # orchestratorObject
         # else:
             # print ("nothing to do")
             # print (peerURI )
     # print ("finished connecting to all peers")
+
+
+def addPeersToContextPeers():
+    global peers
+    global contextPeers
+
+    for p in peers:
+        print("running add peer in addPeer in contextPeers")
+        obj = p.object
+        print("After creating obj in ADDpeer")
+        newPeerContext = obj.getRemoteContext()
+        print("after getting remote context")
+        foundContextPeer = False
+        for index in range(len(contextPeers)):
+            if (contextPeers[index][0] == newPeerContext):
+                print("Context found: " + newPeerContext)
+                contextPeers[index][1].append(p)
+                print("Peer added to context Peer"+str(contextPeers))
+                foundContextPeer = True
+        if(foundContextPeer==False):
+            print("did not find context in contextPeers, creating and appending")
+            contextPeers.append([newPeerContext, [p]])
+            print("CONTEXT and PEER added to context Peer"+str(contextPeers))
+
+    return
 
 
 def addPeer2(peerURI):
@@ -215,12 +282,45 @@ def addPeer2(peerURI):
         @return False - peer already in the network
     """
     global peers
+    global contextPeers
+
     if not (findPeer(peerURI)):
         # print ("peer not found. Create new node and add to list")
         # print ("[addPeer2]adding new peer:" + peerURI)
         newPeer = PeerInfo.PeerInfo(peerURI, Pyro4.Proxy(peerURI))
         peers.append(newPeer)
         # print("Runnin addback...")
+        # print("running add peer in addPeer2 in contextPeers")
+        obj = newPeer.object
+        # print("After creating obj in ADDpeer2")
+        # newPeerContext = obj.getRemoteContext()
+        newPeerContext = obj.getRemoteContexts()
+        # print("after getting remote context")
+        for x,y in newPeerContext:
+            foundContextPeer = False
+            for index in range(len(contextPeers)):
+                if (contextPeers[index][0] == x):
+                    print("Context found: " + x)
+                    contextPeers[index][1].append(newPeer)
+                    print("Peer added2 to context Peer" + str(contextPeers))
+                    foundContextPeer = True
+            if (foundContextPeer == False):
+                # print("2did not find context in contextPeers, creating and appending")
+                contextPeers.append([x, [newPeer]])
+                print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
+        # foundContextPeer = False
+        # for index in range(len(contextPeers)):
+        #     if (contextPeers[index][0] == newPeerContext):
+        #         print("Context found: " + newPeerContext)
+        #         contextPeers[index][1].append(newPeer)
+        #         print("Peer added2 to context Peer" + str(contextPeers))
+        #         foundContextPeer = True
+        # if (foundContextPeer == False):
+        #     # print("2did not find context in contextPeers, creating and appending")
+        #     contextPeers.append([newPeerContext, [newPeer]])
+        #     print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
+
+
         addBack(newPeer, True)
         # syncChain(newPeer)
         # print ("finished addback...")
@@ -256,6 +356,24 @@ def findAESKey(devPubKey):
     for b in genKeysPars:
         if (b.publicKey == devPubKey):
             return b.AESKey
+    return False
+
+
+def removeAESKey(AESKey):
+    """ Receive the public key from a device and found the private key linked to it\n
+        @param devPubKey - device public key\n
+        @return AESkey - found the key\n
+        @return False - public key not found
+    """
+    global genKeysPars
+    for b in genKeysPars:
+        if (b.AESKey == AESKey):
+            logger.error("****************************************")
+            logger.error("****************************************")
+            logger.error("removing AES Key")
+            genKeysPars.remove(b)
+            logger.error("****************************************")
+            logger.error("****************************************")
     return False
 
 #############################################################################
@@ -391,6 +509,402 @@ class R2ac(object):
     def __init__(self):
         """ Init the R2AC chain on the peer"""
         logger.info("SpeedyCHAIN Gateway initialized")
+        # thread to perform transaction consensus
+        for x,y in gwContextConsensus:
+            threading.Thread(target=self.threadTransactionConsensus, args=(x,y)).start()
+            # if (gwContextConsensus[0]) [("0001", "PoA"),("0002", "PBFT")]
+
+
+    def threadTransactionConsensus(self, context, consensus):
+        if(consensus=="PoA"):
+            while (True):
+                # server.performTransactionConsensus()
+                self.performTransactionPoolPoAConsensus(context)
+                time.sleep(0.001)
+        if(consensus=="PBFT"):
+            while(True):
+                self.performTransactionPoolPBFTConsensus(context)
+                time.sleep(1)
+                # print("PBFT for transactions not implemented yet")
+
+    #  it should verify context
+    def performTransactionConsensus(self):
+        # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+
+        candidateTransaction = self.getTransactionFromSyncList(blockContext)
+        # print(candidateTransaction)
+        if(candidateTransaction != False):
+            # print("AAAAAAAAAAAAAAAA passed the if")
+            devPublicKey = candidateTransaction[0]
+            deviceInfo= candidateTransaction[1]
+            context = candidateTransaction[2]
+            blk = ChainFunctions.findBlock(devPublicKey)
+            # print("passed the blk")
+            nextInt = blk.transactions[len(
+                blk.transactions) - 1].index + 1
+            signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+            # print("BBBBBBBBBBBBB passed the devinfo")
+            gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+            # code responsible to create the hash between Info nodes.
+            prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                ChainFunctions.getLatestBlockTransaction(blk))
+
+            transaction = Transaction.Transaction(
+                nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+
+            ChainFunctions.addBlockTransaction(blk, transaction)
+            # logger.debug("Block #" + str(blk.index) + " added locally")
+            # logger.debug("Sending block #" +
+            #             str(blk.index) + " to peers...")
+
+            # --->> this function should be run in a different thread.
+            sendTransactionToPeers(devPublicKey, transaction)
+        return
+
+    def performTransactionPoolPBFTConsensus(self,context):
+        global contextPeers
+
+        index = 0
+        for index in range(len(orchestratorContextObject)):
+            # print("*** obj " + str(orchestratorContextObject[index][1]) + " my pyro " + str(Pyro4.Proxy(myURI)))
+            # print("obj URI: " + str(orchestratorContextObject[index][1].exposedURI()) + "myURI " + str(myURI))
+            # orchestratorContextObject[index][1].exposedURI()
+            if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
+                # print("******************I Am here")
+                self.addContextinLockList(context)
+                tempContextPeers = []
+                for x in range(len(contextPeers)):
+                    # print(" ***VVVVV **** context? " +contextPeers[x][0])
+                    if (contextPeers[x][0] == context):
+                        tempContextPeers = contextPeers[x][1]
+                for p in tempContextPeers:
+                    peer = p.object
+                    peer.addContextinLockList(context)
+                    print("@@@@@@****** getting remote lock")
+
+                print("my Index" + str(index))
+
+                candidatePool = self.getLocalTransactionPool(context)
+                if (candidatePool != False):
+                    print("**************Inside PBFT Transaction ***************")
+                self.removeLockfromContext(context)
+                for p in tempContextPeers:
+                    peer = p.object
+                    peer.removeLockfromContext(context)
+                    print("@@@@@@****** releasing remote lock")
+
+
+        #
+        # logger.error("Inside PBFT Transaction... first step and context: " + context)
+        # candidatePooltoSend = []
+
+
+    def performTransactionPoolPoAConsensus(self, context):
+        # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        global contextPeers
+        # global blockContext
+
+        candidatePool = self.getLocalTransactionPool(context)
+        candidatePooltoSend = []
+
+        if(candidatePool != False):
+            # lock other gw consensus
+            # print("locking my context local: " + str(self.addContextinLockList(context)))
+            i = 0
+            while(len(candidatePool)>0):
+                print("inside transaction pool i= ")
+                print(i)
+                i=i+1
+                candidateTransaction = candidatePool.pop(0)
+               # print("popped element from Pool")
+                # print(candidateTransaction)
+                if(candidateTransaction != False):
+                    # print("AAAAAAAAAAAAAAAA passed the if")
+                    devPublicKey = candidateTransaction[0]
+                    deviceInfo= candidateTransaction[1]
+                    blk = ChainFunctions.findBlock(devPublicKey)
+                    # print("passed the blk")
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    # print("BBBBBBBBBBBBB passed the devinfo")
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                        ChainFunctions.getLatestBlockTransaction(blk))
+
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+
+                    # --->> this function should be run in a different thread.
+                    candidatePooltoSend.append((devPublicKey, transaction))
+                    # instead of sending transactions individually, it will be sent in batch
+                    # sendTransactionToPeers(devPublicKey, transaction)
+
+
+            # print("AAAAAAA After inserting local transactions")
+            if(len(candidatePooltoSend)>0):
+                # print("BBBBB: "+str(candidatePooltoSend))
+                # context = blockContext
+                dumpedSetTrans = pickle.dumps(candidatePooltoSend)
+                for index in range(len(contextPeers)):
+                    if(contextPeers[index][0] == context):
+                        for p in contextPeers[index][1]:
+                            obj=p.object
+                            obj.updateBlockLedgerSetTrans(dumpedSetTrans)
+
+        return
+
+    def addNewTransactionToSyncList(self, devPubKey, devInfo, context):
+        """ Add a new block to a syncronized list through the peers\n
+            @param devPubKey - PubKey from the devices transaction
+            @param devInfo - transaction sent by device
+            @param context - devices context
+        """
+        # logger.debug("running critical stuffff......")
+        # print("Inside addNewBlockToSyncLIst")
+        global transactionLockList
+        global transactionConsensusCandidateList
+        # print("TTTTTTTTTTTT inside addNewTransactionToSyncList")
+        index =0
+        candidateTransactionTuple = (devPubKey, devInfo, context)
+        print ("********* adding a transaction from context: "+context)
+        for x,y in transactionLockList:
+            if x == context:
+                i = 0
+                while (not (transactionLockList[index][1].acquire(False)) and i < 100):
+                    i = i + 1
+                    print("$$$$$$$$$ not possible to acquire a lock in addNewTransaciontosynclist")
+                    time.sleep(0.01)
+                if (i == 100):
+                    return False
+                # if it got the lock, insert a new transaction into the list
+                # candidade tuple is devPubKey, devInfo, context
+                if(transactionConsensusCandidateList[index][0] == context):
+                    transactionConsensusCandidateList[index][1].append(candidateTransactionTuple)
+                    transactionLockList[index][1].release()
+                else:
+                    logger.error("something went wrong when adding transaction tuple")
+                # print("VVVVVV Lock released in addnewtransactionsynclist")
+                return True
+            index = index+1
+
+        # TODO review this part -> if 2 devices try to create a new lock at same time, crazy thing can happen
+        lockContext = thread.allocate_lock()
+        myLockTuple = (context, lockContext)
+        transactionLockList.append(myLockTuple)
+        # return the attempt to lock the last inserted  [-1] context through its lock [1]
+        print("@@Context List after adding context to lock list for context: "+context)
+        transactionLockList[-1][1].acquire(False)
+        transactionConsensusCandidateList.append([context, [candidateTransactionTuple]])
+        # transactionConsensusCandidateList.append(candidateTransactionTuple)
+        transactionLockList[-1][1].release()
+        # print("VVVVVV Lock released in addnewtransactionsynclist")
+        return True
+        # print("Unlocked")
+
+    def getTransactionFromSyncList(self,context):
+        """ Get the first block at a syncronized list through the peers\n
+            @return devPubKey - Public key from the block
+        """
+        # logger.debug("running critical stuffff to get sync list......")
+        global transactionLockList
+        global transactionConsensusCandidateList
+        # print("ENTERED in get transaction")
+        if (len(transactionConsensusCandidateList)>0):
+            index=0
+            for x, y in transactionLockList:
+                if x == context:
+                    # print("X = ", x)
+                    # print("context = ", context)
+                    # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
+                    # print("@@Contextfound")
+                    i = 0
+                    while (not (transactionLockList[index][1].acquire(False)) and i < 1000):
+                        i = i + 1
+                        print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
+                        time.sleep(0.001)
+                    if (i == 1000):
+                        return False
+                    # if it got the lock, insert a new transaction into the list
+
+                    if (len(transactionConsensusCandidateList) > 0):
+                        # logger.debug("there is a candidade, pop it!!!")
+                        transactionTuple = transactionConsensusCandidateList.pop(0)
+                    transactionLockList[index][1].release()
+                    # print("VVVVVV Transaction Tuple: ")
+                    # print(transactionTuple[0])
+                    # print("second part: ")
+                    # print(transactionTuple[1])
+                    # transaction tuple is formed by devPubKey and devInfo
+                    return transactionTuple
+                index = index + 1
+
+        # print("end of get transaction")
+        # logger.debug("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
+        return False
+
+
+    def getLocalTransactionPool(self, context):
+        """ Get the first block at a syncronized list through the peers\n
+            @return devPubKey - Public key from the block
+        """
+        # logger.debug("running critical stuffff to get sync list......")
+        global transactionLockList
+        global transactionConsensusCandidateList
+        # print("ENTERED in get Pool")
+        transactionPool = []
+        if (len(transactionConsensusCandidateList) > 0):
+            index = 0
+            for x, y in transactionLockList:
+                if x == context:
+                    # print("X = ", x)
+                    # print("context = ", context)
+                    # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
+                    # print("@@Contextfound")
+                    i = 0
+                    while (not (transactionLockList[index][1].acquire(False)) and i < 1000):
+                        i = i + 1
+                        print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
+                        time.sleep(0.001)
+                    if (i == 1000):
+                        transactionLockList[index][1].release()
+                        return False
+                    # if it got the lock, insert a new transaction into the list
+
+                    if (len(transactionConsensusCandidateList[index][1]) > 0):
+                        # logger.debug("there is a candidade, pop it!!!")
+                        # transactionPool = transactionConsensusCandidateList[index]
+                        # get only the transactions from the correct context and after clean that transactions
+                        transactionPool = transactionConsensusCandidateList[index][1]
+                        print("there is a pool candidate, pop it!!! context: " + context)
+                        transactionConsensusCandidateList[index][1] = []
+                        transactionLockList[index][1].release()
+                        return transactionPool
+
+                    transactionLockList[index][1].release()
+                    # print("VVVVVV Transaction Tuple: ")
+                    # print(transactionTuple[0])
+                    # print("second part: ")
+                    # print(transactionTuple[1])
+                    # transaction tuple is formed by devPubKey and devInfo
+                    # return transactionPool
+                index = index + 1
+
+        # print("end of get transaction")
+        # logger.debug("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
+        return False
+
+    def addContextinLockList(self,context):
+        global contextLockList
+        ############# transactionLockList is a list of tuples composed by context and its lock
+        index=0
+        ############# 1 lock per block -> 1 consensus per block
+        for x,y in contextLockList:
+            if x == context:
+                # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
+                # print("@@Contextfound")
+                return contextLockList[index][1].acquire(False)
+            index = index+1
+        lockContext = thread.allocate_lock()
+        myLockTuple = (context, lockContext)
+        contextLockList.append(myLockTuple)
+        # return the attempt to lock the last inserted  [-1] context through its lock [1]
+        print("@@Context List after adding context to lock list")
+        return contextLockList[-1][1].acquire(False)
+
+    def removeLockfromContext(self, context):
+        global contextLockList
+        ############# transactionLockList is a list of tuples composed by devpubkey and its lock
+        index = 0
+        for x, y in contextLockList:
+            if x == context:
+                # return the attempt to lock the indexed devpublickley  [index] pubkey through its lock [1]
+                contextLockList[index][1].release()
+                return True
+            index = index + 1
+        return False
+
+
+    def addTransactionToPool(self, devPublicKey, encryptedObj):
+        """ Receive a new transaction to be add to the chain, a
+            send to the pool it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+
+        # loading key and encryptedObj from from pickle serialization
+        devPublicKey=pickle.loads(devPublicKey)
+        # print("DevPubKey= " + str(devPublicKey))
+        encryptedObj=pickle.loads(encryptedObj)
+
+        blk = ChainFunctions.findBlock(devPublicKey)
+        # self.addContextinLockList(devPublicKey)
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                # logger.info("Appending transaction to block #" +
+                #             str(blk.index) + "...")
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+
+                # retrieve the last chars, excluding timestamp - 16 bytes and signature - 172 bytes
+                deviceData = plainObject[(172+16):]
+                # remove the last 20 chars
+                signature = plainObject[:-(16+len(deviceData))]
+                # print("###Signature after receiving: "+signature)
+                # print("###Device Data: "+deviceData)
+                # remove the 16 char of timestamp
+                devTime = plainObject[-(16+len(deviceData)):-len(deviceData)]
+                # print("###devTime: "+devTime)
+                t2 = time.time()
+                logger.info(
+                    "gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format(
+                        (t2 - t1) * 1000))
+
+                d = devTime+deviceData
+                isSigned = CryptoFunctions.signVerify(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+
+                    # send to consensus here
+                    devContext = blk.blockContext
+                    # print("SSSSSSSS my Context: ")
+                    # print(devContext)
+                    self.addNewTransactionToSyncList(devPublicKey, deviceInfo, devContext)
+
+                    # after context
+
+                    # print("all done")
+                    # self.removeLockfromContext(devPublicKey)
+                    return "ok!"
+                else:
+                    # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    # self.removeLockfromContext(devPublicKey)
+                    return "Invalid Signature"
+            # logger.debug("--Transaction not appended--Key not found")
+            # self.removeLockfromContext(devPublicKey)
+            return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
 
     def addTransaction(self, devPublicKey, encryptedObj):
         """ Receive a new transaction to be add to the chain, add the transaction
@@ -406,6 +920,8 @@ class R2ac(object):
         global gwPub
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
+
+        # self.addContextinLockList(devPublicKey)
         if (blk != False and blk.index > 0):
             devAESKey = findAESKey(devPublicKey)
             if (devAESKey != False):
@@ -454,49 +970,55 @@ class R2ac(object):
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done")
+                    # self.removeLockfromContext(devPublicKey)
                     return "ok!"
                 else:
                     # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    # self.removeLockfromContext(devPublicKey)
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
+            # self.removeLockfromContext(devPublicKey)
             return "key not found"
         logger.error("key not found when adding transaction")
-        return "key not found"
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
 
-##############################
-################ To add an Smart Contract transaction can be done in 2 ways
-#################### method was overloaded
-#######################################################
-    def addSCinLockList(self,devPublicKey):
-        global smartcontractLockList
+
+    def addTinLockList(self,devPublicKey):
+        global transactionLockList
         print("@@Locking SC List")
-        ############# smartcontractLockList is a list of tuples composed by devpubkey and its lock
+        ############# transactionLockList is a list of tuples composed by devpubkey and its lock
         index=0
-        for x,y in smartcontractLockList:
+        ############# 1 lock per block -> 1 consensus per block
+        for x,y in transactionLockList:
             if x == devPublicKey:
                 # return the attempt to lock the indexed devpublickley  [index] pubkey through its lock [1]
                 print("@@Keyfound")
-                return smartcontractLockList[index][1].acquire(False)
+                return transactionLockList[index][1].acquire(False)
             index = index+1
         lockSC = thread.allocate_lock()
         myLockTuple = (devPublicKey, lockSC)
-        smartcontractLockList.append(myLockTuple)
+        transactionLockList.append(myLockTuple)
         # return the attempt to lock the last inserted  [-1] pubkey through its lock [1]
         print("@@Locking SC List after adding key")
-        return smartcontractLockList[-1][1].acquire(False)
+        return transactionLockList[-1][1].acquire(False)
 
-    def removeLockfromSC(self, devPublicKey):
-        global smartcontractLockList
-        ############# smartcontractLockList is a list of tuples composed by devpubkey and its lock
+    def removeLockfromT(self, devPublicKey):
+        global transactionLockList
+        ############# transactionLockList is a list of tuples composed by devpubkey and its lock
         index = 0
-        for x, y in smartcontractLockList:
+        for x, y in transactionLockList:
             if x == devPublicKey:
                 # return the attempt to lock the indexed devpublickley  [index] pubkey through its lock [1]
-                smartcontractLockList[index][1].release()
+                transactionLockList[index][1].release()
                 return True
             index = index + 1
         return False
 
+    ##############################
+    ################ To add an Smart Contract transaction can be done in 2 ways
+    #################### addTransaction SC2 
+    #######################################################
     def addTransactionSC2(self, transactionData,signedDatabyDevice,devPublicKey,devTime):
         """ Receive a new transaction to be add to the chain, add the transaction
             to a block and send it to all peers\n
@@ -508,12 +1030,12 @@ class R2ac(object):
         """
         # logger.debug("Transaction received")
 
-        global smartcontractLockList
+        global transactionLockList
         global gwPvt
         global gwPub
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
-        self.addSCinLockList(devPublicKey)
+        self.addTinLockList(devPublicKey)
 
         if (blk != False and blk.index > 0):
             #wait
@@ -570,18 +1092,18 @@ class R2ac(object):
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done in transations")
-                    # smartcontractLockList.remove(devPublicKey)
-                    self.removeLockfromSC(devPublicKey)
+                    # transactionLockList.remove(devPublicKey)
+                    self.removeLockfromT(devPublicKey)
                     return "ok!"
                 else:
                     # print("Signature is not ok")
                     # logger.debug("--Transaction not appended--Transaction Invalid Signature")
-                    # smartcontractLockList.remove(devPublicKey)
-                    self.removeLockfromSC(devPublicKey)
+                    # transactionLockList.remove(devPublicKey)
+                    self.removeLockfromT(devPublicKey)
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
-        # smartcontractLockList.remove(devPublicKey)
-        self.removeLockfromSC(devPublicKey)
+        # transactionLockList.remove(devPublicKey)
+        self.removeLockfromT(devPublicKey)
         return "key not found"
 
     def addTransactionSC(self, devPublicKey, encryptedObj):
@@ -681,6 +1203,33 @@ class R2ac(object):
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return "done"
 
+    def updateBlockLedgerSetTrans(self, candidatePool):
+        # update local bockchain adding a new transaction
+        """ Receive a new transaction and add it to the chain\n
+            @param pubKey - Block public key\n
+            @param transaction - Data to be insert on the block\n
+            @return "done" - method done (the block are not necessarily inserted)
+        """
+        setTrans = pickle.loads(candidatePool)
+        t1 = time.time()
+        # print("inside updateBlockLedgerSeTrans, setTrans: " + str(setTrans))
+        # logger.info("Received transaction #" + (str(trans.index)))
+        while (len(setTrans)>0):
+            candidateTransaction = setTrans.pop(0)
+            # print("popped element from Pool")
+            # print(candidateTransaction)
+            if (candidateTransaction != False):
+                # print("AAAAAAAAAAAAAAAA passed the if")
+                devPublicKey = candidateTransaction[0]
+                deviceTrans = candidateTransaction[1]
+                blk = ChainFunctions.findBlock(devPublicKey)
+                ChainFunctions.addBlockTransaction(blk, deviceTrans)
+
+        t2 = time.time()
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        return "done"
+
+
     def updateIOTBlockLedger(self, iotBlock, gwName):
         # update local bockchain adding a new block
         """ Receive a block and add it to the chain\n
@@ -710,7 +1259,7 @@ class R2ac(object):
 
 
     def addBlockConsensusCandidate(self, devPubKey):
-        # TODO
+
         global blockConsensusCandidateList
         # logger.debug("================================================")
         # print("Inside addBlockConsensusCandidate, devPubKey: ")
@@ -748,36 +1297,42 @@ class R2ac(object):
         # logger.info("Block received from device")
         aesKey = ''
         t1 = time.time()
+        # print("Adding block, PubKey= " + str(devPubKey))
         blk = ChainFunctions.findBlock(devPubKey)
+
         if (blk != False and blk.index > 0):
             # print("inside first if")
             logger.error("It may be already be registered, generating another aeskey")
             aesKey = findAESKey(devPubKey)
             logger.error("passed by findAESKEY")
             if ((aesKey == False) or (len(aesKey) != 32)):
-
-                # print("inside second if")
                 logger.error("aeskey had a problem...")
+                removeAESKey(aesKey)
                 aesKey = generateAESKey(blk.publicKey)
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
-                t2 = time.time()
+                return encKey
+                # t2 = time.time()
             logger.error("actually it didn't had problem with the key")
+            logger.error("publick key received was: " + str(devPubKey) + "blk key was: " + str(blk.publicKey) + " ...")
+            removeAESKey(aesKey)
             aesKey = generateAESKey(blk.publicKey)
             encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
-            t2 = time.time()
+            return encKey
+            # t2 = time.time()
         else:
             # print("inside else")
             # logger.debug("***** New Block: Chain size:" +
             #              str(ChainFunctions.getBlockchainSize()))
             pickedKey = pickle.dumps(devPubKey)
             aesKey = generateAESKey(devPubKey)
-            if(len(aesKey) != 32):
+            while(len(aesKey) != 32):
                 logger.error("Badly generated aesKey")
+                aesKey = generateAESKey(devPubKey)
             # print("pickedKey: ")
             # print(pickedKey)
 
             encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
-            t2 = time.time()
+            # t2 = time.time()
             # Old No Consensus
             # bl = ChainFunctions.createNewBlock(devPubKey, gwPvt)
             # sendBlockToPeers(bl)
@@ -799,7 +1354,7 @@ class R2ac(object):
                     self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
                     counter_fails = counter_fails + 1
-                    if (counter_fails > 20):
+                    if (counter_fails > 200):
                         return -1
 
             if(consensus == "dBFT" or consensus == "Witness3"):
@@ -820,7 +1375,7 @@ class R2ac(object):
                     self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
                     counter_fails = counter_fails +1
-                    if (counter_fails > 20):
+                    if (counter_fails > 200):
                         return -1
                 # print("after rundbft")
             if(consensus == "PoW"):
@@ -865,7 +1420,7 @@ class R2ac(object):
                 # print("ConsensusLocks released!")
             ######end of lock consensus################
 
-        # print("Before encription of rsa2")
+        # print("Before encryption of rsa2")
 
         t3 = time.time()
         # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
@@ -874,7 +1429,17 @@ class R2ac(object):
         # print("block added")
         return encKey
 
-    def addPeer(self, peerURI, isFirst):
+
+    def getRemoteContext(self):
+        global blockContext
+        return blockContext
+
+    def getRemoteContexts(self):
+        global gwContextConsensus
+        return gwContextConsensus
+
+
+    def addPeer(self, peerURI, isFirst, contexts):
         """ Receive a peer URI add it to a list of peers.\n
             the var isFirst is used to ensure that the peer will only be added once.\n
             @param peerURI - peer URI\n
@@ -883,13 +1448,48 @@ class R2ac(object):
             @return False - peer is already on the list
         """
         global peers
+        global contextPeers
+
         if not (findPeer(peerURI)):
             newPeer = PeerInfo.PeerInfo(peerURI, Pyro4.Proxy(peerURI))
             peers.append(newPeer)
+
+            # print("running add peer in addPeer in contextPeers")
+            obj = newPeer.object
+            # print("After creating obj in ADDpeer")
+            newPeerContext = contexts
+            # newPeerContext = obj.getRemoteContext()
+            # print("after getting remote context")
+            for x, y in newPeerContext:
+                foundContextPeer = False
+                for index in range(len(contextPeers)):
+                    if (contextPeers[index][0] == x):
+                        print("Context found: " + x)
+                        contextPeers[index][1].append(newPeer)
+                        print("Peer added2 to context Peer" + str(contextPeers))
+                        foundContextPeer = True
+                if (foundContextPeer == False):
+                    # print("2did not find context in contextPeers, creating and appending")
+                    contextPeers.append([x, [newPeer]])
+                    print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
+            # foundContextPeer = False
+            # for index in range(len(contextPeers)):
+            #     if (contextPeers[index][0] == newPeerContext):
+            #         print("Context found: " + newPeerContext)
+            #         contextPeers[index][1].append(newPeer)
+            #         print("Peer added to context Peer" + str(contextPeers))
+            #         foundContextPeer = True
+            # if (foundContextPeer == False):
+            #     # print("did not find context in contextPeers, creating and appending")
+            #     contextPeers.append([newPeerContext, [newPeer]])
+            #     print("CONTEXT and PEER added to context Peer" + str(contextPeers))
+
             if isFirst:
                 # after adding the original peer, send false to avoid loop
                 addBack(newPeer, False)
             syncChain(newPeer)
+
+
             return True
         else:
             # print("peer is already on the list")
@@ -1084,13 +1684,18 @@ class R2ac(object):
         global blockContext
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
-        blockContext = "0001"
+        #vblockContext = "0001"
+        if(random.randrange(1,3) == 1):
+            blockContext = "0001"
+        else:
+            blockContext = "0002"
+            logger.error("******************Changed to 2****************")
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
 
         if ((PBFTConsensus(blk, gwPub, devPubKey)) == False):
-            print("Consensus not finished")
+            logger.error("Consensus not finished")
             return False
         t2 = time.time()
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
@@ -1105,7 +1710,7 @@ class R2ac(object):
         global blockContext
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
-        blockContext = "0001"
+        #vblockContext = "0001"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # logger.info("after blk, before consensus")
@@ -1128,7 +1733,7 @@ class R2ac(object):
         global blockContext
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
-        blockContext = "0001"
+        #vblockContext = "0001"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # print("Device PubKey (insire runPoW): " + str(devPubKey))
@@ -1150,7 +1755,7 @@ class R2ac(object):
         global blockContext
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
-        blockContext = "0001"
+        #vblockContext = "0001"
         #@TODO define somehow a device is in a context
         newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers)
@@ -1842,7 +2447,7 @@ def verifyTransactionCandidate(block, newTransaction, generatorGwPub, generatorD
         transactionValidation = False
         return transactionValidation
 
-    #lastTransaction = ChainFunctions.getLatestBlockTransaction(block)
+    lastTransaction = ChainFunctions.getLatestBlockTransaction(block)
     # print("Index:"+str(lastBlk.index)+" prevHash:"+str(lastBlk.previousHash)+ " time:"+str(lastBlk.timestamp)+ " pubKey:")
     #lastTransactionHash = CryptoFunctions.calculateHash(lastTransaction.index, lastTransaction.previousHash, lastTransaction.timestamp, lastTransaction.data, lastTransaction.signature, lastTransaction.signature)
     lastTransactionHash = CryptoFunctions.calculateTransactionHash(ChainFunctions.getLatestBlockTransaction(block))
@@ -1976,6 +2581,34 @@ def loadOrchestratorIndex(index):
     # return orchestratorObject
 
 
+
+def loadOrchestratorContextFirstinPeers():
+    global orchestratorContextObject
+    global gwContextConsensus
+    global peers
+    global contextPeers
+    uri = myURI
+
+    for context, consensus in gwContextConsensus:
+        # print("*********")
+        # print("these are my contextPeers: " + str(contextPeers))
+        contextFound = False
+        for index in range(len(contextPeers)):
+            if (contextPeers[index][0] == context):
+                # print("Context: " + context + "found, I am not the first peer")
+                peerObj = contextPeers[index][1][0].object
+                orchestratorContextObject.append([context, peerObj])
+                # print("orchestratorContextObject: " + str(orchestratorContextObject))
+                contextFound = True
+
+        if (contextFound == False):
+            # in the case that it does not has any other peers in list, it is the first of that context
+            # print("I am the first peer: ")
+            orchestratorContextObject.append([context, Pyro4.Proxy(uri)])
+            # print("orchestratorContextObject: " + str(orchestratorContextObject))
+
+
+
 def loadOrchestratorFirstinPeers():
     global orchestratorObject
     if(len(peers) < 1):
@@ -2088,17 +2721,20 @@ def saveURItoFile(uri):
     # text_file.close()
 
 
+
 """ Main function initiate the system"""
 
 
-def main(nameServerIP, nameServerPort, local_gatewayName):
+def main(nameServerIP, nameServerPort, local_gatewayName, gatewayContext):
 
     global myURI
     global votesForNewOrchestrator
 
     global gatewayName
+    global blockContext
     gatewayName = local_gatewayName
 
+    blockContext =gatewayContext
 
     # initialize Logger
     global logger
@@ -2133,6 +2769,7 @@ def main(nameServerIP, nameServerPort, local_gatewayName):
         # logger.info("Creatin thread....")
         # print("going to master thread")
         loadOrchestratorFirstinPeers()
+        loadOrchestratorContextFirstinPeers()
         # firstGwBlock = ChainFunctions.createNewBlock(gwPub, gwPvt, consensus
         # ChainFunctions.addBlockHeader(firstGwBlock)
         # R2ac.updateIOTBlockLedger(firstGwBlock, myName)
@@ -2141,6 +2778,7 @@ def main(nameServerIP, nameServerPort, local_gatewayName):
         # threading.Thread(target=runMasterThread).start()
     else:
         loadOrchestratorFirstinPeers()
+        loadOrchestratorContextFirstinPeers()
         # time.sleep(5)
         # print("inside main else")
         # pickedUri = pickle.dumps(myURI)
@@ -2160,6 +2798,7 @@ def main(nameServerIP, nameServerPort, local_gatewayName):
     logger.info("Pyro name server: " + nameServerIP + ":" + str(nameServerPort))
 
     daemon.requestLoop()
+
 
 
 if __name__ == '__main__':
