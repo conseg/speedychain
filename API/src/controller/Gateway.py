@@ -563,7 +563,7 @@ class R2ac(object):
 
     def performTransactionPoolPBFTConsensus(self,context):
         global contextPeers
-
+        candidatePool =[]
         index = 0
         for index in range(len(orchestratorContextObject)):
             # print("*** obj " + str(orchestratorContextObject[index][1]) + " my pyro " + str(Pyro4.Proxy(myURI)))
@@ -572,6 +572,11 @@ class R2ac(object):
             if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
                 # print("******************I Am here")
                 self.addContextinLockList(context)
+                pickedCandidatePool = self.getLocalTransactionPool(context)
+                myPool = pickle.loads(pickedCandidatePool)
+                if (myPool != False):
+                    candidatePool = myPool
+                    print("I got my pool in PBFT")
                 tempContextPeers = []
                 for x in range(len(contextPeers)):
                     # print(" ***VVVVV **** context? " +contextPeers[x][0])
@@ -580,18 +585,19 @@ class R2ac(object):
                 for p in tempContextPeers:
                     peer = p.object
                     peer.addContextinLockList(context)
-                    print("@@@@@@****** getting remote lock")
-
-                print("my Index" + str(index))
-
-                candidatePool = self.getLocalTransactionPool(context)
-                if (candidatePool != False):
+                    pickedRemotePool = peer.getLocalTransactionPool(context)
+                    remoteCandidatePool = pickle.loads(pickedRemotePool)
+                    if(remoteCandidatePool!=False):
+                        candidatePool.append(remoteCandidatePool)
+                        print("***AAA******** I got other peer pool in PBFT")
+                if (len(candidatePool)!=0):
                     print("**************Inside PBFT Transaction ***************")
+                    # print("candidate Pool: "+ str(candidatePool))
                 self.removeLockfromContext(context)
                 for p in tempContextPeers:
                     peer = p.object
                     peer.removeLockfromContext(context)
-                    print("@@@@@@****** releasing remote lock")
+                    # print("@@@@@@****** releasing remote lock")
 
 
         #
@@ -604,7 +610,10 @@ class R2ac(object):
         global contextPeers
         # global blockContext
 
-        candidatePool = self.getLocalTransactionPool(context)
+        # candidatePool = self.getLocalTransactionPool(context)
+        pickedCandidatePool = self.getLocalTransactionPool(context)
+        candidatePool = pickle.loads(pickedCandidatePool)
+
         candidatePooltoSend = []
 
         if(candidatePool != False):
@@ -774,7 +783,7 @@ class R2ac(object):
                         time.sleep(0.001)
                     if (i == 1000):
                         transactionLockList[index][1].release()
-                        return False
+                        return pickle.dumps(False)
                     # if it got the lock, insert a new transaction into the list
 
                     if (len(transactionConsensusCandidateList[index][1]) > 0):
@@ -785,7 +794,8 @@ class R2ac(object):
                         print("there is a pool candidate, pop it!!! context: " + context)
                         transactionConsensusCandidateList[index][1] = []
                         transactionLockList[index][1].release()
-                        return transactionPool
+                        pickedTransactionPool = pickle.dumps(transactionPool)
+                        return pickedTransactionPool
 
                     transactionLockList[index][1].release()
                     # print("VVVVVV Transaction Tuple: ")
@@ -798,7 +808,7 @@ class R2ac(object):
 
         # print("end of get transaction")
         # logger.debug("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
-        return False
+        return pickle.dumps(False)
 
     def addContextinLockList(self,context):
         global contextLockList
