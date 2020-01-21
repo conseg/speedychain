@@ -103,14 +103,17 @@ blockContext = "0001"
 # should have all context here
 gwContextConsensus = [("0001", "PoA"),("0002", "PBFT")]
 
+# list of votes for new orchestrator votes are: context, voter gwPub, voted gwPub, signature
+votesForNewContextOrchestrator =[]
+myVoteForNewContextOrchestrator =[]
+
 # should have all context here
 orchestratorContextObject = []
 # [["0001", ""], ["0002", ""]]
 # transactionSharedPool could be understood as = [["0001", gwOrchestratorObj],["0002", gwOrchestratorObj]]
 
-# list of votes for new orchestrator votes are: voter gwPub, voted gwPub, signature
-votesForNewOrchestratorTransaction = []
-myVoteForNewOrchestratorTransaction = []  # my gwPub, voted gwPub, my signed vote
+
+
 
 
 def bootstrapChain2():
@@ -593,6 +596,8 @@ class R2ac(object):
                 if (len(candidatePool)!=0):
                     print("**************Inside PBFT Transaction ***************")
                     # print("candidate Pool: "+ str(candidatePool))
+                    print("finished consensus, electing new node")
+                    self.electNewContextOrchestrator(context)
                 self.removeLockfromContext(context)
                 for p in tempContextPeers:
                     peer = p.object
@@ -1637,6 +1642,7 @@ class R2ac(object):
         pickedVote = pickle.dumps(myVoteForNewOrchestrator)
         return pickedVote
 
+
     def electNewOrchestrator(self):
         global votesForNewOrchestrator
         global orchestratorObject
@@ -1671,6 +1677,128 @@ class R2ac(object):
         # logger.info("New Orchestator loaded is: " + str(orchestratorObject.exposedURI()))
         # print("new loaded orchestrator: " + str(orchestratorObject.exposedURI()))
         return True
+
+
+    # Orchestrator voting and election considering contexts
+    def peerVoteNewContextOrchestrator(self,context):
+        global myVoteForNewContextOrchestrator
+        global votesForNewContextOrchestrator
+        global contextPeers
+
+        for x in range(len(contextPeers)):
+            # print(" ***VVVVV **** context? " +contextPeers[x][0])
+            if (contextPeers[x][0] == context):
+                tempContextPeers = contextPeers[x][1]
+
+        randomGw = random.randint(0, len(tempContextPeers) - 1)
+        # print("random GW??????? : "+ str(randomGw))
+        # randomGw=1
+
+        votedURI = tempContextPeers[randomGw].peerURI
+        # print("VotedURI: " + str(votedURI))
+        contextFound = False
+        for i in range(len(myVoteForNewContextOrchestrator)):
+            if(context == myVoteForNewContextOrchestrator[i][0]):
+                myVoteForNewContextOrchestrator[i][1]= votedURI
+                contextFound = True
+
+        if(contextFound == False):
+                myVoteForNewContextOrchestrator.append([context, [votedURI]])
+
+        contextFound = False
+        for index in range(len(votesForNewContextOrchestrator)):
+            if(context == votesForNewContextOrchestrator[index][0]):
+                votesForNewContextOrchestrator[index][1].append(votedURI)
+                contextFound = True
+        if (contextFound == False):
+            votesForNewContextOrchestrator.append([context, [votedURI]])
+
+        pickedVote = pickle.dumps(votedURI)
+        return pickedVote
+
+    def startCleanVotesContextOrchestrator(self, context):
+        global votesForNewContextOrchestrator
+
+        contextFound = False
+
+        for index in range(len(votesForNewContextOrchestrator)):
+            if(context == votesForNewContextOrchestrator[index][0]):
+                # clean votes
+                votesForNewContextOrchestrator[index][1] = []
+                contextFound = True
+                return True
+        if (contextFound == False):
+
+            votesForNewContextOrchestrator.append([context, []])
+            return True
+        return False
+
+    def loadElectedContextOrchestrator(self, context, data):
+        global orchestratorContextObject
+        newOrchestrator = pickle.loads(data)
+        for orc in range(len(orchestratorContextObject)):
+            if (orchestratorContextObject[orc][0] == context):
+                orchestratorContextObject[orc][1] = newOrchestrator
+        return True
+
+    def electNewContextOrchestrator(self,  context):
+        global votesForNewContextOrchestrator
+        global orchestratorContextObject
+        global contextPeers
+        t1 = time.time()
+        print("electing new context orchestrator")
+        # votesForNewContextOrchestrator = []
+        index = 0
+        tempContextPeers = []
+        for x in range(len(contextPeers)):
+            # print(" ***VVVVV **** context? " +contextPeers[x][0])
+            if (contextPeers[x][0] == context):
+                tempContextPeers = contextPeers[x][1]
+
+        if(self.startCleanVotesContextOrchestrator(context) == False):
+            logger.error("Problem initializing votes for context orchestrator")
+        contextFound = False
+        index=0
+        for index in range(len(votesForNewContextOrchestrator)):
+            if(context == votesForNewContextOrchestrator[index][0]):
+                # clean votes
+                # votesForNewContextOrchestrator[index][1] = []
+                contextFound = True
+                break
+        if (contextFound == False):
+            votesForNewContextOrchestrator.append([context, []])
+            index=len(votesForNewContextOrchestrator)-1
+            logger.error("It should had already been initialized in startClean...")
+
+        for peer in tempContextPeers:
+            obj = peer.object
+            # print("objeto criado")
+            obj.startCleanVotesContextOrchestrator(context)
+            receivedVote = obj.peerVoteNewContextOrchestrator(context)
+
+            votesForNewContextOrchestrator[index][1].append(pickle.loads(receivedVote))
+            # logger.info("remote vote for: " + str(pickle.loads(receivedVote)))
+
+        self.peerVoteNewContextOrchestrator(context)
+
+        # newOrchestratorURI = mode(votesForNewOrchestrator)
+        print("verifying votes for index: "+str(index) + " ")
+        print(votesForNewContextOrchestrator[index][1])
+        newOrchestratorURI = max(set(votesForNewContextOrchestrator[index][1]), key=votesForNewContextOrchestrator[index][1].count)
+        # logger.info("Elected node was" + str(newOrchestratorURI))
+
+        # update current context orchestrator in local orchestrator variable
+        for orc in range(len(orchestratorContextObject)):
+            if(orchestratorContextObject[orc][0]==context):
+                orchestratorContextObject[orc][1] = Pyro4.Proxy(newOrchestratorURI)
+
+        # update current context orchestrator in each peer orchestrator variable
+        for peer in tempContextPeers:
+            obj = peer.object
+            dat = pickle.dumps(Pyro4.Proxy(newOrchestratorURI))
+            obj.loadElectedContextOrchestrator(context, dat)
+        print("***AAA*****AAAAA*****AAAA*** Orchestrator for context was elected successfully")
+        t2 = time.time()
 
     def exposedURI(self):
         return myURI
@@ -2385,58 +2513,58 @@ def calcBlockPBFT(newBlock, alivePeers):
 # Transaction PBFT
 ######
 
-# Consensus for transactions
-def PBFTConsensusTransaction(block, newTransaction, generatorGwPub, generatorDevicePub):
-    """ Run the PBFT consensus to add a new transaction to a block\n
-        @param block - BlockHeader object where the transaction will be add\n
-        @param newTransaction - the transaction who will be add\n
-        @param generatorGwPub - Sender peer public key\n
-        @generatorDevicePub - Device how create the transaction and wants to add it to a block\n
-        @return boolean - True: Transaction approved to consensus, False: transaction not approved
-    """
-    threads = []
-    connectedPeers = preparePBFTConsensus()
-    commitTransactionPBFT(block, newTransaction,
-                            generatorGwPub, generatorDevicePub, connectedPeers)
-    # calculate, and if it is good, insert new block and call other peers to do the same
-    if calcTransactionPBFT(newTransaction, connectedPeers):
-        for p in connectedPeers:
-            t = threading.Thread(target=p.object.calcBlockPBFT, args=(
-                block, newTransaction, connectedPeers))
-            threads.append(t)
-        for t in threads:
-            t.join()
-        del newBlockCandidate[CryptoFunctions.calculateHashForBlock(
-            newTransaction)]
-        return True
-    return False
+# # Consensus for transactions
+# def PBFTConsensusTransaction(block, newTransaction, generatorGwPub, generatorDevicePub):
+#     """ Run the PBFT consensus to add a new transaction to a block\n
+#         @param block - BlockHeader object where the transaction will be add\n
+#         @param newTransaction - the transaction who will be add\n
+#         @param generatorGwPub - Sender peer public key\n
+#         @generatorDevicePub - Device how create the transaction and wants to add it to a block\n
+#         @return boolean - True: Transaction approved to consensus, False: transaction not approved
+#     """
+#     threads = []
+#     connectedPeers = preparePBFTConsensus()
+#     commitTransactionPBFT(block, newTransaction,
+#                             generatorGwPub, generatorDevicePub, connectedPeers)
+#     # calculate, and if it is good, insert new block and call other peers to do the same
+#     if calcTransactionPBFT(newTransaction, connectedPeers):
+#         for p in connectedPeers:
+#             t = threading.Thread(target=p.object.calcBlockPBFT, args=(
+#                 block, newTransaction, connectedPeers))
+#             threads.append(t)
+#         for t in threads:
+#             t.join()
+#         del newBlockCandidate[CryptoFunctions.calculateHashForBlock(
+#             newTransaction)]
+#         return True
+#     return False
 
-def commitTransactionPBFT(block, newTransaction, generatorGwPub, generatorDevicePub, alivePeers):
-    """ Send a transaction to be validated by all peers\n
-        @param block - BlockHeader object where the transaction will be add\n
-        @param newTransaction - the transaction who will be add\n
-        @param generatorGwPub - Sender peer public key\n
-        @generatorDevicePub - Device how create the transaction and wants to add it to a block\n
-        @param alivePeers - list of available peerszn\n
-        @return boolean - True: sended to validation, False: transaction are not valid or already in consensus
-    """
-    # TODO similar to what was done with block, just different verifications
-    threads = []
-    # if it was already inserted a validation for the candidade block, abort
-    if newTransactionCandidate[CryptoFunctions.calculateHash(newTransaction)][gwPub] == CryptoFunctions.signInfo(gwPvt, newTransaction):
-        # print ("transaction already in consensus")
-        return False
-    if verifyTransactionCandidate():  # verify if the transaction is valid
-        for p in alivePeers:  # call all peers to verify if block is valid
-            t = threading.Thread(target=p.object.verifyTransactionCandidate, args=(
-                block, newTransaction, generatorGwPub, generatorDevicePub, alivePeers))
-            # @Regio -> would it be better to use "pickle.dumps(newBlock)"  instead of newBlock?
-            threads.append(t)
-        #  join threads
-        for t in threads:
-            t.join()
-        return True
-    return False
+# def commitTransactionPBFT(block, newTransaction, generatorGwPub, generatorDevicePub, alivePeers):
+#     """ Send a transaction to be validated by all peers\n
+#         @param block - BlockHeader object where the transaction will be add\n
+#         @param newTransaction - the transaction who will be add\n
+#         @param generatorGwPub - Sender peer public key\n
+#         @generatorDevicePub - Device how create the transaction and wants to add it to a block\n
+#         @param alivePeers - list of available peerszn\n
+#         @return boolean - True: sended to validation, False: transaction are not valid or already in consensus
+#     """
+#     # TODO similar to what was done with block, just different verifications
+#     threads = []
+#     # if it was already inserted a validation for the candidade block, abort
+#     if newTransactionCandidate[CryptoFunctions.calculateHash(newTransaction)][gwPub] == CryptoFunctions.signInfo(gwPvt, newTransaction):
+#         # print ("transaction already in consensus")
+#         return False
+#     if verifyTransactionCandidate():  # verify if the transaction is valid
+#         for p in alivePeers:  # call all peers to verify if block is valid
+#             t = threading.Thread(target=p.object.verifyTransactionCandidate, args=(
+#                 block, newTransaction, generatorGwPub, generatorDevicePub, alivePeers))
+#             # @Regio -> would it be better to use "pickle.dumps(newBlock)"  instead of newBlock?
+#             threads.append(t)
+#         #  join threads
+#         for t in threads:
+#             t.join()
+#         return True
+#     return False
 
 def verifyTransactionCandidate(block, newTransaction, generatorGwPub, generatorDevicePub, alivePeers):
     """ Checks whether the new transaction has the following characteristics:\n
