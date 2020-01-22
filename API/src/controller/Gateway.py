@@ -103,14 +103,17 @@ blockContext = "0001"
 # should have all context here
 gwContextConsensus = [("0001", "PoA"),("0002", "PBFT")]
 
+# list of votes for new orchestrator votes are: context, voter gwPub, voted gwPub, signature
+votesForNewContextOrchestrator =[]
+myVoteForNewContextOrchestrator =[]
+
 # should have all context here
 orchestratorContextObject = []
 # [["0001", ""], ["0002", ""]]
 # transactionSharedPool could be understood as = [["0001", gwOrchestratorObj],["0002", gwOrchestratorObj]]
 
-# list of votes for new orchestrator votes are: voter gwPub, voted gwPub, signature
-votesForNewOrchestratorTransaction = []
-myVoteForNewOrchestratorTransaction = []  # my gwPub, voted gwPub, my signed vote
+
+
 
 
 def bootstrapChain2():
@@ -563,15 +566,22 @@ class R2ac(object):
 
     def performTransactionPoolPBFTConsensus(self,context):
         global contextPeers
-
+        candidatePool =[]
         index = 0
         for index in range(len(orchestratorContextObject)):
             # print("*** obj " + str(orchestratorContextObject[index][1]) + " my pyro " + str(Pyro4.Proxy(myURI)))
             # print("obj URI: " + str(orchestratorContextObject[index][1].exposedURI()) + "myURI " + str(myURI))
             # orchestratorContextObject[index][1].exposedURI()
             if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
-                # print("******************I Am here")
-                self.addContextinLockList(context)
+                print("******************I Am the orchestrator leader")
+                while(self.addContextinLockList(context)==False):
+                    logger.error("I AM NOT WITH LOCK!!!!!")
+                    time.sleep(1)
+                pickedCandidatePool = self.getLocalTransactionPool(context)
+                myPool = pickle.loads(pickedCandidatePool)
+                if (myPool != False):
+                    candidatePool = myPool
+                    print("I got my pool in PBFT")
                 tempContextPeers = []
                 for x in range(len(contextPeers)):
                     # print(" ***VVVVV **** context? " +contextPeers[x][0])
@@ -579,24 +589,223 @@ class R2ac(object):
                         tempContextPeers = contextPeers[x][1]
                 for p in tempContextPeers:
                     peer = p.object
-                    peer.addContextinLockList(context)
-                    print("@@@@@@****** getting remote lock")
+                    while(peer.addContextinLockList(context)==False):
+                        time.sleep(1)
+                    pickedRemotePool = peer.getLocalTransactionPool(context)
+                    remoteCandidatePool = pickle.loads(pickedRemotePool)
+                    if(remoteCandidatePool!=False):
+                        while(len(remoteCandidatePool)>0):
+                            # cant just append the remoteCandidatePool, should add each tuple
+                            remoteTR = remoteCandidatePool.pop(0)
+                            candidatePool.append((remoteTR[0],remoteTR[1]))
 
-                print("my Index" + str(index))
-
-                candidatePool = self.getLocalTransactionPool(context)
-                if (candidatePool != False):
+                        # candidatePool.append(remoteCandidatePool)
+                        print("***AAA******** I got other peer pool in PBFT")
+                if (len(candidatePool)!=0):
                     print("**************Inside PBFT Transaction ***************")
-                self.removeLockfromContext(context)
-                for p in tempContextPeers:
-                    peer = p.object
-                    peer.removeLockfromContext(context)
-                    print("@@@@@@****** releasing remote lock")
+                    # print("candidate Pool: "+ str(candidatePool))
+
+                    self.prepareContextPBFT(context,candidatePool,tempContextPeers)
+                    print("finished consensus, electing new node")
+
+                    logger.error("-----------------------------main--lockremoved")
+                    # for p in tempContextPeers:
+                    #     peer = p.object
+                    #     peer.removeLockfromContext(context)
+
+                    self.electNewContextOrchestrator(context)
+
+                    self.removeLockfromContext(context)
+                    for p in tempContextPeers:
+                        peer = p.object
+                        peer.removeLockfromContext(context)
+
+                else:
+                    self.removeLockfromContext(context)
+                    for p in tempContextPeers:
+                        peer = p.object
+                        peer.removeLockfromContext(context)
+                    # print("@@@@@@****** releasing remote lock")
+
+
 
 
         #
         # logger.error("Inside PBFT Transaction... first step and context: " + context)
         # candidatePooltoSend = []
+
+    def prepareContextPBFT(self, context, candidatePool, alivePeers):
+        """ Send a new candidatePool for all the available peers on the network\n
+            @param newBlock - BlockHeader object\n
+            @param generatorGwPub - Public key from the peer who want to generate the block\n
+            @param generatorDevicePub - Public key from the device who want to generate the block\n
+        """
+        logger.error("-----------------------------inside prepare")
+        candidateTransactionPool =[]
+        votesPoolTotal = []
+        validTransactionPool =[]
+        while (len(candidatePool) > 0):
+            logger.error("-----------------------------inside prepare--while")
+            candidateTransaction = candidatePool.pop(0)
+            # print("popped element from Pool")
+            # print(candidateTransaction)
+            if (candidateTransaction != False):
+                logger.error("-----------------------------inside prepare--notfalse candidate")
+                # print("AAAAAAAAAAAAAAAA passed the if")
+                devPublicKey = candidateTransaction[0]
+                deviceInfo = candidateTransaction[1]
+                if(ChainFunctions.findBlock(devPublicKey)!=False):
+                    blk = ChainFunctions.findBlock(devPublicKey)
+                # print("passed the blk")
+                    nextInt = blk.transactions[len(blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    # print("BBBBBBBBBBBBB passed the devinfo")
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(ChainFunctions.getLatestBlockTransaction(blk))
+                    transaction = Transaction.Transaction(nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+                    candidateTransactionPool.append((devPublicKey, transaction))
+                    logger.error("-----------------------------inside prepare--transaction appended")
+                    trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
+                    votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
+        if(len(candidateTransactionPool)==0):
+            logger.error("!!!!!!! All tr were invalid or no tr at all")
+            return
+
+        dumpedPool = pickle.dumps(candidateTransactionPool)
+        # a = pickle.loads(picked)
+        # b = a.pop(0)
+        # c =b[1]
+        # c.__class__ = Transaction.Transaction
+        # originalTr=candidateTransactionPool.pop(0)
+        # sig = originalTr[1].signature
+        # logger.error(" casting to transaction worked!!!!! " + str(c.signature))
+        # logger.error(" original sign was: "+ str(sig))
+        logger.error("-----------------------------inside prepare--before voting")
+        for p in alivePeers:
+            # p.object.getGwPubkey
+            # p.object.votePoolCandidate(context, dumpedPool, gwPub)
+            pickedVotes = p.object.votePoolCandidate(context, dumpedPool, gwPub)
+            votes = pickle.loads(pickedVotes)
+
+            for index in range(len(votes)):
+                # if there is a vote
+                if(votes[index][1]!=False):
+                    votesPoolTotal[index][1].append(votes[index][1])
+
+        for v in range(len(votesPoolTotal)):
+            if (len(votesPoolTotal[v][1]) > ((2 / 3) * len(alivePeers))):
+                logger.error("APPENDED in final pool")
+                validTransactionPool.append(votesPoolTotal[v][0])
+
+        # commit
+        if(len(validTransactionPool)>0):
+            dumpedSetTrans = pickle.dumps(validTransactionPool)
+            # addLocally
+            self.updateBlockLedgerSetTrans(dumpedSetTrans)
+
+            # add remote
+
+            for p in alivePeers:
+                obj=p.object
+                obj.updateBlockLedgerSetTrans(dumpedSetTrans)
+            logger.error("!!!! PASSED !!!")
+            return True
+
+
+
+            # update list of votes, while updating verify the size and if it is higher then the minimum
+            # when consensus is made, send transaction to all peers -> commit
+
+            # logger.debug("Answer received: "+str(verifyRet))
+            # print("######inside handlePBFT first for")
+
+            # if (verifyRet):
+            #     peerPubKey = p.object.getGwPubkey()
+            #     # logger.debug("Pub Key from gateway that voted: "+str(peerPubKey))
+            #     # logger.debug("Running the add vote to block")
+            #     addVoteBlockPBFT(newBlock, peerPubKey, verifyRet)
+            #     calcRet = calcBlockPBFT(newBlock, alivePeers)
+            #     # logger.debug("Result from calcBlockPBFT:"+str(calcRet))
+            #     if (calcRet):
+            #         # logger.info("Consensus was achieve, updating peers and finishing operation")
+            #         sendBlockToPeers(newBlock)
+            #         # print("handlePBFT = true")
+            #         return True
+
+        return False
+
+    def votePoolCandidate(self, context, candidatePool, receivedGwPub):
+        """ Checks whether the new block has the following characteristics: \n
+            * The hash of the previous block are correct in the new block data\n
+            * The new block index is equals to the previous block index plus one\n
+            * The generation time of the last block is smaller than the new one \n
+            If the new block have it all, sign it with the peer private key\n
+            @return False - The block does not have one or more of the previous characteristics\n
+            @return voteSignature - The block has been verified and approved
+        """
+        validation = True
+        votesPool =[]
+        receivedPool = pickle.loads(candidatePool)
+        while(len(receivedPool) > 0):
+            candidate = receivedPool.pop(0)
+            receivedDevPub = candidate[0]
+            candidateTr = candidate[1]
+            candidateTr.__class__ = Transaction.Transaction
+
+            # after verifications...
+            trSign = CryptoFunctions.signInfo(gwPvt, str(candidateTr))
+            votesPool.append([(receivedDevPub, candidateTr), trSign])
+        return pickle.dumps(votesPool)
+        # lastBlk = ChainFunctions.getLatestBlock()
+        # # logger.debug("last block:"+str(lastBlk.strBlock()))
+        # lastBlkHash = CryptoFunctions.calculateHashForBlock(lastBlk)
+        # # print("Index:"+str(lastBlk.index)+" prevHash:"+str(lastBlk.previousHash)+ " time:"+str(lastBlk.timestamp)+ " pubKey:")
+        # # lastBlkHash = CryptoFunctions.calculateHash(lastBlk.index, lastBlk.previousHash, lastBlk.timestamp,
+        # #                                             lastBlk.publicKey)
+        # # print ("This Hash:"+str(lastBlkHash))
+        # # print ("Last Hash:"+str(block.previousHash))
+        #
+        # if (lastBlkHash != newBlock.previousHash):
+        #     # print("validation lastblkhash")
+        #     logger.error("Failed to validate new block(" +
+        #                  str(newBlock.index) + ") HASH value")
+        #     # logger.debug("lastBlkHash="+str(lastBlkHash))
+        #     # logger.debug("newBlock-previousHash="+str(newBlock.previousHash))
+        #     blockValidation = False
+        #     return blockValidation
+        # if (int(lastBlk.index + 1) != int(newBlock.index)):
+        #     # print("validation lastblkindex")
+        #     logger.error("Failed to validate new block(" +
+        #                  str(newBlock.index) + ") INDEX value")
+        #     # logger.debug("lastBlk Index="+str(lastBlk.index))
+        #     # logger.debug("newBlock Index="+str(newBlock.index))
+        #     blockValidation = False
+        #     return blockValidation
+        # if (lastBlk.timestamp > newBlock.timestamp):  # @TODO this timestamp contraint can be hard -> global time
+        #     # print("validation lastblktime")
+        #     logger.error("Failed to validate new block(" +
+        #                  str(newBlock.index) + ") TIME value")
+        #     # logger.debug("lastBlk time:"+str(lastBlk.timestamp))
+        #     # logger.debug("lastBlk time:"+str(newBlock.timestamp))
+        #     blockValidation = False
+        #     return blockValidation
+        # if blockValidation:
+        #     # logger.info("block successfully validated")
+        #     voteSignature = CryptoFunctions.signInfo(
+        #         gwPvt, newBlock.__str__())  # identify the problem in this line!!
+        #     # logger.debug("block successfully signed")
+        #     # addVoteBlockPBFT(newBlock, gwPub, voteSignature)
+        #     # logger.debug("block successfully added locally")
+        #     return voteSignature
+        #     # addVoteBlockPBFT(newBlock, gwPub, voteSignature) #vote positively, signing the candidate block
+        #     # for p in alivePeers:
+        #     #     p.object.addVoteBlockPBFTRemote(newBlock, gwPub, voteSignature) #put its vote in the list of each peer
+        #     # return True
+        # else:
+        #     # print("Failed to validate new block")
+        #     logger.error("Failed to validate new block")
+        #     return False
 
 
     def performTransactionPoolPoAConsensus(self, context):
@@ -604,7 +813,10 @@ class R2ac(object):
         global contextPeers
         # global blockContext
 
-        candidatePool = self.getLocalTransactionPool(context)
+        # candidatePool = self.getLocalTransactionPool(context)
+        pickedCandidatePool = self.getLocalTransactionPool(context)
+        candidatePool = pickle.loads(pickedCandidatePool)
+
         candidatePooltoSend = []
 
         if(candidatePool != False):
@@ -774,7 +986,7 @@ class R2ac(object):
                         time.sleep(0.001)
                     if (i == 1000):
                         transactionLockList[index][1].release()
-                        return False
+                        return pickle.dumps(False)
                     # if it got the lock, insert a new transaction into the list
 
                     if (len(transactionConsensusCandidateList[index][1]) > 0):
@@ -785,7 +997,8 @@ class R2ac(object):
                         print("there is a pool candidate, pop it!!! context: " + context)
                         transactionConsensusCandidateList[index][1] = []
                         transactionLockList[index][1].release()
-                        return transactionPool
+                        pickedTransactionPool = pickle.dumps(transactionPool)
+                        return pickedTransactionPool
 
                     transactionLockList[index][1].release()
                     # print("VVVVVV Transaction Tuple: ")
@@ -798,7 +1011,7 @@ class R2ac(object):
 
         # print("end of get transaction")
         # logger.debug("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
-        return False
+        return pickle.dumps(False)
 
     def addContextinLockList(self,context):
         global contextLockList
@@ -1627,6 +1840,7 @@ class R2ac(object):
         pickedVote = pickle.dumps(myVoteForNewOrchestrator)
         return pickedVote
 
+
     def electNewOrchestrator(self):
         global votesForNewOrchestrator
         global orchestratorObject
@@ -1662,6 +1876,128 @@ class R2ac(object):
         # print("new loaded orchestrator: " + str(orchestratorObject.exposedURI()))
         return True
 
+
+    # Orchestrator voting and election considering contexts
+    def peerVoteNewContextOrchestrator(self,context):
+        global myVoteForNewContextOrchestrator
+        global votesForNewContextOrchestrator
+        global contextPeers
+
+        for x in range(len(contextPeers)):
+            # print(" ***VVVVV **** context? " +contextPeers[x][0])
+            if (contextPeers[x][0] == context):
+                tempContextPeers = contextPeers[x][1]
+
+        randomGw = random.randint(0, len(tempContextPeers) - 1)
+        # print("random GW??????? : "+ str(randomGw))
+        # randomGw=1
+
+        votedURI = tempContextPeers[randomGw].peerURI
+        # print("VotedURI: " + str(votedURI))
+        contextFound = False
+        for i in range(len(myVoteForNewContextOrchestrator)):
+            if(context == myVoteForNewContextOrchestrator[i][0]):
+                myVoteForNewContextOrchestrator[i][1]= votedURI
+                contextFound = True
+
+        if(contextFound == False):
+                myVoteForNewContextOrchestrator.append([context, [votedURI]])
+
+        contextFound = False
+        for index in range(len(votesForNewContextOrchestrator)):
+            if(context == votesForNewContextOrchestrator[index][0]):
+                votesForNewContextOrchestrator[index][1].append(votedURI)
+                contextFound = True
+        if (contextFound == False):
+            votesForNewContextOrchestrator.append([context, [votedURI]])
+
+        pickedVote = pickle.dumps(votedURI)
+        return pickedVote
+
+    def startCleanVotesContextOrchestrator(self, context):
+        global votesForNewContextOrchestrator
+
+        contextFound = False
+
+        for index in range(len(votesForNewContextOrchestrator)):
+            if(context == votesForNewContextOrchestrator[index][0]):
+                # clean votes
+                votesForNewContextOrchestrator[index][1] = []
+                contextFound = True
+                return True
+        if (contextFound == False):
+
+            votesForNewContextOrchestrator.append([context, []])
+            return True
+        return False
+
+    def loadElectedContextOrchestrator(self, context, data):
+        global orchestratorContextObject
+        newOrchestrator = pickle.loads(data)
+        for orc in range(len(orchestratorContextObject)):
+            if (orchestratorContextObject[orc][0] == context):
+                orchestratorContextObject[orc][1] = newOrchestrator
+        return True
+
+    def electNewContextOrchestrator(self,  context):
+        global votesForNewContextOrchestrator
+        global orchestratorContextObject
+        global contextPeers
+        t1 = time.time()
+        print("electing new context orchestrator")
+        # votesForNewContextOrchestrator = []
+        index = 0
+        tempContextPeers = []
+        for x in range(len(contextPeers)):
+            # print(" ***VVVVV **** context? " +contextPeers[x][0])
+            if (contextPeers[x][0] == context):
+                tempContextPeers = contextPeers[x][1]
+
+        if(self.startCleanVotesContextOrchestrator(context) == False):
+            logger.error("Problem initializing votes for context orchestrator")
+        contextFound = False
+        index=0
+        for index in range(len(votesForNewContextOrchestrator)):
+            if(context == votesForNewContextOrchestrator[index][0]):
+                # clean votes
+                # votesForNewContextOrchestrator[index][1] = []
+                contextFound = True
+                break
+        if (contextFound == False):
+            votesForNewContextOrchestrator.append([context, []])
+            index=len(votesForNewContextOrchestrator)-1
+            logger.error("It should had already been initialized in startClean...")
+
+        for peer in tempContextPeers:
+            obj = peer.object
+            # print("objeto criado")
+            obj.startCleanVotesContextOrchestrator(context)
+            receivedVote = obj.peerVoteNewContextOrchestrator(context)
+
+            votesForNewContextOrchestrator[index][1].append(pickle.loads(receivedVote))
+            # logger.info("remote vote for: " + str(pickle.loads(receivedVote)))
+
+        self.peerVoteNewContextOrchestrator(context)
+
+        # newOrchestratorURI = mode(votesForNewOrchestrator)
+        print("verifying votes for index: "+str(index) + " ")
+        print(votesForNewContextOrchestrator[index][1])
+        newOrchestratorURI = max(set(votesForNewContextOrchestrator[index][1]), key=votesForNewContextOrchestrator[index][1].count)
+        # logger.info("Elected node was" + str(newOrchestratorURI))
+
+        # update current context orchestrator in local orchestrator variable
+        for orc in range(len(orchestratorContextObject)):
+            if(orchestratorContextObject[orc][0]==context):
+                orchestratorContextObject[orc][1] = Pyro4.Proxy(newOrchestratorURI)
+
+        # update current context orchestrator in each peer orchestrator variable
+        for peer in tempContextPeers:
+            obj = peer.object
+            dat = pickle.dumps(Pyro4.Proxy(newOrchestratorURI))
+            obj.loadElectedContextOrchestrator(context, dat)
+        print("***AAA*****AAAAA*****AAAA*** Orchestrator for context was elected successfully")
+        t2 = time.time()
+
     def exposedURI(self):
         return myURI
 
@@ -1690,6 +2026,7 @@ class R2ac(object):
         else:
             blockContext = "0002"
             logger.error("******************Changed to 2****************")
+        blockContext = "0002"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
@@ -2203,12 +2540,12 @@ def handlePBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
     # print("inside handlepbft")
     # logger.debug("Running commit function to block: "+str(hashblk))
     # print("######before handlePBFT first for")
+    picked = pickle.dumps(newBlock)
     for p in alivePeers:
         # logger.debug("Asking for block verification from: "+str(p.peerURI))
         # verifyRet = p.object.verifyBlockCandidateRemote(pickle.dumps(newBlock), generatorGwPub, generatorDevicePub)
-        picked = pickle.dumps(newBlock)
-        verifyRet = p.object.verifyBlockCandidateRemote(
-            picked, generatorGwPub)
+
+        verifyRet = p.object.verifyBlockCandidateRemote(picked, generatorGwPub)
         # logger.debug("Answer received: "+str(verifyRet))
         # print("######inside handlePBFT first for")
         if(verifyRet):
@@ -2371,62 +2708,121 @@ def calcBlockPBFT(newBlock, alivePeers):
         # print("calcBLockPBFT = false")
         return False
 
+def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
+    """ Checks whether the new block has the following characteristics: \n
+        * The hash of the previous block are correct in the new block data\n
+        * The new block index is equals to the previous block index plus one\n
+        * The generation time of the last block is smaller than the new one \n
+        If the new block have it all, sign it with the peer private key\n
+        @return False - The block does not have one or more of the previous characteristics\n
+        @return voteSignature - The block has been verified and approved
+    """
+    blockValidation = True
+    lastBlk = ChainFunctions.getLatestBlock()
+    # logger.debug("last block:"+str(lastBlk.strBlock()))
+    lastBlkHash = CryptoFunctions.calculateHashForBlock(lastBlk)
+    # print("Index:"+str(lastBlk.index)+" prevHash:"+str(lastBlk.previousHash)+ " time:"+str(lastBlk.timestamp)+ " pubKey:")
+    # lastBlkHash = CryptoFunctions.calculateHash(lastBlk.index, lastBlk.previousHash, lastBlk.timestamp,
+    #                                             lastBlk.publicKey)
+    # print ("This Hash:"+str(lastBlkHash))
+    # print ("Last Hash:"+str(block.previousHash))
+
+    if (lastBlkHash != newBlock.previousHash):
+        # print("validation lastblkhash")
+        logger.error("Failed to validate new block(" +
+                        str(newBlock.index)+") HASH value")
+        # logger.debug("lastBlkHash="+str(lastBlkHash))
+        # logger.debug("newBlock-previousHash="+str(newBlock.previousHash))
+        blockValidation = False
+        return blockValidation
+    if (int(lastBlk.index+1) != int(newBlock.index)):
+        # print("validation lastblkindex")
+        logger.error("Failed to validate new block(" +
+                        str(newBlock.index)+") INDEX value")
+        # logger.debug("lastBlk Index="+str(lastBlk.index))
+        # logger.debug("newBlock Index="+str(newBlock.index))
+        blockValidation = False
+        return blockValidation
+    if (lastBlk.timestamp > newBlock.timestamp): # @TODO this timestamp contraint can be hard -> global time
+        # print("validation lastblktime")
+        logger.error("Failed to validate new block(" +
+                        str(newBlock.index)+") TIME value")
+        # logger.debug("lastBlk time:"+str(lastBlk.timestamp))
+        # logger.debug("lastBlk time:"+str(newBlock.timestamp))
+        blockValidation = False
+        return blockValidation
+    if blockValidation:
+        # logger.info("block successfully validated")
+        voteSignature = CryptoFunctions.signInfo(
+            gwPvt, newBlock.__str__())  # identify the problem in this line!!
+        # logger.debug("block successfully signed")
+        # addVoteBlockPBFT(newBlock, gwPub, voteSignature)
+        # logger.debug("block successfully added locally")
+        return voteSignature
+        # addVoteBlockPBFT(newBlock, gwPub, voteSignature) #vote positively, signing the candidate block
+        # for p in alivePeers:
+        #     p.object.addVoteBlockPBFTRemote(newBlock, gwPub, voteSignature) #put its vote in the list of each peer
+        # return True
+    else:
+        # print("Failed to validate new block")
+        return False
+
 ######
 # Transaction PBFT
 ######
 
-# Consensus for transactions
-def PBFTConsensusTransaction(block, newTransaction, generatorGwPub, generatorDevicePub):
-    """ Run the PBFT consensus to add a new transaction to a block\n
-        @param block - BlockHeader object where the transaction will be add\n
-        @param newTransaction - the transaction who will be add\n
-        @param generatorGwPub - Sender peer public key\n
-        @generatorDevicePub - Device how create the transaction and wants to add it to a block\n
-        @return boolean - True: Transaction approved to consensus, False: transaction not approved
-    """
-    threads = []
-    connectedPeers = preparePBFTConsensus()
-    commitTransactionPBFT(block, newTransaction,
-                            generatorGwPub, generatorDevicePub, connectedPeers)
-    # calculate, and if it is good, insert new block and call other peers to do the same
-    if calcTransactionPBFT(newTransaction, connectedPeers):
-        for p in connectedPeers:
-            t = threading.Thread(target=p.object.calcBlockPBFT, args=(
-                block, newTransaction, connectedPeers))
-            threads.append(t)
-        for t in threads:
-            t.join()
-        del newBlockCandidate[CryptoFunctions.calculateHashForBlock(
-            newTransaction)]
-        return True
-    return False
+# # Consensus for transactions
+# def PBFTConsensusTransaction(block, newTransaction, generatorGwPub, generatorDevicePub):
+#     """ Run the PBFT consensus to add a new transaction to a block\n
+#         @param block - BlockHeader object where the transaction will be add\n
+#         @param newTransaction - the transaction who will be add\n
+#         @param generatorGwPub - Sender peer public key\n
+#         @generatorDevicePub - Device how create the transaction and wants to add it to a block\n
+#         @return boolean - True: Transaction approved to consensus, False: transaction not approved
+#     """
+#     threads = []
+#     connectedPeers = preparePBFTConsensus()
+#     commitTransactionPBFT(block, newTransaction,
+#                             generatorGwPub, generatorDevicePub, connectedPeers)
+#     # calculate, and if it is good, insert new block and call other peers to do the same
+#     if calcTransactionPBFT(newTransaction, connectedPeers):
+#         for p in connectedPeers:
+#             t = threading.Thread(target=p.object.calcBlockPBFT, args=(
+#                 block, newTransaction, connectedPeers))
+#             threads.append(t)
+#         for t in threads:
+#             t.join()
+#         del newBlockCandidate[CryptoFunctions.calculateHashForBlock(
+#             newTransaction)]
+#         return True
+#     return False
 
-def commitTransactionPBFT(block, newTransaction, generatorGwPub, generatorDevicePub, alivePeers):
-    """ Send a transaction to be validated by all peers\n
-        @param block - BlockHeader object where the transaction will be add\n
-        @param newTransaction - the transaction who will be add\n
-        @param generatorGwPub - Sender peer public key\n
-        @generatorDevicePub - Device how create the transaction and wants to add it to a block\n
-        @param alivePeers - list of available peerszn\n
-        @return boolean - True: sended to validation, False: transaction are not valid or already in consensus
-    """
-    # TODO similar to what was done with block, just different verifications
-    threads = []
-    # if it was already inserted a validation for the candidade block, abort
-    if newTransactionCandidate[CryptoFunctions.calculateHash(newTransaction)][gwPub] == CryptoFunctions.signInfo(gwPvt, newTransaction):
-        # print ("transaction already in consensus")
-        return False
-    if verifyTransactionCandidate():  # verify if the transaction is valid
-        for p in alivePeers:  # call all peers to verify if block is valid
-            t = threading.Thread(target=p.object.verifyTransactionCandidate, args=(
-                block, newTransaction, generatorGwPub, generatorDevicePub, alivePeers))
-            # @Regio -> would it be better to use "pickle.dumps(newBlock)"  instead of newBlock?
-            threads.append(t)
-        #  join threads
-        for t in threads:
-            t.join()
-        return True
-    return False
+# def commitTransactionPBFT(block, newTransaction, generatorGwPub, generatorDevicePub, alivePeers):
+#     """ Send a transaction to be validated by all peers\n
+#         @param block - BlockHeader object where the transaction will be add\n
+#         @param newTransaction - the transaction who will be add\n
+#         @param generatorGwPub - Sender peer public key\n
+#         @generatorDevicePub - Device how create the transaction and wants to add it to a block\n
+#         @param alivePeers - list of available peerszn\n
+#         @return boolean - True: sended to validation, False: transaction are not valid or already in consensus
+#     """
+#     # TODO similar to what was done with block, just different verifications
+#     threads = []
+#     # if it was already inserted a validation for the candidade block, abort
+#     if newTransactionCandidate[CryptoFunctions.calculateHash(newTransaction)][gwPub] == CryptoFunctions.signInfo(gwPvt, newTransaction):
+#         # print ("transaction already in consensus")
+#         return False
+#     if verifyTransactionCandidate():  # verify if the transaction is valid
+#         for p in alivePeers:  # call all peers to verify if block is valid
+#             t = threading.Thread(target=p.object.verifyTransactionCandidate, args=(
+#                 block, newTransaction, generatorGwPub, generatorDevicePub, alivePeers))
+#             # @Regio -> would it be better to use "pickle.dumps(newBlock)"  instead of newBlock?
+#             threads.append(t)
+#         #  join threads
+#         for t in threads:
+#             t.join()
+#         return True
+#     return False
 
 def verifyTransactionCandidate(block, newTransaction, generatorGwPub, generatorDevicePub, alivePeers):
     """ Checks whether the new transaction has the following characteristics:\n
