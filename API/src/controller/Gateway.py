@@ -600,7 +600,7 @@ class R2ac(object):
                             candidatePool.append((remoteTR[0],remoteTR[1]))
 
                         # candidatePool.append(remoteCandidatePool)
-                        print("***AAA******** I got other peer pool in PBFT")
+                        # print("***AAA******** I got other peer pool in PBFT")
                 if (len(candidatePool)!=0):
                     print("**************Inside PBFT Transaction ***************")
                     # print("candidate Pool: "+ str(candidatePool))
@@ -645,12 +645,12 @@ class R2ac(object):
         votesPoolTotal = []
         validTransactionPool =[]
         while (len(candidatePool) > 0):
-            logger.error("-----------------------------inside prepare--while")
+            # logger.error("-----------------------------inside prepare--while")
             candidateTransaction = candidatePool.pop(0)
             # print("popped element from Pool")
             # print(candidateTransaction)
             if (candidateTransaction != False):
-                logger.error("-----------------------------inside prepare--notfalse candidate")
+                # logger.error("-----------------------------inside prepare--notfalse candidate")
                 # print("AAAAAAAAAAAAAAAA passed the if")
                 devPublicKey = candidateTransaction[0]
                 deviceInfo = candidateTransaction[1]
@@ -665,7 +665,7 @@ class R2ac(object):
                     prevInfoHash = CryptoFunctions.calculateTransactionHash(ChainFunctions.getLatestBlockTransaction(blk))
                     transaction = Transaction.Transaction(nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
                     candidateTransactionPool.append((devPublicKey, transaction))
-                    logger.error("-----------------------------inside prepare--transaction appended")
+                    # logger.error("-----------------------------inside prepare--transaction appended")
                     trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
                     votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
         if(len(candidateTransactionPool)==0):
@@ -681,11 +681,13 @@ class R2ac(object):
         # sig = originalTr[1].signature
         # logger.error(" casting to transaction worked!!!!! " + str(c.signature))
         # logger.error(" original sign was: "+ str(sig))
-        logger.error("-----------------------------inside prepare--before voting")
+        # logger.error("-----------------------------inside prepare--before voting")
+        dumpedGwPub = pickle.dumps(gwPub)
         for p in alivePeers:
             # p.object.getGwPubkey
             # p.object.votePoolCandidate(context, dumpedPool, gwPub)
-            pickedVotes = p.object.votePoolCandidate(context, dumpedPool, gwPub)
+
+            pickedVotes = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
             votes = pickle.loads(pickedVotes)
 
             for index in range(len(votes)):
@@ -735,7 +737,7 @@ class R2ac(object):
 
         return False
 
-    def votePoolCandidate(self, context, candidatePool, receivedGwPub):
+    def votePoolCandidate(self, context, candidatePool, pickedGwPub):
         """ Checks whether the new block has the following characteristics: \n
             * The hash of the previous block are correct in the new block data\n
             * The new block index is equals to the previous block index plus one\n
@@ -747,15 +749,61 @@ class R2ac(object):
         validation = True
         votesPool =[]
         receivedPool = pickle.loads(candidatePool)
+        receivedGwPub = pickle.loads(pickedGwPub)
         while(len(receivedPool) > 0):
             candidate = receivedPool.pop(0)
             receivedDevPub = candidate[0]
             candidateTr = candidate[1]
             candidateTr.__class__ = Transaction.Transaction
 
+            # verify if device is registered and if the index and timestamp are correct
+            if (ChainFunctions.findBlock(receivedDevPub) != False):
+                blk = ChainFunctions.findBlock(receivedDevPub)
+                # print("passed the blk")
+                lastTrIndex = blk.transactions[len(blk.transactions) - 1].index
+                lastTimestamp = blk.transactions[len(blk.transactions) - 1].timestamp
+                if(lastTrIndex >= candidateTr.index or lastTimestamp >= candidateTr.timestamp ):
+                    logger.error("***********************")
+                    logger.error("***Invalid Tr time or index*")
+                    logger.error("***********************")
+                    validation = False
+
+            else:
+                logger.error("***********************")
+                logger.error("***Invalid PubKey -> it is not in BC*")
+                logger.error("***********************")
+                validation = False
+
+            # verify the gw of the device
+            candidateDevInfo = candidateTr.data
+            candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+            verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
+            if(verifyGwSign!=True):
+                logger.error("***********************")
+                logger.error("***Invalid Gw Signature*")
+                logger.error("***********************")
+                validation = False
+
+            # verify the signature of the device
+            d = candidateDevInfo.timestamp + candidateDevInfo.data
+
+            isSigned = CryptoFunctions.signVerify(d, candidateDevInfo.deviceSignature, receivedDevPub)
+            if (isSigned!=True):
+                logger.error("***********************")
+                logger.error("***Invalid Signature*")
+                logger.error("***********************")
+                validation = False
             # after verifications...
-            trSign = CryptoFunctions.signInfo(gwPvt, str(candidateTr))
-            votesPool.append([(receivedDevPub, candidateTr), trSign])
+
+
+
+            if(validation==True):
+                trSign = CryptoFunctions.signInfo(gwPvt, str(candidateTr))
+                votesPool.append([(receivedDevPub, candidateTr), trSign])
+            # if it is not valid, do not vote as valid
+            else:
+                votesPool.append([(receivedDevPub, candidateTr), ""])
+            validation = True
         return pickle.dumps(votesPool)
         # lastBlk = ChainFunctions.getLatestBlock()
         # # logger.debug("last block:"+str(lastBlk.strBlock()))
