@@ -1,3 +1,4 @@
+
 """
 import io
 import time
@@ -24,11 +25,16 @@ def runPyro(nameServerIP, nameServerPort):
     pyro = Thread(target=runPyro4, args=(nameServerIP, nameServerPort)).start()
 """
 import sys
+import argparse
 
 from src.controller import Gateway
 
-nameServerIP = sys.argv[1]
-nameServerPort = int(sys.argv[2])
-gatewayName = sys.argv[3]
-gatewayContext = sys.argv[4]
-Gateway.main(nameServerIP, nameServerPort, gatewayName, gatewayContext)
+parser = argparse.ArgumentParser(description='Run the Gateway')
+
+parser.add_argument('-n', '--nameServerIP', type=str, metavar='', help='Server IP address')
+parser.add_argument('-p', '--nameServerPort', type=str, metavar='', help='Server port')
+parser.add_argument('-G', '--gatewayName', type=str, metavar='', help='The name of the gateway')
+parser.add_argument('-C', '--gatewayContext', type=str, metavar='', help='The context of the gateway')
+args = parser.parse_args()
+
+Gateway.main(args.nameServerIP, int(args.nameServerPort), args.gatewayName, args.gatewayContext)
