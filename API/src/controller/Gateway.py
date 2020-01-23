@@ -695,7 +695,7 @@ class R2ac(object):
             # logger.error("received signture was: "+ votesSignature + "received votes is: " + str(votes) + "eceived pub: "+ remoteGwPk)
             # logger.error("!!***!!!!*** Result of Votes Signature is: "+str(CryptoFunctions.signVerify(str(votes),votesSignature, remoteGwPk)))
             if(CryptoFunctions.signVerify(str(votes),votesSignature, p.object.getGwPubkey())):
-                logger.error("!!***!!!!*** Votes Signature is valid****")
+                # logger.error("!!***!!!!*** Votes Signature is valid****")
                 for index in range(len(votes)):
                     # if there is a vote
                     if(votes[index][1]=="valid"):
@@ -703,7 +703,7 @@ class R2ac(object):
 
         for v in range(len(votesPoolTotal)):
             if (len(votesPoolTotal[v][1]) > ((2 / 3) * len(alivePeers))):
-                logger.error("APPENDED in final pool")
+                # logger.error("APPENDED in final pool")
                 validTransactionPool.append(votesPoolTotal[v][0])
 
         # commit
@@ -827,10 +827,10 @@ class R2ac(object):
                 # trSign = CryptoFunctions.signInfo(gwPvt, str(candidateTr))
                 # votesPool.append([(receivedDevPub, candidateTr), trSign])
                 # send only de candidate Tr signature
-                votesPool.append([(receivedDevPub, candidateTr.signature), "valid"])
+                votesPool.append([(candidateTr.signature), "valid"])
             # if it is not valid, do not vote as valid
             else:
-                votesPool.append([(receivedDevPub, candidateTr.signature), ""])
+                votesPool.append([(candidateTr.signature), ""])
             validation = True
         votesSignature=CryptoFunctions.signInfo(gwPvt, str(votesPool))
         # logger.error("!!!!! My verification sign = " + str(CryptoFunctions.signVerify(str(votesPool),votesSignature,gwPub)))
@@ -2057,7 +2057,7 @@ class R2ac(object):
         else:
             blockContext = "0002"
             logger.error("******************Changed to 2****************")
-        blockContext = "0002"
+        # blockContext = "0002"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
