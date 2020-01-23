@@ -23,7 +23,6 @@ import CryptoFunctions
 logger = Logger.logging.getLogger("speedychain")
 deviceName = ""
 consensus = ""
-
 fname = socket.gethostname()
 
 server = "localhost"
@@ -551,6 +550,8 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
 ######################          Main         ################################
 #############################################################################
 #############################################################################
+
+
 def InteractiveMain():
     """ Creates an interactive screen for the user with all option of a device"""
     global server
@@ -601,13 +602,22 @@ def InteractiveMain():
         # print("17 - execute EVM code")
         print("#############################################################")
 
+
         try:
             mode = int(input('Input:'))
-        except ValueError:
+        except:
             print ("Not a number")
+            mode = -1
+
         if (mode == 0):
-            break
-        options[mode]()
+            print("See you soon, Thanks for using SpeedyChain =) ");
+            print("Powered by CONSEG group");
+            break;
+        try:
+            options[mode]()
+        except:
+            print("Not a valid input, try again")
+            mode = -1
 
 if __name__ == '__main__':
 
