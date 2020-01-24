@@ -4,6 +4,7 @@ from os import listdir
 from os.path import isfile, join
 import time
 import threading
+from threading import Thread
 import pickle
 import socket
 #import for python 3 or above
@@ -12,6 +13,7 @@ import socket
 import thread
 import random
 import json
+import Queue
 
 from flask import Flask, request
 
@@ -113,8 +115,25 @@ orchestratorContextObject = []
 # transactionSharedPool could be understood as = [["0001", gwOrchestratorObj],["0002", gwOrchestratorObj]]
 
 
+# example from: www.stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-pyhton
+# class ThreadWithReturn(Thread):
+#     def __init__(self, group=None, target=None, name=None, args=(), kwargs={}, Verbose=None):
+#         Thread.__init__(self, group, target, name, args,kwargs, Verbose)
+#         self._return = None
+#     def run(self):
+#         if self._Thread__target is None:
+#             self._return = self._Thread__target(*self._Thread__args, **self._Thread__kwargs)
+#     def join(self):
+#         Thread.join(self)
+#         return self._return
 
 
+my_queue = Queue.Queue()
+
+def storeInQueue(f):
+    def wrapper(*args):
+        my_queue.put(f(*args))
+    return wrapper
 
 def bootstrapChain2():
     """ generate the RSA key pair for the gateway and create the chain"""
@@ -630,9 +649,7 @@ class R2ac(object):
 
 
 
-        #
-        # logger.error("Inside PBFT Transaction... first step and context: " + context)
-        # candidatePooltoSend = []
+
 
     def prepareContextPBFT(self, context, candidatePool, alivePeers):
         """ Send a new candidatePool for all the available peers on the network\n
@@ -682,13 +699,38 @@ class R2ac(object):
         # logger.error(" casting to transaction worked!!!!! " + str(c.signature))
         # logger.error(" original sign was: "+ str(sig))
         # logger.error("-----------------------------inside prepare--before voting")
+
+        arrayPeersThreads = []
+        counter =0
         dumpedGwPub = pickle.dumps(gwPub)
         for p in alivePeers:
-            # p.object.getGwPubkey
-            # p.object.votePoolCandidate(context, dumpedPool, gwPub)
 
-            # get votes and signature of the gw
-            pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
+            arrayPeersThreads.append(threading.Thread(target=self.startRemoteVoting, args=(context,dumpedPool,dumpedGwPub,p)))
+            arrayPeersThreads[counter].start()
+            counter = counter+1
+
+            # pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
+            # votes = pickle.loads(pickedVotes)
+            # votesSignature = pickle.loads(pickedVotesSignature)
+            # # verify if list of votes are valid, i.e., peer signature in votes is correct
+            # # logger.error("received signture was: "+ votesSignature + "received votes is: " + str(votes) + "eceived pub: "+ remoteGwPk)
+            # # logger.error("!!***!!!!*** Result of Votes Signature is: "+str(CryptoFunctions.signVerify(str(votes),votesSignature, remoteGwPk)))
+            # if(CryptoFunctions.signVerify(str(votes),votesSignature, p.object.getGwPubkey())):
+            #     # logger.error("!!***!!!!*** Votes Signature is valid****")
+            #     for index in range(len(votes)):
+            #         # if there is a vote
+            #         if(votes[index][1]=="valid"):
+            #             votesPoolTotal[index][1].append(votes[index][1])
+        # logger.error("after start")
+        for i in range(len(arrayPeersThreads)):
+            # pickedVotes, pickedVotesSignature, remoteGwPk =
+            arrayPeersThreads[i].join()
+            # logger.error("after join")
+
+            # will get from a queue of returns (from votes)
+            pickedVotes, pickedVotesSignature, remoteGwPk = my_queue.get()
+            # logger.error("got stuff")
+            # pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
             votes = pickle.loads(pickedVotes)
             votesSignature = pickle.loads(pickedVotesSignature)
             # verify if list of votes are valid, i.e., peer signature in votes is correct
@@ -700,6 +742,8 @@ class R2ac(object):
                     # if there is a vote
                     if(votes[index][1]=="valid"):
                         votesPoolTotal[index][1].append(votes[index][1])
+            # get every return from the method votePoolCandidate called by each thread and count votes after joins
+
 
         for v in range(len(votesPoolTotal)):
             if (len(votesPoolTotal[v][1]) > ((2 / 3) * len(alivePeers))):
@@ -707,41 +751,41 @@ class R2ac(object):
                 validTransactionPool.append(votesPoolTotal[v][0])
 
         # commit
+        if(self.commitContextPBFT(validTransactionPool,alivePeers)):
+            return True
+
+        return False
+
+    def commitContextPBFT(self, validTransactionPool, alivePeers):
+        arrayPeersThreads = [] * len(alivePeers)
+
         if(len(validTransactionPool)>0):
             dumpedSetTrans = pickle.dumps(validTransactionPool)
             # addLocally
             self.updateBlockLedgerSetTrans(dumpedSetTrans)
 
             # add remote
-
+            index = 0
             for p in alivePeers:
+
                 obj=p.object
-                obj.updateBlockLedgerSetTrans(dumpedSetTrans)
+                # obj.updateBlockLedgerSetTrans(dumpedSetTrans)
+                arrayPeersThreads.append(threading.Thread(target=obj.updateBlockLedgerSetTrans, args=[dumpedSetTrans]))
+                arrayPeersThreads[index].start()
+                index = index+1
+
+            for i in range(len(arrayPeersThreads)):
+                arrayPeersThreads[i].join()
+
             logger.error("!!!! PASSED !!!")
             return True
-
-
-
-            # update list of votes, while updating verify the size and if it is higher then the minimum
-            # when consensus is made, send transaction to all peers -> commit
-
-            # logger.debug("Answer received: "+str(verifyRet))
-            # print("######inside handlePBFT first for")
-
-            # if (verifyRet):
-            #     peerPubKey = p.object.getGwPubkey()
-            #     # logger.debug("Pub Key from gateway that voted: "+str(peerPubKey))
-            #     # logger.debug("Running the add vote to block")
-            #     addVoteBlockPBFT(newBlock, peerPubKey, verifyRet)
-            #     calcRet = calcBlockPBFT(newBlock, alivePeers)
-            #     # logger.debug("Result from calcBlockPBFT:"+str(calcRet))
-            #     if (calcRet):
-            #         # logger.info("Consensus was achieve, updating peers and finishing operation")
-            #         sendBlockToPeers(newBlock)
-            #         # print("handlePBFT = true")
-            #         return True
-
         return False
+
+    @storeInQueue
+    def startRemoteVoting(self, context, dumpedPool, dumpedGwPub, p):
+        pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
+        return pickedVotes, pickedVotesSignature, remoteGwPk
+
 
     def votePoolCandidate(self, context, candidatePool, pickedGwPub):
         """ Checks whether the new block has the following characteristics: \n
@@ -853,11 +897,11 @@ class R2ac(object):
         if(candidatePool != False):
             # lock other gw consensus
             # print("locking my context local: " + str(self.addContextinLockList(context)))
-            i = 0
+            # i = 0
             while(len(candidatePool)>0):
-                print("inside transaction pool i= ")
-                print(i)
-                i=i+1
+                # print("inside transaction pool i= ")
+                # print(i)
+                # i=i+1
                 candidateTransaction = candidatePool.pop(0)
                # print("popped element from Pool")
                 # print(candidateTransaction)
@@ -916,7 +960,7 @@ class R2ac(object):
         # print("TTTTTTTTTTTT inside addNewTransactionToSyncList")
         index =0
         candidateTransactionTuple = (devPubKey, devInfo, context)
-        print ("********* adding a transaction from context: "+context)
+        # print ("********* adding a transaction from context: "+context)
         for x,y in transactionLockList:
             if x == context:
                 i = 0
@@ -942,7 +986,7 @@ class R2ac(object):
         myLockTuple = (context, lockContext)
         transactionLockList.append(myLockTuple)
         # return the attempt to lock the last inserted  [-1] context through its lock [1]
-        print("@@Context List after adding context to lock list for context: "+context)
+        # print("@@Context List after adding context to lock list for context: "+context)
         transactionLockList[-1][1].acquire(False)
         transactionConsensusCandidateList.append([context, [candidateTransactionTuple]])
         # transactionConsensusCandidateList.append(candidateTransactionTuple)
@@ -1025,7 +1069,7 @@ class R2ac(object):
                         # transactionPool = transactionConsensusCandidateList[index]
                         # get only the transactions from the correct context and after clean that transactions
                         transactionPool = transactionConsensusCandidateList[index][1]
-                        print("there is a pool candidate, pop it!!! context: " + context)
+                        # print("there is a pool candidate, pop it!!! context: " + context)
                         transactionConsensusCandidateList[index][1] = []
                         transactionLockList[index][1].release()
                         pickedTransactionPool = pickle.dumps(transactionPool)
@@ -2011,8 +2055,8 @@ class R2ac(object):
         self.peerVoteNewContextOrchestrator(context)
 
         # newOrchestratorURI = mode(votesForNewOrchestrator)
-        print("verifying votes for index: "+str(index) + " ")
-        print(votesForNewContextOrchestrator[index][1])
+        # print("verifying votes for index: "+str(index) + " ")
+        # print(votesForNewContextOrchestrator[index][1])
         newOrchestratorURI = max(set(votesForNewContextOrchestrator[index][1]), key=votesForNewContextOrchestrator[index][1].count)
         # logger.info("Elected node was" + str(newOrchestratorURI))
 
@@ -2026,7 +2070,7 @@ class R2ac(object):
             obj = peer.object
             dat = pickle.dumps(Pyro4.Proxy(newOrchestratorURI))
             obj.loadElectedContextOrchestrator(context, dat)
-        print("***AAA*****AAAAA*****AAAA*** Orchestrator for context was elected successfully")
+        print("****** Orchestrator for context was elected successfully")
         t2 = time.time()
 
     def exposedURI(self):
@@ -2056,7 +2100,7 @@ class R2ac(object):
             blockContext = "0001"
         else:
             blockContext = "0002"
-            logger.error("******************Changed to 2****************")
+            # logger.error("******************Changed to 2****************")
         # blockContext = "0002"
         #@TODO define somehow a device is in a context
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
@@ -2219,7 +2263,7 @@ class R2ac(object):
         """
         global peers
         newBlock = pickle.loads(newBlock)
-        print("inside verifyblockcandidateremote")
+        # print("inside verifyblockcandidateremote")
         # logger.debug("|---------------------------------------------------------------------|")
         # logger.debug("Verify for newBlock asked - index:"+str(newBlock.index))
         ret = verifyBlockCandidate(
@@ -2456,6 +2500,8 @@ newTransactionCandidate = {}  # same as block, for transaction
 #     t2 = time.time()
 #     logger.info("=====6=====>time to execute block consensus: " + '{0:.12f}'.format((t2 - t1) * 1000))
 #     print("I finished rundBFT")
+
+# improve threads to return value when joins
 
 def preparePBFTConsensus():
     """ verify all alive peers that will particpate in consensus\n
