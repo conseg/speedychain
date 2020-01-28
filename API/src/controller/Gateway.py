@@ -588,12 +588,14 @@ class R2ac(object):
         global contextPeers
         candidatePool =[]
         index = 0
+
         for index in range(len(orchestratorContextObject)):
             # print("*** obj " + str(orchestratorContextObject[index][1]) + " my pyro " + str(Pyro4.Proxy(myURI)))
             # print("obj URI: " + str(orchestratorContextObject[index][1].exposedURI()) + "myURI " + str(myURI))
             # orchestratorContextObject[index][1].exposedURI()
             if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
                 print("******************I Am the orchestrator leader")
+                tcc1 = ((time.time()) * 1000) * 1000
                 while(self.addContextinLockList(context)==False):
                     logger.error("I AM NOT WITH LOCK!!!!!")
                     time.sleep(0.001)
@@ -621,7 +623,8 @@ class R2ac(object):
 
                         # candidatePool.append(remoteCandidatePool)
                         # print("***AAA******** I got other peer pool in PBFT")
-                if (len(candidatePool)!=0):
+                candidatePoolSize = len(candidatePool)
+                if (candidatePoolSize!=0):
                     # print("**************Inside PBFT Transaction ***************")
                     # print("candidate Pool: "+ str(candidatePool))
 
@@ -634,12 +637,16 @@ class R2ac(object):
                     #     peer.removeLockfromContext(context)
 
                     # election for new orchestrator
+                    # te1 = ((time.time()) * 1000) *1000
                     self.electNewContextOrchestrator(context)
-
+                    # te2 = ((time.time()) * 1000) * 1000
+                    # logger.error("ELECTION; " + str((te2-te1)/1000))
                     self.removeLockfromContext(context)
                     for p in tempContextPeers:
                         peer = p.object
                         peer.removeLockfromContext(context)
+                    tcc2 = ((time.time()) * 1000) * 1000
+                    logger.error("CONTEXT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
 
                 else:
                     self.removeLockfromContext(context)
