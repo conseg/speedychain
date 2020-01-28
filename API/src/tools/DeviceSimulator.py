@@ -309,7 +309,8 @@ def consensusTrans():
 def simDevBlockAndTrans(blk, trans):
     numTrans=trans
     devPubK,devPrivK = generateRSAKeyPair()
-
+    # trInterval is amount of time to wait before send the next tr in ms
+    trInterval = 1000 #1000
     counter = 0
     AESKey = addBlockOnChainv2(devPubK,devPrivK)
     while (AESKey == False):
@@ -321,12 +322,20 @@ def simDevBlockAndTrans(blk, trans):
     # brutePairAuth(blk)
     for tr in range(0, numTrans):
         logger.info("Sending transaction blk #" + str(blk) +"tr #"+ str(tr) + "...")
+        # we can set time interval
+        t1 = time.time()
         # sendData()
         while (not (server.isBlockInTheChain(devPubK))):
             time.sleep(0.0001)
             continue
             # time.sleep(1)
         AESKey = multSend(devPubK, devPrivK, AESKey, tr, blk)
+        t2=time.time()
+        #
+        while((t2-t1)*1000 < trInterval):
+            t2=time.time()
+            time.sleep(0.0001)
+
 
 # for sequential generation of blocks and transactions (sequential devices), use this
 def seqDevSim(blk,trans):

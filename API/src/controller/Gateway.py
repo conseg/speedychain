@@ -86,8 +86,9 @@ consensus = "None"  # it can be None, dBFT, PBFT, PoW, Witness3
 votesForNewOrchestrator = []
 myVoteForNewOrchestrator = []  # my gwPub, voted gwPub, my signed vote
 
-
-
+# transactionTime will store the time that a transaction was inserted in local BC
+# transaction time is { dataSign : timestamp}
+# transactionsTime = {}
 contextPeers = []
 # contextPeers = [["0001",[]]]
 # context peers is [[context, [peers]], [context2, [peers]], [context3, [peers]]]
@@ -595,7 +596,7 @@ class R2ac(object):
                 print("******************I Am the orchestrator leader")
                 while(self.addContextinLockList(context)==False):
                     logger.error("I AM NOT WITH LOCK!!!!!")
-                    time.sleep(1)
+                    time.sleep(0.001)
                 pickedCandidatePool = self.getLocalTransactionPool(context)
                 myPool = pickle.loads(pickedCandidatePool)
                 if (myPool != False):
@@ -609,7 +610,7 @@ class R2ac(object):
                 for p in tempContextPeers:
                     peer = p.object
                     while(peer.addContextinLockList(context)==False):
-                        time.sleep(1)
+                        time.sleep(0.001)
                     pickedRemotePool = peer.getLocalTransactionPool(context)
                     remoteCandidatePool = pickle.loads(pickedRemotePool)
                     if(remoteCandidatePool!=False):
@@ -621,7 +622,7 @@ class R2ac(object):
                         # candidatePool.append(remoteCandidatePool)
                         # print("***AAA******** I got other peer pool in PBFT")
                 if (len(candidatePool)!=0):
-                    print("**************Inside PBFT Transaction ***************")
+                    # print("**************Inside PBFT Transaction ***************")
                     # print("candidate Pool: "+ str(candidatePool))
 
                     self.prepareContextPBFT(context,candidatePool,tempContextPeers)
@@ -632,6 +633,7 @@ class R2ac(object):
                     #     peer = p.object
                     #     peer.removeLockfromContext(context)
 
+                    # election for new orchestrator
                     self.electNewContextOrchestrator(context)
 
                     self.removeLockfromContext(context)
@@ -645,8 +647,6 @@ class R2ac(object):
                         peer = p.object
                         peer.removeLockfromContext(context)
                     # print("@@@@@@****** releasing remote lock")
-
-
 
 
 
@@ -701,26 +701,16 @@ class R2ac(object):
         # logger.error("-----------------------------inside prepare--before voting")
 
         arrayPeersThreads = []
-        counter =0
+        # counter =0
         dumpedGwPub = pickle.dumps(gwPub)
         for p in alivePeers:
 
             arrayPeersThreads.append(threading.Thread(target=self.startRemoteVoting, args=(context,dumpedPool,dumpedGwPub,p)))
-            arrayPeersThreads[counter].start()
-            counter = counter+1
+            # start the last inserted thread in array
+            arrayPeersThreads[-1].start()
+            # counter = counter+1
 
-            # pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
-            # votes = pickle.loads(pickedVotes)
-            # votesSignature = pickle.loads(pickedVotesSignature)
-            # # verify if list of votes are valid, i.e., peer signature in votes is correct
-            # # logger.error("received signture was: "+ votesSignature + "received votes is: " + str(votes) + "eceived pub: "+ remoteGwPk)
-            # # logger.error("!!***!!!!*** Result of Votes Signature is: "+str(CryptoFunctions.signVerify(str(votes),votesSignature, remoteGwPk)))
-            # if(CryptoFunctions.signVerify(str(votes),votesSignature, p.object.getGwPubkey())):
-            #     # logger.error("!!***!!!!*** Votes Signature is valid****")
-            #     for index in range(len(votes)):
-            #         # if there is a vote
-            #         if(votes[index][1]=="valid"):
-            #             votesPoolTotal[index][1].append(votes[index][1])
+
         # logger.error("after start")
         for i in range(len(arrayPeersThreads)):
             # pickedVotes, pickedVotesSignature, remoteGwPk =
@@ -734,8 +724,6 @@ class R2ac(object):
             votes = pickle.loads(pickedVotes)
             votesSignature = pickle.loads(pickedVotesSignature)
             # verify if list of votes are valid, i.e., peer signature in votes is correct
-            # logger.error("received signture was: "+ votesSignature + "received votes is: " + str(votes) + "eceived pub: "+ remoteGwPk)
-            # logger.error("!!***!!!!*** Result of Votes Signature is: "+str(CryptoFunctions.signVerify(str(votes),votesSignature, remoteGwPk)))
             if(CryptoFunctions.signVerify(str(votes),votesSignature, p.object.getGwPubkey())):
                 # logger.error("!!***!!!!*** Votes Signature is valid****")
                 for index in range(len(votes)):
@@ -966,7 +954,7 @@ class R2ac(object):
                 i = 0
                 while (not (transactionLockList[index][1].acquire(False)) and i < 100):
                     i = i + 1
-                    print("$$$$$$$$$ not possible to acquire a lock in addNewTransaciontosynclist")
+                    # print("$$$$$$$$$ not possible to acquire a lock in addNewTransaciontosynclist")
                     time.sleep(0.01)
                 if (i == 100):
                     return False
@@ -1014,7 +1002,7 @@ class R2ac(object):
                     i = 0
                     while (not (transactionLockList[index][1].acquire(False)) and i < 1000):
                         i = i + 1
-                        print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
+                        # print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
                         time.sleep(0.001)
                     if (i == 1000):
                         return False
@@ -1057,7 +1045,7 @@ class R2ac(object):
                     i = 0
                     while (not (transactionLockList[index][1].acquire(False)) and i < 1000):
                         i = i + 1
-                        print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
+                        # print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
                         time.sleep(0.001)
                     if (i == 1000):
                         transactionLockList[index][1].release()
@@ -1160,9 +1148,7 @@ class R2ac(object):
                 devTime = plainObject[-(16+len(deviceData)):-len(deviceData)]
                 # print("###devTime: "+devTime)
                 t2 = time.time()
-                logger.info(
-                    "gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format(
-                        (t2 - t1) * 1000))
+                # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
 
                 d = devTime+deviceData
                 isSigned = CryptoFunctions.signVerify(
@@ -1502,6 +1488,7 @@ class R2ac(object):
         t1 = time.time()
         # print("inside updateBlockLedgerSeTrans, setTrans: " + str(setTrans))
         # logger.info("Received transaction #" + (str(trans.index)))
+        originalLen = len(setTrans)
         while (len(setTrans)>0):
             candidateTransaction = setTrans.pop(0)
             # print("popped element from Pool")
@@ -1512,9 +1499,20 @@ class R2ac(object):
                 deviceTrans = candidateTransaction[1]
                 blk = ChainFunctions.findBlock(devPublicKey)
                 ChainFunctions.addBlockTransaction(blk, deviceTrans)
+                deviceTrans.__class__ = Transaction.Transaction
+                candidateDevInfo = deviceTrans.data
+                candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+                originalTimestamp = float (candidateDevInfo.timestamp)
+                gwTimestamp = float(deviceTrans.timestamp)
+                currentTimestamp = float (((time.time())*1000)*1000)
+                logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
+                logger.info(
+                    "gateway;" + gatewayName + ";" + consensus + ";T21;Time to process Tr is;" + str(
+                        (currentTimestamp - gwTimestamp) / 1000))
 
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+
         return "done"
 
 
@@ -1636,7 +1634,7 @@ class R2ac(object):
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
                 counter_fails = 0
                 while(orchestratorObject.runPBFT()==False):
-                    logger.info("##### second attmept for a block")
+                    # logger.info("##### second attmept for a block")
                     orchestratorObject.removeBlockConsensusCandidate(pickedKey)
                     # print("$$$$$$$second trial")
                     self.electNewOrchestrator()
@@ -1657,7 +1655,7 @@ class R2ac(object):
                 # print("blockadded!")
                 counter_fails = 0
                 while (orchestratorObject.rundBFT() == False):
-                    logger.info("##### second attempt for a block")
+                    # logger.info("##### second attempt for a block")
                     orchestratorObject.removeBlockConsensusCandidate(pickedKey)
                     logger.error("Consensus not achieved, trying another one")
                     self.electNewOrchestrator()
@@ -2070,8 +2068,8 @@ class R2ac(object):
             obj = peer.object
             dat = pickle.dumps(Pyro4.Proxy(newOrchestratorURI))
             obj.loadElectedContextOrchestrator(context, dat)
-        print("****** Orchestrator for context was elected successfully")
-        t2 = time.time()
+        # print("****** Orchestrator for context was elected successfully")
+
 
     def exposedURI(self):
         return myURI
@@ -2193,7 +2191,7 @@ class R2ac(object):
         while (counter < len(peers)):
             while ((consensusLock.acquire(
                     False) == False) and i<30):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
-                logger.info("$$$$$$$I can't lock my lock, waiting for it -> in lock for consensus")
+                # logger.info("$$$$$$$I can't lock my lock, waiting for it -> in lock for consensus")
                 time.sleep(0.01)
             # print("##Before for and after acquire my lock")
             if (i==30):
@@ -2205,7 +2203,7 @@ class R2ac(object):
                 # print("On counter = "+str(counter)+" lock result was: "+str(thisPeerIsNotAvailableToLock))
                 if (thisPeerIsNotAvailableToLock == False):
                     counter = counter - 1  # I have to unlock the locked ones, the last was not locked
-                    logger.info("$$$$$$$I can't lock REMOTE lock, waiting for it -> in lockforconsensus")
+                    # logger.info("$$$$$$$I can't lock REMOTE lock, waiting for it -> in lockforconsensus")
                     # logger.info("Almost got a deadlock")
                     consensusLock.release()
                     if (counter > 0):
@@ -2414,7 +2412,7 @@ def addNewBlockToSyncList(devPubKey):
     i=0
     while(not(lock.acquire(False)) and i<30):
         i=i+1
-        logger.info("$$$$$$$$$ not possible to acquire a lock in addNewblocktosynclist")
+        # logger.info("$$$$$$$$$ not possible to acquire a lock in addNewblocktosynclist")
         time.sleep(0.01)
     if (i==30):
         return False
@@ -2436,7 +2434,7 @@ def getBlockFromSyncList():
     i=0
     while (not(lock.acquire(False)) and i < 30):
         i = i + 1
-        logger.info("$$$$$$$$$ not possible to acquire a lock in getblockfromsynclist")
+        # logger.info("$$$$$$$$$ not possible to acquire a lock in getblockfromsynclist")
         time.sleep(0.01)
     if (i == 30):
         return False
