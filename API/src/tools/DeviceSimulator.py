@@ -321,7 +321,10 @@ def simDevBlockAndTrans(blk, trans):
             break
     # brutePairAuth(blk)
     for tr in range(0, numTrans):
-        logger.info("Sending transaction blk #" + str(blk) +"tr #"+ str(tr) + "...")
+        if (tr == 0):
+            logger.info("Sending transaction blk #" + str(blk) +"tr #"+ str(tr) + "...")
+        if (tr == int(numTrans/2)):
+            logger.info("Sending transaction blk #" + str(blk) + "tr #" + str(tr) + "...")
         # we can set time interval
         t1 = time.time()
         # sendData()
@@ -334,7 +337,8 @@ def simDevBlockAndTrans(blk, trans):
         #
         while((t2-t1)*1000 < trInterval):
             t2=time.time()
-            time.sleep(0.0001)
+            # trInterval is in ms and time.sleep is in s, so you should divide by 1000, error is max 10% of trInterval
+            time.sleep((trInterval/10)/1000)
 
 
 # for sequential generation of blocks and transactions (sequential devices), use this
