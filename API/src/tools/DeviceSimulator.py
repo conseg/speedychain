@@ -559,6 +559,9 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     defineConsensus(consensus)
     return gatewayURI
 
+def gwSaveLogT20():
+    server.saveLog()
+
 #############################################################################
 #############################################################################
 ######################          Main         ################################
@@ -584,7 +587,8 @@ def InteractiveMain():
         14: showLastTransactionData,
         15: callEVMInterface,
         16: evmConnector,
-        17: executeEVM
+        17: executeEVM,
+        18: gwSaveLogT20,
     }
 
     mode = -1
@@ -610,6 +614,7 @@ def InteractiveMain():
         print("13 - Create a block for Smart Contract")
         print("14 - Show data from last transaction from block Index")
         print("15 - Call Smart Contract")
+        print("18 - Save Gw log T20")
         # print("16 - EVM connector")
         # print("17 - execute EVM code")
         print("#############################################################")

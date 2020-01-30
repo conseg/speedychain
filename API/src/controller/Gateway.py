@@ -47,7 +47,12 @@ def getTime():
     """
     return time.time()
 
+blkCounter = 0 # blkCounter is used to choose blk context
 
+logT3 = [] # time to insert a block in local chain (block ledger)
+logT20 = [] # time/latency to insert a transaction (from creation on device to insertion in the gw BC)
+logT21 = [] # time to insert a set of transactions in local chain (time to process/insert a list of Tr
+logT22 = [] # time to perform transaction concensus, transations per transaction consensus, and throuput per transaction consensus
 lock = thread.allocate_lock()
 transListLock  = thread.allocate_lock()
 consensusLock = thread.allocate_lock()
@@ -90,7 +95,7 @@ transactionSharedPool = []
 # [["0001", [(devKey1, tr1),(devKey2,tr2], (devKey3,tr3)],["0002",[]]]
 blockContext = "0001"
 # should have all context here
-gwContextConsensus = [("0001", "PoA"),("0002", "PBFT"),("0003", "dBFT")]
+gwContextConsensus = [("0001", "PBFT"),("0002", "PBFT"),("0003", "PBFT")]
 
 # list of votes for new orchestrator votes are: context, voter gwPub, voted gwPub, signature
 votesForNewContextOrchestrator =[]
@@ -103,24 +108,24 @@ orchestratorContextObject = []
 
 
 # example from: www.stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-pyhton
-# class ThreadWithReturn(Thread):
-#     def __init__(self, group=None, target=None, name=None, args=(), kwargs={}, Verbose=None):
-#         Thread.__init__(self, group, target, name, args,kwargs, Verbose)
-#         self._return = None
-#     def run(self):
-#         if self._Thread__target is None:
-#             self._return = self._Thread__target(*self._Thread__args, **self._Thread__kwargs)
-#     def join(self):
-#         Thread.join(self)
-#         return self._return
+class ThreadWithReturn(Thread):
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs={}, Verbose=None):
+        Thread.__init__(self, group, target, name, args,kwargs, Verbose)
+        self._return = None
+    def run(self):
+        if self._Thread__target is not None:
+            self._return = self._Thread__target(*self._Thread__args, **self._Thread__kwargs)
+    def join(self):
+        Thread.join(self)
+        return self._return
 
 
-my_queue = Queue.Queue()
-
-def storeInQueue(f):
-    def wrapper(*args):
-        my_queue.put(f(*args))
-    return wrapper
+# my_queue = Queue.Queue()
+#
+# def storeInQueue(f):
+#     def wrapper(*args):
+#         my_queue.put(f(*args))
+#     return wrapper
 
 def bootstrapChain2():
     """ generate the RSA key pair for the gateway and create the chain"""
@@ -580,10 +585,10 @@ class R2ac(object):
 
     def performTransactionPoolPBFTConsensus(self,context):
         global contextPeers
+        global logT22
         candidatePool =[]
-        index = 0
         sizePool = 100 # slice of transactions get from each pool
-        minInterval = 5 # interval between consensus in ms
+        minInterval = 10 # interval between consensus in ms
         minTransactions = 0 # minimum number of transactions to start consensus
 
 
@@ -598,7 +603,7 @@ class R2ac(object):
             # just to not printing in every time that enters here, leave it only for interactive
 
             while(self.addContextinLockList(context)==False):
-                logger.error("I AM NOT WITH LOCK!!!!!")
+                # logger.error("I AM NOT WITH LOCK!!!!!")
                 time.sleep(0.001)
             # use this if you want to get all elements from trpool
             # pickedCandidatePool = self.getLocalTransactionPool(context)
@@ -650,7 +655,8 @@ class R2ac(object):
                     peer = p.object
                     peer.removeLockfromContext(context)
                 tcc2 = ((time.time()) * 1000) * 1000
-                logger.error("CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
+                logT22.append("T22 CONTEXT; "+context+";PBFT CONSENSUS TIME; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize) + ";TPUT;" + str((candidatePoolSize)/(((tcc2-tcc1)/1000)/1000)))
+                # logger.error("CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
                 return
 
             else:
@@ -659,10 +665,9 @@ class R2ac(object):
                     peer = p.object
                     peer.removeLockfromContext(context)
                 tcc2 = ((time.time()) * 1000) * 1000
-                while ((tcc2 - tcc1) / 1000 < minInterval):
-                    time.sleep(0.1)
-                    tcc2 = ((time.time()) * 1000) * 1000
-                # print("@@@@@@****** releasing remote lock")
+                if((tcc2 - tcc1) / 1000 < minInterval):
+                    time.sleep(minInterval-((tcc2-tcc1)/1000))
+                    print("****** sleeping")
 
 
     def performTransactionPooldBFTConsensus(self, context):
@@ -673,17 +678,13 @@ class R2ac(object):
         minInterval = 5  # interval between consensus in ms
         minTransactions = 0  # minimum number of transactions to start consensus
 
-        # for index in range(len(orchestratorContextObject)):
-        #     # print("*** obj " + str(orchestratorContextObject[index][1]) + " my pyro " + str(Pyro4.Proxy(myURI)))
-        #     # print("obj URI: " + str(orchestratorContextObject[index][1].exposedURI()) + "myURI " + str(myURI))
-        #     # orchestratorContextObject[index][1].exposedURI()
         #     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
         print("******************I Am the orchestrator leader dBFT")
         while (len(candidatePool) == 0):
             tcc1 = ((time.time()) * 1000) * 1000
             # just to not printing in every time that enters here, leave it only for interactive
             while (self.addContextinLockList(context) == False):
-                logger.error("I AM NOT WITH LOCK!!!!!")
+                # logger.error("I AM NOT WITH LOCK!!!!!")
                 time.sleep(0.001)
             # use this if you want to get all elements from trpool
             # pickedCandidatePool = self.getLocalTransactionPool(context)
@@ -709,12 +710,6 @@ class R2ac(object):
                 if (remoteCandidatePool != False):
                     # .extend append each from another list
                     candidatePool.extend(remoteCandidatePool)
-                    # while(len(remoteCandidatePool)>0):
-                    #     # cant just append the remoteCandidatePool, should add each tuple
-                    #     remoteTR = remoteCandidatePool.pop(0)
-                    #     candidatePool.append((remoteTR[0],remoteTR[1]))
-
-                    # candidatePool.append(remoteCandidatePool)
             candidatePoolSize = len(candidatePool)
             if (candidatePoolSize != 0):
                 # print("**************Inside PBFT Transaction ***************")
@@ -728,14 +723,15 @@ class R2ac(object):
 
                 # dBFT does not have election
                 # self.electNewContextOrchestrator(context)
-                # te2 = ((time.time()) * 1000) * 1000
-                # logger.error("ELECTION; " + str((te2-te1)/1000))
                 self.removeLockfromContext(context)
                 for p in tempContextPeers:
                     peer = p.object
                     peer.removeLockfromContext(context)
                 tcc2 = ((time.time()) * 1000) * 1000
-                logger.error("CONTEXT "+context+" dBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
+                logT22.append(
+                    "T22 CONTEXT; " + context + ";dBFT CONSENSUS TIME; " + str((tcc2 - tcc1) / 1000) + "; SIZE; " + str(
+                        candidatePoolSize) + ";TPUT;" + str((candidatePoolSize) / (((tcc2 - tcc1) / 1000) / 1000)))
+                # logger.error("CONTEXT "+context+" dBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
                 return
 
             else:
@@ -744,10 +740,9 @@ class R2ac(object):
                     peer = p.object
                     peer.removeLockfromContext(context)
                 tcc2 = ((time.time()) * 1000) * 1000
-                while ((tcc2 - tcc1) / 1000 < minInterval):
-                    time.sleep(0.1)
-                    tcc2 = ((time.time()) * 1000) * 1000
-                # print("@@@@@@****** releasing remote lock")
+                if ((tcc2 - tcc1) / 1000 < minInterval):
+                    time.sleep(minInterval - ((tcc2 - tcc1) / 1000))
+                    print("****** sleeping")
 
 
 
@@ -761,6 +756,7 @@ class R2ac(object):
         candidateTransactionPool =[]
         votesPoolTotal = []
         validTransactionPool =[]
+
         while (len(candidatePool) > 0):
             # logger.error("-----------------------------inside prepare--while")
             candidateTransaction = candidatePool.pop(0)
@@ -784,7 +780,8 @@ class R2ac(object):
                     candidateTransactionPool.append((devPublicKey, transaction))
                     # logger.error("-----------------------------inside prepare--transaction appended")
                     trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
-                    votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
+                    # votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
+                    votesPoolTotal.append([(devPublicKey, transaction), ["valid"]])
         if(len(candidateTransactionPool)==0):
             logger.error("!!!!!!! All tr were invalid or no tr at all")
             return
@@ -795,8 +792,9 @@ class R2ac(object):
         # counter =0
         dumpedGwPub = pickle.dumps(gwPub)
         for p in alivePeers:
-
-            arrayPeersThreads.append(threading.Thread(target=self.startRemoteVoting, args=(context,dumpedPool,dumpedGwPub,p)))
+            # default type of thread that accepts return value in the join
+            arrayPeersThreads.append(ThreadWithReturn(target=self.startRemoteVoting, args=(context, dumpedPool, dumpedGwPub, p)))
+            # arrayPeersThreads.append(threading.Thread(target=self.startRemoteVoting, args=(context,dumpedPool,dumpedGwPub,p)))
             # start the last inserted thread in array
             arrayPeersThreads[-1].start()
             # counter = counter+1
@@ -805,11 +803,14 @@ class R2ac(object):
         # logger.error("after start")
         for i in range(len(arrayPeersThreads)):
             # pickedVotes, pickedVotesSignature, remoteGwPk =
-            arrayPeersThreads[i].join()
+            # default class of thread used to have a return on join
+            pickedVotes, pickedVotesSignature, remoteGwPk = arrayPeersThreads[i].join()
+            # arrayPeersThreads[i].join()
             # logger.error("after join")
 
             # will get from a queue of returns (from votes)
-            pickedVotes, pickedVotesSignature, remoteGwPk = my_queue.get()
+            # pickedVotes, pickedVotesSignature, remoteGwPk = my_queue.get()
+
             # logger.error("got stuff")
             # pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
             votes = pickle.loads(pickedVotes)
@@ -861,7 +862,7 @@ class R2ac(object):
         logger.error("!!!! Failed to commit transactions !!!")
         return False
 
-    @storeInQueue
+    # @storeInQueue
     def startRemoteVoting(self, context, dumpedPool, dumpedGwPub, p):
         pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
         return pickedVotes, pickedVotesSignature, remoteGwPk
@@ -1131,11 +1132,13 @@ class R2ac(object):
                     # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
                     # print("@@Contextfound")
                     i = 0
-                    while (not (transactionLockList[index][1].acquire(False)) and i < 1000):
+                    getLockList = transactionLockList[index][1].acquire(False)
+                    while (not (getLockList) and i < 1000):
                         i = i + 1
                         # print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
                         time.sleep(0.001)
-                    if (i == 1000):
+                        getLockList = transactionLockList[index][1].acquire(False)
+                    if (not (getLockList)):
                         # transactionLockList[index][1].release()
                         return pickle.dumps(False)
                     # if it got the lock, insert a new transaction into the list
@@ -1191,11 +1194,13 @@ class R2ac(object):
                     # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
                     # print("@@Contextfound")
                     i = 0
-                    while (not (transactionLockList[index][1].acquire(False)) and i < 1000):
+                    getTrPool = transactionLockList[index][1].acquire(False)
+                    while (not (getTrPool) and i < 1000):
                         i = i + 1
                         # print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
                         time.sleep(0.001)
-                    if (i == 1000):
+                        getTrPool = transactionLockList[index][1].acquire(False)
+                    if (not (getTrPool)):
                         transactionLockList[index][1].release()
                         return pickle.dumps(False)
                     # if it got the lock, insert a new transaction into the list
@@ -1227,14 +1232,15 @@ class R2ac(object):
     def addContextinLockList(self,context):
         global contextLockList
         ############# transactionLockList is a list of tuples composed by context and its lock
-        index=0
+        # index=0
         ############# 1 lock per block -> 1 consensus per block
         for x,y in contextLockList:
             if x == context:
                 # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
                 # print("@@Contextfound")
-                return contextLockList[index][1].acquire(False)
-            index = index+1
+                # return contextLockList[index][1].acquire(False)
+                return y.acquire(False)
+            # index = index+1
         lockContext = thread.allocate_lock()
         myLockTuple = (context, lockContext)
         contextLockList.append(myLockTuple)
@@ -1245,13 +1251,14 @@ class R2ac(object):
     def removeLockfromContext(self, context):
         global contextLockList
         ############# transactionLockList is a list of tuples composed by devpubkey and its lock
-        index = 0
+        # index = 0
         for x, y in contextLockList:
             if x == context:
                 # return the attempt to lock the indexed devpublickley  [index] pubkey through its lock [1]
-                contextLockList[index][1].release()
+                # contextLockList[index][1].release()
+                y.release()
                 return True
-            index = index + 1
+            # index = index + 1
         return False
 
 
@@ -1626,6 +1633,8 @@ class R2ac(object):
         return "done"
 
     def updateBlockLedgerSetTrans(self, candidatePool):
+        global logT20
+        global logT21
         # update local bockchain adding a new transaction
         """ Receive a new transaction and add it to the chain\n
             @param pubKey - Block public key\n
@@ -1653,13 +1662,15 @@ class R2ac(object):
                 originalTimestamp = float (candidateDevInfo.timestamp)
                 gwTimestamp = float(deviceTrans.timestamp)
                 currentTimestamp = float (((time.time())*1000)*1000)
-                logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
+                logT20.append("gateway;" + gatewayName + ";T20;Transaction Latency;" + str((currentTimestamp - originalTimestamp)/1000))
+                # logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
                 # logger.info(
                 #     "gateway;" + gatewayName + ";" + consensus + ";T21;Time to process Tr is;" + str(
                 #         (currentTimestamp - gwTimestamp) / 1000))
 
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logT21.append("gateway;" + gatewayName + ";T21;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
 
         return "done"
 
@@ -1670,6 +1681,7 @@ class R2ac(object):
             @param iotBlock - Block to be add\n
             @param gwName - sender peer's name
         """
+        global logT3
         # print("Updating IoT Block Ledger, in Gw: "+str(gwName))
         # logger.debug("updateIoTBlockLedger Function")
         b = pickle.loads(iotBlock)
@@ -1683,7 +1695,10 @@ class R2ac(object):
             ChainFunctions.addBlockHeader(b)
         t2 = time.time()
         # print("updating was done")
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logT3.append(
+            "gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in BL;" + '{0:.12f}'.format(
+                (t2 - t1) * 1000))
+        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
 
     def removeBlockConsensusCandidate(self, devPubKey):
         global blockConsensusCandidateList
@@ -1905,7 +1920,7 @@ class R2ac(object):
                 if (foundContextPeer == False):
                     # print("2did not find context in contextPeers, creating and appending")
                     contextPeers.append([x, [newPeer]])
-                    print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
+                    # print("2CONTEXT and PEER added to context Peer" + str(contextPeers))
             # foundContextPeer = False
             # for index in range(len(contextPeers)):
             #     if (contextPeers[index][0] == newPeerContext):
@@ -1957,6 +1972,41 @@ class R2ac(object):
         # print("My data is: "+str(transactionData))
 
         return transactionData
+
+    def saveLog(self):
+        self.remoteSaveLog()
+        for p in peers:
+            p.object.remoteSaveLog()
+        return
+
+    def remoteSaveLog(self):
+        global logT3
+        global logT20
+        global logT21
+        global logT22
+
+        for i in range(len(logT3)):
+            logger.info(logT3[i])
+        print("Log T3 saved")
+        logT3 = []
+
+        for i in range(len(logT20)):
+            logger.info(logT20[i])
+        print("Log T20 saved")
+        logT20 = []
+
+        for i in range(len(logT21)):
+            logger.info(logT21[i])
+        print("Log T21 saved")
+        logT21 = []
+
+        for i in range(len(logT22)):
+            logger.info(logT22[i])
+        print("Log T22 saved")
+        logT22 = []
+        return
+
+
 
     def showBlockLedger(self, index):
         """ Log all transactions of a block\n
@@ -2240,12 +2290,16 @@ class R2ac(object):
         global gwPvt
         global blockContext
         global gwContextConsensus
+        global blkCounter
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
         #vblockContext = "0001"
-        randomContext = random.randrange(0,len(gwContextConsensus))
+        # set each block with a different context, e.g., based on the rest of division of bc size by number of contexts
 
-        blockContext = gwContextConsensus[randomContext][0]
+        # randomContext = random.randrange(0,len(gwContextConsensus))
+
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
         # if(random.randrange(1,3) == 1):
         #     blockContext = "0001"
         # else:
