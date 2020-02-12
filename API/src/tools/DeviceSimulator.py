@@ -320,6 +320,7 @@ def simDevBlockAndTrans(blk, trans):
             break
     # brutePairAuth(blk)
     for tr in range(0, numTrans):
+        # logger.info("Sending transaction blk #" + str(blk) + "tr #" + str(tr) + "...")
         if (tr == 0):
             logger.info("Sending transaction blk #" + str(blk) +"tr #"+ str(tr) + "...")
         if (tr == int(numTrans/2)):
@@ -329,15 +330,15 @@ def simDevBlockAndTrans(blk, trans):
         # sendData()
         while (not (server.isBlockInTheChain(devPubK))):
             time.sleep(0.0001)
-            continue
+            # continue
             # time.sleep(1)
         AESKey = multSend(devPubK, devPrivK, AESKey, tr, blk)
         t2=time.time()
         #
-        while((t2-t1)*1000 < trInterval):
+        if((t2-t1)*1000 < trInterval):
             t2=time.time()
-            # trInterval is in ms and time.sleep is in s, so you should divide by 1000, error is max 10% of trInterval
-            time.sleep((trInterval/10)/1000)
+            # trInterval is in ms and time.sleep is in s, so you should divide by 1000
+            time.sleep((trInterval - ((t2-t1)*1000))/1000)
 
 
 # for sequential generation of blocks and transactions (sequential devices), use this
@@ -379,6 +380,8 @@ def automa(blocks, trans):
     for blk in range(0, blocks):
         arrayDevicesThreads[blk].join()
 
+    time.sleep(10)
+    gwSaveLog()
 
         # newKeyPair()
         # counter = 0
@@ -558,7 +561,7 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     defineConsensus(consensus)
     return gatewayURI
 
-def gwSaveLogT20():
+def gwSaveLog():
     server.saveLog()
 
 #############################################################################
@@ -589,7 +592,7 @@ def InteractiveMain():
         15: callEVMInterface,
         16: evmConnector,
         17: executeEVM,
-        18: gwSaveLogT20,
+        18: gwSaveLog,
     }
 
     mode = -1
@@ -661,7 +664,7 @@ if __name__ == '__main__':
 
 
         if (len(sys.argv) < 6): #when it is not called with number of blocks/transactions and consensus, it is called interactive mode
-            consensus = "None"
+            consensus = "PBFT"
             gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
             logger.info("Connected to gateway: " + gatewayURI.asString())
