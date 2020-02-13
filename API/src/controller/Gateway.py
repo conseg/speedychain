@@ -50,6 +50,8 @@ def getTime():
 blkCounter = 0 # blkCounter is used to choose blk context
 
 logT3 = [] # time to insert a block in local chain (block ledger)
+logT5 = []
+logT6 = []
 logT20 = [] # time/latency to insert a transaction (from creation on device to insertion in the gw BC)
 logT21 = [] # time to insert a set of transactions in local chain (time to process/insert a list of Tr
 logT22 = [] # time to perform transaction concensus, transations per transaction consensus, and throuput per transaction consensus
@@ -537,15 +539,13 @@ class R2ac(object):
 
 
     def threadTransactionConsensus(self, context, consensus):
+        # a sleep time to give time to all gateways connect and etc
         time.sleep(5)
+        # the other sleep times in this method is due to bad parallelism of Python... without any sleep, this thread can leave others in starvation
         if(consensus=="PoA"):
             while (True):
-                # for index in range(len(orchestratorContextObject)):
-                #     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
-                        # server.performTransactionConsensus()
-                        # logger.error("I am the leader of contezt" + context)
-                        self.performTransactionPoolPoAConsensus(context)
-                        time.sleep(0.04)
+                self.performTransactionPoolPoAConsensus(context)
+                time.sleep(0.05)
         if(consensus=="PBFT"):
             while(True):
                 for index in range(len(orchestratorContextObject)):
@@ -989,7 +989,7 @@ class R2ac(object):
         # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         global contextPeers
 
-        sizePool = 70  # slice of transactions get from each pool
+        sizePool = 100  # slice of transactions get from each pool
         minInterval = 1  # interval between consensus in ms
         # global blockContext
 
@@ -1027,7 +1027,7 @@ class R2ac(object):
 
             receivedCandidate = pickle.loads(pickedCandidatePool)
             if (receivedCandidate != False):
-                print("******************I Am the PoA Leader of context: " + context)
+                # print("******************I Am the PoA Leader of context: " + context)
                 candidatePool.extend(receivedCandidate)
             while(len(candidatePool)>0):
                 candidateTransaction = candidatePool.pop(0)
@@ -2119,7 +2119,7 @@ class R2ac(object):
 
         t3 = time.time()
         # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
+        logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
         # logger.debug("|---------------------------------------------------------------------|")
         # print("block added")
         return encKey
@@ -2227,6 +2227,8 @@ class R2ac(object):
 
     def remoteSaveLog(self):
         global logT3
+        global logT5
+        global logT6
         global logT20
         global logT21
         global logT22
@@ -2238,6 +2240,16 @@ class R2ac(object):
             logger.info(logT3[i])
         print("Log T3 saved")
         logT3 = []
+
+        for i in range(len(logT5)):
+            logger.info(logT5[i])
+        print("Log T5 saved")
+        logT5 = []
+
+        for i in range(len(logT6)):
+            logger.info(logT6[i])
+        print("Log T6 saved")
+        logT6 = []
 
         for i in range(len(logT20)):
             logger.info(logT20[i])
@@ -2539,6 +2551,34 @@ class R2ac(object):
     def exposedURI(self):
         return myURI
 
+    # set context and consensus list for each gateway
+    def setContexts(self, receivedContexts):
+        global gwContextConsensus
+
+        if (receivedContexts != gwContextConsensus):
+            gwContextConsensus = receivedContexts
+
+            # print("Changed my consensus to " + consensus)
+            for p in peers:
+                obj = p.object
+
+                dumpedContexts = pickle.dumps(receivedContexts)
+                obj.setContextsRemote(dumpedContexts)
+
+        print("Contexts set: "+ str(gwContextConsensus))
+        return True
+
+    def setContextsRemote(self, dumpedContexts):
+        global gwContextConsensus
+
+        receivedContexts = pickle.loads(dumpedContexts)
+        if (receivedContexts != gwContextConsensus):
+
+            gwContextConsensus = receivedContexts
+
+        print("Contexts set: " + str(gwContextConsensus))
+        return
+
     def setConsensus(self, receivedConsensus):
         global consensus
         if (receivedConsensus != consensus):
@@ -2558,11 +2598,12 @@ class R2ac(object):
         global blockContext
         global gwContextConsensus
         global blkCounter
+        global logT5
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
         #vblockContext = "0001"
         # set each block with a different context, e.g., based on the rest of division of bc size by number of contexts
-
+        # @TODO define somehow a device is in a context
         # randomContext = random.randrange(0,len(gwContextConsensus))
 
         blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
@@ -2573,7 +2614,7 @@ class R2ac(object):
         #     blockContext = "0002"
             # logger.error("******************Changed to 2****************")
         # blockContext = "0002"
-        #@TODO define somehow a device is in a context
+
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
 
@@ -2581,7 +2622,7 @@ class R2ac(object):
             logger.error("Consensus not finished")
             return False
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return True
         # print("Finish PBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
 
@@ -2591,6 +2632,7 @@ class R2ac(object):
         t1 = time.time()
         global gwPvt
         global blockContext
+        global logT5
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
         #vblockContext = "0001"
@@ -2603,7 +2645,7 @@ class R2ac(object):
             return False
         # logger.info("Consensus finished")
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with dBFT consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with dBFT consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return True
         # print("Finish dBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
 
@@ -2614,6 +2656,7 @@ class R2ac(object):
         t1 = time.time()
         global gwPvt
         global blockContext
+        global logT5
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
         #vblockContext = "0001"
@@ -2623,7 +2666,7 @@ class R2ac(object):
 
         if (PoWConsensus(blk, gwPub, devPubKey)):
             t2 = time.time()
-            logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with PoW consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+            logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with PoW consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
             # # print("Finish PoW consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
         else:
             t2 = time.time()
@@ -2636,6 +2679,7 @@ class R2ac(object):
         t1 = time.time()
         global peers
         global blockContext
+        global logT5
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
         #vblockContext = "0001"
@@ -2649,7 +2693,7 @@ class R2ac(object):
         ChainFunctions.addBlockHeader(newBlock)
         sendBlockToPeers(newBlock)
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
         # print("Finish adding Block without consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
         return True
 

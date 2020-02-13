@@ -293,6 +293,23 @@ def defineAutomaNumbers():
     trans = int(input('How many Transactions:'))
     automa(blocks, trans)
 
+def defineContextsAutomaNumbers():
+    """ Ask for the user to input how many context, blocks and transaction he wants and calls the function automa()"""
+    numContexts = int(input('How many Contexts(1 to n, default 3):'))
+    blocks = int(input('How many Blocks/Devices:'))
+    trans = int(input('How many Transactions:'))
+    contextsToSend = []
+    for i in range(numContexts):
+        print("i am in for")
+        contextStr = "000" + str(i + 1)
+        contextConsensus = "PoA"
+        contextTuple = (contextStr,contextConsensus)
+        contextsToSend.append(contextTuple)
+
+    server.setContexts(contextsToSend)
+
+    automa(blocks, trans)
+
 
 def consensusTrans():
     # for i in range(1,100):
@@ -590,8 +607,9 @@ def InteractiveMain():
         13: createBlockForSC,
         14: showLastTransactionData,
         15: callEVMInterface,
-        16: evmConnector,
-        17: executeEVM,
+        # 16: evmConnector,
+        # 17: executeEVM,
+        17: defineContextsAutomaNumbers,
         18: gwSaveLog,
     }
 
@@ -618,9 +636,11 @@ def InteractiveMain():
         print("13 - Create a block for Smart Contract")
         print("14 - Show data from last transaction from block Index")
         print("15 - Call Smart Contract")
+        print("17 - Define number of Contexts, Devices per Gw, and Tx per Device")
         print("18 - Save Gw log T20")
+
         # print("16 - EVM connector")
-        # print("17 - execute EVM code")
+
         print("#############################################################")
 
 
