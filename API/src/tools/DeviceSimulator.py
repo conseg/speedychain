@@ -31,6 +31,8 @@ serverAESKey = ""
 privateKey = "-----BEGIN PRIVATE KEY-----\nMIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEA7P6DKm54NjLE7ajy\nTks298FEJeHJNxGT+7DjbTQgJdZKjQ6X9lYW8ittiMnvds6qDL95eYFgZCvO22YT\nd1vU1QIDAQABAkBEzTajEOMRSPfmzw9ZL3jLwG3aWYwi0pWVkirUPze+A8MTp1Gj\njaGgR3sPinZ3EqtiTA+PveMQqBsCv0rKA8NZAiEA/swxaCp2TnJ4zDHyUTipvJH2\nqe+KTPBHMvOAX5zLNNcCIQDuHM/gISL2hF2FZHBBMT0kGFOCcWBW1FMbsUqtWcpi\nMwIhAM5s0a5JkHV3qkQMRvvkgydBvevpJEu28ofl3OAZYEwbAiBJHKmrfSE6Jlx8\n5+Eb8119psaFiAB3yMwX9bEjVy2wRwIgd5X3n2wD8tQXcq1T6S9nr1U1dmTz7407\n1UbKzu4J8GQ=\n-----END PRIVATE KEY-----\n"
 publicKey = "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOz+gypueDYyxO2o8k5LNvfBRCXhyTcR\nk/uw4200ICXWSo0Ol/ZWFvIrbYjJ73bOqgy/eXmBYGQrzttmE3db1NUCAwEAAQ==\n-----END PUBLIC KEY-----\n"
 
+logT30 = []
+logT31 = []
 # input = getattr(__builtin__, 'raw_input', input)
 
 def getMyIP():
@@ -250,6 +252,8 @@ def multSend(devPubK, devPrivateK, AESKey, retry, blk):
 
 def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
     """ Read the sensor data, encrypt it and send it as a transaction to be validated by the peers """
+    global logT30
+    global logT31
     temperature = readSensorTemperature()
     t = ((time.time() * 1000) * 1000)
     timeStr = "{:.0f}".format(t)
@@ -259,8 +263,11 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
     toSend = signedData + timeStr + temperature
 
     try:
-
         encobj = CryptoFunctions.encryptAES(toSend, AESKey)
+        t2 = ((time.time() * 1000) * 1000)
+        logT30.append("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000))
+        # print(("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000)))
+
     except:
         logger.error("was not possible to encrypt... verify aeskey: "+ str(AESKey) +" in blk: " + str(blk) + "tr: " + str(trans))
         newKeyPair()
@@ -269,11 +276,17 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
         signedData = CryptoFunctions.signInfo(devPrivateK, data)
         toSend = signedData + timeStr + temperature
         encobj = CryptoFunctions.encryptAES(toSend, AESKey)
+        t2 = ((time.time() * 1000) * 1000)
+        logT30.append("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000))
+        # print(("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000)))
         logger.error("passed through sendData except")
     try:
         encobj=pickle.dumps(encobj)
         devPubK = pickle.dumps(devPubK)
         transactionStatus= server.addTransactionToPool(devPubK, encobj)
+        t3 = ((time.time() * 1000) * 1000)
+        logT31.append("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
+        # print("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
         if(transactionStatus=="ok!"):
             # logger.error("everything good now")
             return AESKey
@@ -310,6 +323,20 @@ def defineContextsAutomaNumbers():
 
     automa(blocks, trans)
 
+
+def saveDeviceLog():
+    global logT30
+    global logT31
+
+    for i in range(len(logT30)):
+        logger.info(logT30[i])
+    print("Log T30 saved")
+    logT30 = []
+
+    for i in range(len(logT31)):
+        logger.info(logT31[i])
+    print("Log T31 saved")
+    logT31 = []
 
 def consensusTrans():
     # for i in range(1,100):
@@ -398,7 +425,13 @@ def automa(blocks, trans):
         arrayDevicesThreads[blk].join()
 
     time.sleep(10)
-    gwSaveLog()
+    print("saving Gw logs")
+    try:
+        gwSaveLog()
+    except:
+        print("another is saving the logs")
+    print("Saved Gw logs, now saving Dev logs")
+    saveDeviceLog()
 
         # newKeyPair()
         # counter = 0
