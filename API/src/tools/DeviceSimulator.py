@@ -311,6 +311,13 @@ def defineContextsAutomaNumbers():
     numContexts = int(input('How many Contexts(1 to n, default 3):'))
     blocks = int(input('How many Blocks/Devices:'))
     trans = int(input('How many Transactions:'))
+    try:
+        setContexts(numContexts)
+    except:
+        logger.error("Probably, another interface set the numbers of contexts")
+    automa(blocks, trans)
+
+def setContexts(numContexts):
     contextsToSend = []
     for i in range(numContexts):
         print("i am in for")
@@ -320,8 +327,6 @@ def defineContextsAutomaNumbers():
         contextsToSend.append(contextTuple)
 
     server.setContexts(contextsToSend)
-
-    automa(blocks, trans)
 
 
 def saveDeviceLog():
@@ -424,7 +429,7 @@ def automa(blocks, trans):
     for blk in range(0, blocks):
         arrayDevicesThreads[blk].join()
 
-    time.sleep(10)
+    time.sleep(30)
     print("saving Gw logs")
     try:
         gwSaveLog()
@@ -726,13 +731,15 @@ if __name__ == '__main__':
             blocks = sys.argv[5]
             transactions = sys.argv[6]
             consensus = sys.argv[7]
+            numContexts = sys.argv[8]
 
             gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
             logger.info("Connected to gateway: " + gatewayURI.asString())
-
+            setContexts(int(numContexts))
             logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
             automa(int(blocks), int(transactions))
+            logger.info("Finishing Execution of Device"+deviceName)
 
         # else:
         # os.system("clear")
