@@ -78,7 +78,7 @@ gwPvt = ""
 gwPub = ""
 myOwnBlock = ""
 orchestratorObject = ""
-consensus = "PBFT"  # it can be None, dBFT, PBFT, PoW, Witness3
+consensus = "PoA"  # it can be None, dBFT, PBFT, PoW, PoA, Witness3
 nameServerIP =""
 nameServerPort=""
 # list of votes for new orchestrator votes are: voter gwPub, voted gwPub, signature
@@ -533,10 +533,11 @@ class R2ac(object):
         logger.info("SpeedyCHAIN Gateway initialized")
         # thread to perform transaction consensus
         # time.sleep(5)
+
+    def startTransactionsConsThreads(self):
         for x,y in gwContextConsensus:
             threading.Thread(target=self.threadTransactionConsensus, args=(x,y)).start()
             # if (gwContextConsensus[0]) [("0001", "PoA"),("0002", "PBFT")]
-
 
     def threadTransactionConsensus(self, context, consensus):
         # a sleep time to give time to all gateways connect and etc
@@ -2085,6 +2086,10 @@ class R2ac(object):
             if(consensus == "None"):
                 self.addBlockConsensusCandidate(pickedKey)
                 self.runNoConsesus()
+            if(consensus == "PoA"):
+                self.lockForConsensus()
+                self.addBlockConsensusCandidate(pickedKey)
+                self.runPoA()
 
             # print("after orchestratorObject.addBlockConsensusCandidate")
             # try:
@@ -2633,10 +2638,14 @@ class R2ac(object):
         global gwPvt
         global blockContext
         global logT5
+        global blkCounter
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
         #vblockContext = "0001"
+
         #@TODO define somehow a device is in a context
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # logger.info("after blk, before consensus")
         # logger.debug("Running dBFT function to block(" + str(blk.index) + ")")
@@ -2657,10 +2666,13 @@ class R2ac(object):
         global gwPvt
         global blockContext
         global logT5
+        global blkCounter
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
         #vblockContext = "0001"
         #@TODO define somehow a device is in a context
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         # print("Device PubKey (insire runPoW): " + str(devPubKey))
 
@@ -2680,10 +2692,39 @@ class R2ac(object):
         global peers
         global blockContext
         global logT5
+        global blkCounter
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
         #vblockContext = "0001"
         #@TODO define somehow a device is in a context
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
+        newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
+        signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers)
+        if (signature == False):
+            logger.info("Consesus was not achieved: block #" +
+                        str(newBlock.index) + " will not be added")
+            return False
+        ChainFunctions.addBlockHeader(newBlock)
+        sendBlockToPeers(newBlock)
+        t2 = time.time()
+        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        # print("Finish adding Block without consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
+        return True
+
+    def runPoA(self):
+        # print("Running without consensus")
+        t1 = time.time()
+        global peers
+        global blockContext
+        global logT5
+        global blkCounter
+        devPubKey = getBlockFromSyncList()
+        #verififyKeyContext()
+        #vblockContext = "0001"
+        #@TODO define somehow a device is in a context
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
         newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
         signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers)
         if (signature == False):
@@ -2707,12 +2748,12 @@ class R2ac(object):
         i =0
         while (counter < len(peers)):
             while ((consensusLock.acquire(
-                    False) == False) and i<30):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
+                    False) == False)):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
                 # logger.info("$$$$$$$I can't lock my lock, waiting for it -> in lock for consensus")
                 time.sleep(0.01)
             # print("##Before for and after acquire my lock")
-            if (i==30):
-                return False
+                if (i==1000):
+                    return False
             for p in peers:
                 obj = p.object
                 thisPeerIsNotAvailableToLock = obj.acquireLockRemote()
@@ -3721,12 +3762,21 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
     global nameServerPort
     global gatewayName
     global blockContext
+    global gwContextConsensus
     gatewayName = local_gatewayName
     nameServerIP = nameServerIP_received
     nameServerPort = nameServerPort_received
 
     blockContext =gatewayContext
+    # @TODO there is a temporary approach to set consensus of gw
+    contextsToSend = []
+    for i in range(int(gatewayContext)):
+        contextStr = "000" + str(i + 1)
 
+        contextConsensus = "PoA"
+        contextTuple = (contextStr, contextConsensus)
+        contextsToSend.append(contextTuple)
+    gwContextConsensus=contextsToSend
     # initialize Logger
     global logger
     logger = Logger.configure(gatewayName + ".log")

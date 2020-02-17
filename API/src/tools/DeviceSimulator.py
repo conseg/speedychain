@@ -320,7 +320,7 @@ def defineContextsAutomaNumbers():
 def setContexts(numContexts):
     contextsToSend = []
     for i in range(numContexts):
-        print("i am in for")
+
         contextStr = "000" + str(i + 1)
         contextConsensus = "PoA"
         contextTuple = (contextStr,contextConsensus)
@@ -418,6 +418,8 @@ def automa(blocks, trans):
         @param blocks - int number of blocks\n
         @param trans - int number of transactions
     """
+    server.startTransactionsConsThreads()
+    # time.sleep(5)
 
     arrayDevicesThreads = []*blocks
     for blk in range(0, blocks):
