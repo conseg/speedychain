@@ -307,14 +307,17 @@ def defineAutomaNumbers():
     automa(blocks, trans)
 
 def defineContextsAutomaNumbers():
-    """ Ask for the user to input how many context, blocks and transaction he wants and calls the function automa()"""
-    numContexts = int(input('How many Contexts(1 to n, default 3):'))
+    """ Ask for the user to input how many context (been reviewed), blocks and transaction he wants and calls the function automa()"""
+    # numContexts = int(input('How many Contexts(1 to n, default 3):'))
     blocks = int(input('How many Blocks/Devices:'))
     trans = int(input('How many Transactions:'))
-    try:
-        setContexts(numContexts)
-    except:
-        logger.error("Probably, another interface set the numbers of contexts")
+
+    # need to be reviewed -> should change list of peeers
+    # try:
+    #     setContexts(numContexts)
+    # except:
+    #     logger.error("Probably, another interface set the numbers of contexts")
+
     automa(blocks, trans)
 
 def setContexts(numContexts):
