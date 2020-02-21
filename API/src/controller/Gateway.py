@@ -1158,13 +1158,19 @@ class R2ac(object):
 
         tempContextPeers =[]
         counter = 0
-
         for x in range(len(contextPeers)):
             # print(" ***VVVVV **** context? " +contextPeers[x][0])
             if (contextPeers[x][0] == context):
                 tempContextPeers = contextPeers[x][1]
 
         while (counter < len(tempContextPeers)):
+            tempContextPeers = []
+            counter = 0
+            for x in range(len(contextPeers)):
+                # print(" ***VVVVV **** context? " +contextPeers[x][0])
+                if (contextPeers[x][0] == context):
+                    tempContextPeers = contextPeers[x][1]
+
             while ((self.addContextinLockList(context) == False) ):#and i<100):  # in this mode (with False value) it will lock the execution and return true if it was locked or false if not
                 # logger.info("$$$$$$$I can't lock my lock, waiting for it -> in lock for consensus")
                 time.sleep(random.randrange(10,1000)/1000)
