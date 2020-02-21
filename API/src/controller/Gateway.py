@@ -1479,6 +1479,9 @@ class R2ac(object):
         ############# transactionLockList is a list of tuples composed by context and its lock
         # index=0
         ############# 1 lock per block -> 1 consensus per block
+        lockContext = thread.allocate_lock()
+        myLockTuple = (context, lockContext)
+
         for x,y in contextLockList:
             if x == context:
                 # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
@@ -1486,12 +1489,17 @@ class R2ac(object):
                 # return contextLockList[index][1].acquire(False)
                 return y.acquire(False)
             # index = index+1
-        lockContext = thread.allocate_lock()
-        myLockTuple = (context, lockContext)
+
         contextLockList.append(myLockTuple)
         # return the attempt to lock the last inserted  [-1] context through its lock [1]
         print("@@Context List after adding context to lock list")
-        return contextLockList[-1][1].acquire(False)
+        # return contextLockList[-1][1].acquire(False)
+        for x,y in contextLockList:
+            if x == context:
+                # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
+                # print("@@Contextfound")
+                # return contextLockList[index][1].acquire(False)
+                return y.acquire(False)
 
     def removeLockfromContext(self, context):
         global contextLockList
@@ -1501,7 +1509,10 @@ class R2ac(object):
             if x == context:
                 # return the attempt to lock the indexed devpublickley  [index] pubkey through its lock [1]
                 # contextLockList[index][1].release()
-                y.release()
+                try:
+                    y.release()
+                except:
+                    logger.error("not locked lock")
                 return True
             # index = index + 1
         return False
