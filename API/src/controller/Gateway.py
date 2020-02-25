@@ -604,7 +604,7 @@ class R2ac(object):
         global contextPeers
         global logT22
         candidatePool =[]
-        sizePool = 70 # slice of transactions get from each pool
+        sizePool = 30 # slice of transactions get from each pool
         minInterval = 1 # interval between consensus in ms
         minTransactions = 0 # minimum number of transactions to start consensus
 
@@ -614,7 +614,7 @@ class R2ac(object):
         #     # print("obj URI: " + str(orchestratorContextObject[index][1].exposedURI()) + "myURI " + str(myURI))
         #     # orchestratorContextObject[index][1].exposedURI()
         #     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
-        print("******************I Am the PBFT Leader of context: "+context)
+        # print("******************I Am the PBFT Leader of context: "+context)
         while(len(candidatePool)==0):
             tcc1 = ((time.time()) * 1000) * 1000
             # just to not printing in every time that enters here, leave it only for interactive
@@ -622,6 +622,11 @@ class R2ac(object):
             while(self.addContextinLockList(context)==False):
                 # logger.error("I AM NOT WITH LOCK!!!!!")
                 time.sleep(0.001)
+            tempContextPeers = []
+            for x in range(len(contextPeers)):
+                # print(" ***VVVVV **** context? " +contextPeers[x][0])
+                if (contextPeers[x][0] == context):
+                    tempContextPeers = contextPeers[x][1]
             # use this if you want to get all elements from trpool
             # pickedCandidatePool = self.getLocalTransactionPool(context)
             # use this if you want to get first sizePool elements
@@ -630,11 +635,7 @@ class R2ac(object):
             if (myPool != False):
                 candidatePool = myPool
                 # print("I got my pool in PBFT")
-            tempContextPeers = []
-            for x in range(len(contextPeers)):
-                # print(" ***VVVVV **** context? " +contextPeers[x][0])
-                if (contextPeers[x][0] == context):
-                    tempContextPeers = contextPeers[x][1]
+
             for p in tempContextPeers:
                 peer = p.object
                 while(peer.addContextinLockList(context)==False):
@@ -710,7 +711,7 @@ class R2ac(object):
         pickedCandidatePool = self.getNElementsLocalTransactionPool(context, sizePool)
         myPool = pickle.loads(pickedCandidatePool)
         if (myPool != False):
-            print("******************I Am the dBFT Leader of context: " + context)
+            # print("******************I Am the dBFT Leader of context: " + context)
             candidatePool = myPool
             # print("I got my pool in PBFT")
         tempContextPeers = []
@@ -1492,7 +1493,7 @@ class R2ac(object):
 
         contextLockList.append(myLockTuple)
         # return the attempt to lock the last inserted  [-1] context through its lock [1]
-        print("@@Context List after adding context to lock list")
+        # print("@@Context List after adding context to lock list")
         # return contextLockList[-1][1].acquire(False)
         for x,y in contextLockList:
             if x == context:
@@ -3780,6 +3781,7 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
     global gatewayName
     global blockContext
     global gwContextConsensus
+    global consensus
     gatewayName = local_gatewayName
     nameServerIP = nameServerIP_received
     nameServerPort = nameServerPort_received
@@ -3790,7 +3792,7 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
     for i in range(int(gatewayContext)):
         contextStr = "000" + str(i + 1)
 
-        contextConsensus = "PoA"
+        contextConsensus = consensus # using this, it will use same consensus as for blocks for all gw
         contextTuple = (contextStr, contextConsensus)
         contextsToSend.append(contextTuple)
     gwContextConsensus=contextsToSend

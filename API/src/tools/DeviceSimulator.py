@@ -325,7 +325,8 @@ def setContexts(numContexts):
     for i in range(numContexts):
 
         contextStr = "000" + str(i + 1)
-        contextConsensus = "PoA"
+        # use same consensus as defined previously
+        contextConsensus = consensus
         contextTuple = (contextStr,contextConsensus)
         contextsToSend.append(contextTuple)
 
@@ -371,6 +372,8 @@ def simDevBlockAndTrans(blk, trans):
         if (counter > 10):
             break
     # brutePairAuth(blk)
+    # wait a little bit before sending tx
+    time.sleep(5)
     for tr in range(0, numTrans):
         # logger.info("Sending transaction blk #" + str(blk) + "tr #" + str(tr) + "...")
         if (tr == 0):
@@ -381,7 +384,7 @@ def simDevBlockAndTrans(blk, trans):
         t1 = time.time()
         # sendData()
         while (not (server.isBlockInTheChain(devPubK))):
-            time.sleep(0.0001)
+            time.sleep(0.001)
             # continue
             # time.sleep(1)
         AESKey = multSend(devPubK, devPrivK, AESKey, tr, blk)
@@ -421,8 +424,9 @@ def automa(blocks, trans):
         @param blocks - int number of blocks\n
         @param trans - int number of transactions
     """
+    time.sleep(5)
     server.startTransactionsConsThreads()
-    # time.sleep(5)
+    time.sleep(5)
 
     arrayDevicesThreads = []*blocks
     for blk in range(0, blocks):
@@ -434,7 +438,7 @@ def automa(blocks, trans):
     for blk in range(0, blocks):
         arrayDevicesThreads[blk].join()
 
-    time.sleep(30)
+    time.sleep(60)
     print("saving Gw logs")
     try:
         gwSaveLog()
