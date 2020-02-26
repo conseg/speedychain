@@ -52,6 +52,7 @@ t22=$"T22.csv"
 t23=$"T23.csv"
 t24=$"T24.csv"
 t25=$"T25.csv"
+t26=$"T26.csv"
 t30=$"T30.csv"
 t31=$"T31.csv"
 more gw* | grep T20 > $timestamp$t20
@@ -60,6 +61,7 @@ more gw* | grep T22 > $timestamp$t22
 more gw* | grep T23 > $timestamp$t23
 more gw* | grep T24 > $timestamp$t24
 more gw* | grep T25 > $timestamp$t25
+more gw* | grep T26 > $timestamp$t26
 more dev* | grep T30 > $timestamp$t30
 more dev* | grep T31 > $timestamp$t31
 rm *.log*

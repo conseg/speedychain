@@ -58,6 +58,7 @@ logT22 = [] # time to perform transaction concensus, transations per transaction
 logT23 = []  # time to validate a candidate list and vote
 logT24 = []  # time to original/proposer of tx consensus to validate txdata
 logT25 = []  # time to insert transaction in the pool
+logT26 = []  # time/latency to insert a transaction in the First Gw(from creation on device to insertion in the gw BC)
 # logT29 =[]
 lock = thread.allocate_lock()
 transListLock  = thread.allocate_lock()
@@ -873,7 +874,7 @@ class R2ac(object):
         if(len(validTransactionPool)>0):
             dumpedSetTrans = pickle.dumps(validTransactionPool)
             # addLocally
-            self.updateBlockLedgerSetTrans(dumpedSetTrans)
+            self.updateBlockLedgerSetTrans(dumpedSetTrans,True)
 
             # add remote
             index = 0
@@ -881,7 +882,7 @@ class R2ac(object):
 
                 obj=p.object
                 # obj.updateBlockLedgerSetTrans(dumpedSetTrans)
-                arrayPeersThreads.append(threading.Thread(target=obj.updateBlockLedgerSetTrans, args=[dumpedSetTrans]))
+                arrayPeersThreads.append(threading.Thread(target=obj.updateBlockLedgerSetTrans, args=(dumpedSetTrans,False)))
                 arrayPeersThreads[index].start()
                 index = index+1
 
@@ -1898,9 +1899,10 @@ class R2ac(object):
         logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return "done"
 
-    def updateBlockLedgerSetTrans(self, candidatePool):
+    def updateBlockLedgerSetTrans(self, candidatePool, isFirst):
         global logT20
         global logT21
+        global logT26
         # update local bockchain adding a new transaction
         """ Receive a new transaction and add it to the chain\n
             @param pubKey - Block public key\n
@@ -1929,6 +1931,10 @@ class R2ac(object):
                 gwTimestamp = float(deviceTrans.timestamp)
                 currentTimestamp = float (((time.time())*1000)*1000)
                 logT20.append("gateway;" + gatewayName +";Context;" +blk.blockContext + ";T20;Transaction Latency;" + str((currentTimestamp - originalTimestamp)/1000))
+                if(isFirst):
+                    logT26.append(
+                    "gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T20;First Transaction Latency;" + str(
+                        (currentTimestamp - originalTimestamp) / 1000))
                 # logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
                 # logger.info(
                 #     "gateway;" + gatewayName + ";" + consensus + ";T21;Time to process Tr is;" + str(
@@ -2259,6 +2265,7 @@ class R2ac(object):
         global logT23
         global logT24
         global logT25
+        global logT26
 
         for i in range(len(logT3)):
             logger.info(logT3[i])
@@ -2305,6 +2312,11 @@ class R2ac(object):
             logger.info(logT25[i])
         print("Log T25 saved")
         logT25 = []
+
+        for i in range(len(logT26)):
+            logger.info(logT26[i])
+        print("Log T26 saved")
+        logT26 = []
 
 
         return

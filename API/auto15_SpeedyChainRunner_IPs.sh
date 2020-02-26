@@ -8,7 +8,7 @@ export PYRO_THREADPOOL_SIZE=1000
 numDev=25
 numTr=200
 contexts=0020
-sizePool=10
+sizePool=20
 
 #python -m Pyro4.naming -n 192.168.2.2 -p 9090 &
 #PIDPyroNS=$!
@@ -133,6 +133,7 @@ t22=$"T22.csv"
 t23=$"T23.csv"
 t24=$"T24.csv"
 t25=$"T25.csv"
+t26=$"T26.csv"
 t30=$"T30.csv"
 t31=$"T31.csv"
 ERROR=$"ERROR.csv"
@@ -144,6 +145,7 @@ more gw* | grep T22 > $timestamp$t22
 more gw* | grep T23 > $timestamp$t23
 more gw* | grep T24 > $timestamp$t24
 more gw* | grep T25 > $timestamp$t25
+more gw* | grep T26 > $timestamp$t26
 more dev* | grep T30 > $timestamp$t30
 more dev* | grep T31 > $timestamp$t31
 more dev* | grep ERROR > $timestamp$ERROR
