@@ -1933,7 +1933,7 @@ class R2ac(object):
                 logT20.append("gateway;" + gatewayName +";Context;" +blk.blockContext + ";T20;Transaction Latency;" + str((currentTimestamp - originalTimestamp)/1000))
                 if(isFirst):
                     logT26.append(
-                    "gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T20;First Transaction Latency;" + str(
+                    "gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str(
                         (currentTimestamp - originalTimestamp) / 1000))
                 # logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
                 # logger.info(
