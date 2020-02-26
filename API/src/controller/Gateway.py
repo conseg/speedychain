@@ -2612,7 +2612,7 @@ class R2ac(object):
 
             gwContextConsensus = receivedContexts
 
-        print("Contexts set: " + str(gwContextConsensus))
+        # print("Contexts set: " + str(gwContextConsensus))
         return
 
     def setConsensus(self, receivedConsensus):

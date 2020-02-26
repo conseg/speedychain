@@ -746,6 +746,7 @@ if __name__ == '__main__':
 
             logger.info("Connected to gateway: " + gatewayURI.asString())
             setContexts(int(numContexts))
+            time.sleep(10)
             logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
             automa(int(blocks), int(transactions))
             logger.info("Finishing Execution of Device"+deviceName)
