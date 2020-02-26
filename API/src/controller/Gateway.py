@@ -555,7 +555,7 @@ class R2ac(object):
                         self.performTransactionPoolPBFTConsensus(context)
                         time.sleep(0.01)
                     else:
-                        time.sleep(0.03)
+                        time.sleep(0.1)
 
         if (consensus == "dBFT"):
             while (True):
@@ -886,8 +886,9 @@ class R2ac(object):
                 arrayPeersThreads[index].start()
                 index = index+1
 
-            for i in range(len(arrayPeersThreads)):
-                arrayPeersThreads[i].join()
+            # this can be a problem for performance... trying
+            # for i in range(len(arrayPeersThreads)):
+            #     arrayPeersThreads[i].join()
 
             # logger.error("!!!! PASSED !!!")
             return True
