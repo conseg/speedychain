@@ -881,7 +881,7 @@ class R2ac(object):
             for p in alivePeers:
 
                 obj=p.object
-                obj.updateBlockLedgerSetTrans(dumpedSetTrans)
+                obj.updateBlockLedgerSetTrans(dumpedSetTrans,False)
                 # arrayPeersThreads.append(threading.Thread(target=obj.updateBlockLedgerSetTrans, args=(dumpedSetTrans,False)))
                 # arrayPeersThreads[index].start()
                 # index = index+1

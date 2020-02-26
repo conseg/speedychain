@@ -8,7 +8,7 @@ export PYRO_THREADPOOL_SIZE=1000
 numDev=20
 numTr=200
 contexts=0010
-sizePool=10
+sizePool=5
 
 #python -m Pyro4.naming -n 192.168.2.2 -p 9090 &
 #PIDPyroNS=$!
