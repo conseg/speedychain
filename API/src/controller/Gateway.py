@@ -881,10 +881,10 @@ class R2ac(object):
             for p in alivePeers:
 
                 obj=p.object
-                # obj.updateBlockLedgerSetTrans(dumpedSetTrans)
-                arrayPeersThreads.append(threading.Thread(target=obj.updateBlockLedgerSetTrans, args=(dumpedSetTrans,False)))
-                arrayPeersThreads[index].start()
-                index = index+1
+                obj.updateBlockLedgerSetTrans(dumpedSetTrans)
+                # arrayPeersThreads.append(threading.Thread(target=obj.updateBlockLedgerSetTrans, args=(dumpedSetTrans,False)))
+                # arrayPeersThreads[index].start()
+                # index = index+1
 
             # this can be a problem for performance... trying
             # for i in range(len(arrayPeersThreads)):
