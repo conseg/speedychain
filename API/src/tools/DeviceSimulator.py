@@ -373,7 +373,7 @@ def simDevBlockAndTrans(blk, trans):
             break
     # brutePairAuth(blk)
     # wait a little bit before sending tx
-    time.sleep(5)
+    time.sleep(60)
     for tr in range(0, numTrans):
         # logger.info("Sending transaction blk #" + str(blk) + "tr #" + str(tr) + "...")
         if (tr == 0):

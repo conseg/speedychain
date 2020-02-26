@@ -104,7 +104,7 @@ transactionSharedPool = []
 blockContext = "0001"
 # should have all context here
 gwContextConsensus = [("0001", "PoA"),("0002", "PoA"),("0003", "PoA")]
-
+sizePool = 1
 # list of votes for new orchestrator votes are: context, voter gwPub, voted gwPub, signature
 votesForNewContextOrchestrator =[]
 myVoteForNewContextOrchestrator =[]
@@ -603,8 +603,9 @@ class R2ac(object):
     def performTransactionPoolPBFTConsensus(self,context):
         global contextPeers
         global logT22
+        global sizePool
         candidatePool =[]
-        sizePool = 30 # slice of transactions get from each pool
+        # sizePool = 30 # slice of transactions get from each pool
         minInterval = 1 # interval between consensus in ms
         minTransactions = 0 # minimum number of transactions to start consensus
 
@@ -3772,7 +3773,7 @@ def saveURItoFile(uri):
 """ Main function initiate the system"""
 
 
-def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gatewayContext):
+def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gatewayContext, poolSize):
 
     global myURI
     global votesForNewOrchestrator
@@ -3782,9 +3783,12 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
     global blockContext
     global gwContextConsensus
     global consensus
+    global sizePool
+
     gatewayName = local_gatewayName
     nameServerIP = nameServerIP_received
     nameServerPort = nameServerPort_received
+    sizePool = poolSize
 
     blockContext =gatewayContext
     # @TODO there is a temporary approach to set consensus of gw

@@ -35,6 +35,7 @@ parser.add_argument('-n', '--nameServerIP', type=str, metavar='', help='Server I
 parser.add_argument('-p', '--nameServerPort', type=str, metavar='', help='Server port')
 parser.add_argument('-G', '--gatewayName', type=str, metavar='', help='The name of the gateway')
 parser.add_argument('-C', '--gatewayContext', type=str, metavar='', help='The context of the gateway')
+parser.add_argument('-S', '--poolSize', type=str, metavar='', help='Amount of Tx from each Pool')
 args = parser.parse_args()
 
-Gateway.main(args.nameServerIP, int(args.nameServerPort), args.gatewayName, args.gatewayContext)
+Gateway.main(args.nameServerIP, int(args.nameServerPort), args.gatewayName, args.gatewayContext,int(args.poolSize))

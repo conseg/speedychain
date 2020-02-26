@@ -1,22 +1,23 @@
 #!/bin/bash
 #export PATH=$PATH:/usr/local/go/bin
-#echo $GOPATH /home/roben/go
+#echo $GOPATH /home
+sizePool=50
 python -m Pyro4.naming -n 127.0.0.1 -p 9090 &
 PIDPyroNS=$!
 sleep 1
-python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwa -C 0004 &
+python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwa -C $contexts -S $sizePool &
 PIDGwa=$!
 sleep 1
-python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwb -C 0004 &
+python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwb -C $contexts -S $sizePool &
 PIDGwb=$!
 sleep 1
-python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwc -C 0004 &
+python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwc -C $contexts -S $sizePool &
 PIDGwc=$!
 sleep 1
-python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwd -C 0004 &
+python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwd -C $contexts -S $sizePool &
 PIDGwd=$!
 sleep 1
-python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwe -C 0004 &
+python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwe -C $contexts -S $sizePool &
 PIDGwe=$!
 sleep 1
 #gnome-terminal -e "bash -c \"python ~/speedychain_varruda/speedychain-master/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a     50   10 PoW 1; exec bash\""
