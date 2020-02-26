@@ -273,6 +273,9 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
         newKeyPair()
         AESKey = addBlockOnChainv2(devPubK, devPrivateK) # this will force gateway to recreate the aes key
         # logger.error("New aeskey is: "+ str(AESKey))
+        t = ((time.time() * 1000) * 1000)
+        timeStr = "{:.0f}".format(t)
+        data = timeStr + temperature
         signedData = CryptoFunctions.signInfo(devPrivateK, data)
         toSend = signedData + timeStr + temperature
         encobj = CryptoFunctions.encryptAES(toSend, AESKey)

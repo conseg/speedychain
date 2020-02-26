@@ -542,7 +542,7 @@ class R2ac(object):
 
     def threadTransactionConsensus(self, context, consensus):
         # a sleep time to give time to all gateways connect and etc
-        time.sleep(5)
+        # time.sleep(5)
         # the other sleep times in this method is due to bad parallelism of Python... without any sleep, this thread can leave others in starvation
         if(consensus=="PoA"):
             while (True):
@@ -553,9 +553,9 @@ class R2ac(object):
                 for index in range(len(orchestratorContextObject)):
                     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
                         self.performTransactionPoolPBFTConsensus(context)
-                        time.sleep(0.01)
+                        time.sleep(0.02)
                     else:
-                        time.sleep(0.1)
+                        time.sleep(0.5)
 
         if (consensus == "dBFT"):
             while (True):
@@ -662,18 +662,18 @@ class R2ac(object):
 
                 # if you want to set a min interval between consensus
                 tcc2 = ((time.time()) * 1000) * 1000
-                if ((tcc2 - tcc1) / 1000 < minInterval):
-                    time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
 
-
-                # election for new orchestrator
-                self.electNewContextOrchestrator(context)
                 # te2 = ((time.time()) * 1000) * 1000
                 # logger.error("ELECTION; " + str((te2-te1)/1000))
                 self.removeLockfromContext(context)
                 for p in tempContextPeers:
                     peer = p.object
                     peer.removeLockfromContext(context)
+
+                # if ((tcc2 - tcc1) / 1000 < minInterval):
+                #     time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
+                # election for new orchestrator
+                self.electNewContextOrchestrator(context)
                 tcc2 = ((time.time()) * 1000) * 1000
                 logT22.append("T22 CONTEXT; "+context+";PBFT CONSENSUS TIME; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize) + ";TPUT;" + str((candidatePoolSize)/(((tcc2-tcc1)/1000)/1000)))
                 # logger.error("CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
@@ -1294,7 +1294,7 @@ class R2ac(object):
                 while (not (transactionLockList[index][1].acquire(False))):
                     i = i + 1
                     # print("$$$$$$$$$ not possible to acquire a lock in addNewTransaciontosynclist")
-                    time.sleep(0.01)
+                    time.sleep(0.001)
                     if (i == 100):
                         return False
                 # if it got the lock, insert a new transaction into the list
