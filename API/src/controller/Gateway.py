@@ -553,7 +553,7 @@ class R2ac(object):
                 for index in range(len(orchestratorContextObject)):
                     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
                         self.performTransactionPoolPBFTConsensus(context)
-                        time.sleep(0.02)
+                        # time.sleep(0.02)
                     # else:
                 time.sleep(0.1)
 
