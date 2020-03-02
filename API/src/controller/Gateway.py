@@ -554,8 +554,8 @@ class R2ac(object):
                     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
                         self.performTransactionPoolPBFTConsensus(context)
                         time.sleep(0.02)
-                    else:
-                        time.sleep(0.5)
+                    # else:
+                time.sleep(0.1)
 
         if (consensus == "dBFT"):
             while (True):
@@ -563,8 +563,8 @@ class R2ac(object):
                     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
                         self.performTransactionPooldBFTConsensus(context)
                         time.sleep(0.01)
-                    else:
-                        time.sleep(1)
+                    # else:
+                    time.sleep(0.01)
                 # print("PBFT for transactions not implemented yet")
 
     #  it should verify context
@@ -607,7 +607,7 @@ class R2ac(object):
         global sizePool
         candidatePool =[]
         # sizePool = 30 # slice of transactions get from each pool
-        minInterval = 1 # interval between consensus in ms
+        minInterval = 10 # interval between consensus in ms
         minTransactions = 0 # minimum number of transactions to start consensus
 
 
@@ -881,10 +881,10 @@ class R2ac(object):
             for p in alivePeers:
 
                 obj=p.object
-                obj.updateBlockLedgerSetTrans(dumpedSetTrans,False)
-                # arrayPeersThreads.append(threading.Thread(target=obj.updateBlockLedgerSetTrans, args=(dumpedSetTrans,False)))
-                # arrayPeersThreads[index].start()
-                # index = index+1
+                # obj.updateBlockLedgerSetTrans(dumpedSetTrans,False)
+                arrayPeersThreads.append(threading.Thread(target=obj.updateBlockLedgerSetTrans, args=(dumpedSetTrans,False)))
+                arrayPeersThreads[index].start()
+                index = index+1
 
             # this can be a problem for performance... trying
             # for i in range(len(arrayPeersThreads)):
