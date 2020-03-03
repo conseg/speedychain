@@ -43,40 +43,61 @@ SMART CONTRACTS automated:
 
 STREAMING FULL SETUP:
 1. Setup virtual environment in the raspberry pi:
+
 1.1. sudo pip install virtualenv
+
 1.2. sudo pip install virtualenvwrapper
 
 2. Add the following variables to the ~/.bashrc:
 `
 export WORKON_HOME=$HOME/.virtualenvs
+
 export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
+
 source /usr/local/bin/virtualenvwrapper.sh
+
 export VIRTUALENVWRAPPER_ENV_BIN_DIR=bin
 `
 
 Reload the bashrc: `source ~/.bashrc`
 
 3. Create the virtual environment:
+
 3.1. mkvirtualenv speedy
+
 3.2 workon speedy
 
 4. Get the last project verion:
+
 `git clone https://github.com/conseg/speedychain.git
+
 cd speedychain
+
 git checkout streamMultilevel
+
 cd src
+
 pip install -r requirements.txt
 `
 
 5. Execution:
+
 Node 1 (name server): pyro4-ns 192.168.0.2 -p 12345
+
 Node 2 (gateway[s]): python runner.py 192.168.0.2 12345 Gw2
+
 Node 3 (gateway[s]): python runner.py 192.168.0.2 12345 Gw3
+
 ...
-Node 10 (streamings): 
+
+Node 10 (streamings):
+
 Individual execution:
+
 python speedychain/src/tools/StreamHandler.py 192.168.0.2 12345 Gw2 dev-0
+
 Multiple instances:
+
 python speedychain/src/tools/launcher.sh
 
 
