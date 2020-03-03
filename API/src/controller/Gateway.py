@@ -549,22 +549,22 @@ class R2ac(object):
                 self.performTransactionPoolPoAConsensus(context)
                 time.sleep(0.05)
         if(consensus=="PBFT"):
-            while(True):
+            # while(True):
                 for index in range(len(orchestratorContextObject)):
                     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
                         self.performTransactionPoolPBFTConsensus(context)
                         # time.sleep(0.02)
                     # else:
-                time.sleep(0.1)
+                # time.sleep(0.1)
 
         if (consensus == "dBFT"):
             while (True):
                 for index in range(len(orchestratorContextObject)):
                     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
                         self.performTransactionPooldBFTConsensus(context)
-                        time.sleep(0.01)
+                        # time.sleep(0.01)
                     # else:
-                    time.sleep(0.01)
+                    time.sleep(0.1)
                 # print("PBFT for transactions not implemented yet")
 
     #  it should verify context
@@ -674,8 +674,13 @@ class R2ac(object):
                 #     time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
                 # election for new orchestrator
                 self.electNewContextOrchestrator(context)
+                # orchestratorContextObject.performTransactionPoolPBFTConsensus(context)
                 tcc2 = ((time.time()) * 1000) * 1000
                 logT22.append("T22 CONTEXT; "+context+";PBFT CONSENSUS TIME; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize) + ";TPUT;" + str((candidatePoolSize)/(((tcc2-tcc1)/1000)/1000)))
+                # call to execute the consensus for the new leader
+                for index in range(len(orchestratorContextObject)):
+                    if (orchestratorContextObject[index][0] == context):
+                        threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensus, args=[context]).start()
                 # logger.error("CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
                 return
 
@@ -1074,7 +1079,7 @@ class R2ac(object):
                     if(contextPeers[index][0] == context):
                         for p in contextPeers[index][1]:
                             obj=p.object
-                            obj.updateBlockLedgerSetTrans(dumpedSetTrans)
+                            obj.updateBlockLedgerSetTrans(dumpedSetTrans,False)
 
                 tcc2 = ((time.time()) * 1000) * 1000
                 logT22.append(
@@ -1269,7 +1274,7 @@ class R2ac(object):
                     if(contextPeers[index][0] == context):
                         for p in contextPeers[index][1]:
                             obj=p.object
-                            obj.updateBlockLedgerSetTrans(dumpedSetTrans)
+                            obj.updateBlockLedgerSetTrans(dumpedSetTrans,False)
 
         return
 

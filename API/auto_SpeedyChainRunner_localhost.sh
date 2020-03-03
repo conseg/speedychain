@@ -1,7 +1,11 @@
 #!/bin/bash
 #export PATH=$PATH:/usr/local/go/bin
 #echo $GOPATH /home
-sizePool=50
+export PYRO_THREADPOOL_SIZE=1000
+numDev=35
+numTr=200
+contexts=0004
+sizePool=15
 python -m Pyro4.naming -n 127.0.0.1 -p 9090 &
 PIDPyroNS=$!
 sleep 1
@@ -22,15 +26,15 @@ PIDGwe=$!
 sleep 1
 #gnome-terminal -e "bash -c \"python ~/speedychain_varruda/speedychain-master/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a     50   10 PoW 1; exec bash\""
 #for automated running devices calls should pass as arguments Pyro-NS_IP PORT GatewayNameToConnect DeviceName numBlocks numTx blockConsensus numContexts
-python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a 8 5 PBFT 4 &
+python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a $numDev $numTr PBFT $contexts &
 PIDDeva=$!
-python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwb dev-b 8 5 PBFT 4 &
+python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwb dev-b $numDev $numTr PBFT $contexts &
 PIDDevb=$!
-python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwc dev-c 8 5 PBFT 4 &
+python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwc dev-c $numDev $numTr PBFT $contexts &
 PIDDevc=$!
-python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwd dev-d 8 5 PBFT 4 &
+python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwd dev-d $numDev $numTr PBFT $contexts &
 PIDDevd=$!
-python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwe dev-e 8 5 PBFT 4 &
+python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwe dev-e $numDev $numTr PBFT $contexts &
 PIDDeve=$!
 
 wait $PIDDeva
