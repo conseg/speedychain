@@ -34,10 +34,14 @@ def getMyIP():
     """ Return the IP from the gateway
     @return str
     """
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8", 80))
-    myIP = s.getsockname()[0]
-    s.close()
+    # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # s.connect(("8.8.8.8", 80))
+    # myIP = s.getsockname()[0]
+    # s.close()
+    hostname = socket.gethostname()
+    IPAddr = socket.gethostbyname(hostname)
+    myIP = IPAddr
+
     return myIP
 
 
@@ -2143,7 +2147,7 @@ class R2ac(object):
             # except:
             #     print "thread not working..."
 
-            if(consensus == "PBFT" or consensus == "dBFT" or consensus == "Witness3" or consensus == "PoW"):
+            if(consensus == "PBFT" or consensus == "dBFT" or consensus == "Witness3" or consensus == "PoW" or consensus == "PoA"):
                 self.releaseLockForConsensus()
                 for p in peers:
                     obj = p.object

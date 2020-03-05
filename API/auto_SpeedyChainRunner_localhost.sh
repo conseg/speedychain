@@ -6,35 +6,36 @@ numDev=35
 numTr=200
 contexts=0004
 sizePool=15
-python -m Pyro4.naming -n 127.0.0.1 -p 9090 &
+nsIP=127.0.0.1
+python -m Pyro4.naming -n $nsIP -p 9090 &
 PIDPyroNS=$!
 sleep 1
-python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwa -C $contexts -S $sizePool &
+python ~/PycharmProjects/speedychain/API/runner.py -n $nsIP -p 9090 -G gwa -C $contexts -S $sizePool &
 PIDGwa=$!
 sleep 1
-python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwb -C $contexts -S $sizePool &
+python ~/PycharmProjects/speedychain/API/runner.py -n $nsIP -p 9090 -G gwb -C $contexts -S $sizePool &
 PIDGwb=$!
 sleep 1
-python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwc -C $contexts -S $sizePool &
+python ~/PycharmProjects/speedychain/API/runner.py -n $nsIP -p 9090 -G gwc -C $contexts -S $sizePool &
 PIDGwc=$!
 sleep 1
-python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwd -C $contexts -S $sizePool &
+python ~/PycharmProjects/speedychain/API/runner.py -n 1$nsIP -p 9090 -G gwd -C $contexts -S $sizePool &
 PIDGwd=$!
 sleep 1
-python ~/PycharmProjects/speedychain/API/runner.py -n 127.0.0.1 -p 9090 -G gwe -C $contexts -S $sizePool &
+python ~/PycharmProjects/speedychain/API/runner.py -n $nsIP -p 9090 -G gwe -C $contexts -S $sizePool &
 PIDGwe=$!
 sleep 1
-#gnome-terminal -e "bash -c \"python ~/speedychain_varruda/speedychain-master/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a     50   10 PoW 1; exec bash\""
+#gnome-terminal -e "bash -c \"python ~/speedychain_varruda/speedychain-master/src/tools/DeviceSimulator.py $nsIP 9090 gwa dev-a     50   10 PoW 1; exec bash\""
 #for automated running devices calls should pass as arguments Pyro-NS_IP PORT GatewayNameToConnect DeviceName numBlocks numTx blockConsensus numContexts
-python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a $numDev $numTr PBFT $contexts &
+python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py $nsIP 9090 gwa dev-a $numDev $numTr PBFT $contexts &
 PIDDeva=$!
-python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwb dev-b $numDev $numTr PBFT $contexts &
+python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py $nsIP 9090 gwb dev-b $numDev $numTr PBFT $contexts &
 PIDDevb=$!
-python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwc dev-c $numDev $numTr PBFT $contexts &
+python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py $nsIP 9090 gwc dev-c $numDev $numTr PBFT $contexts &
 PIDDevc=$!
-python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwd dev-d $numDev $numTr PBFT $contexts &
+python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py $nsIP 9090 gwd dev-d $numDev $numTr PBFT $contexts &
 PIDDevd=$!
-python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py 127.0.0.1 9090 gwe dev-e $numDev $numTr PBFT $contexts &
+python ~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py $nsIP 9090 gwe dev-e $numDev $numTr PBFT $contexts &
 PIDDeve=$!
 
 wait $PIDDeva
