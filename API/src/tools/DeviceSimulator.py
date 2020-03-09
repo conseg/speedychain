@@ -31,6 +31,8 @@ serverAESKey = ""
 privateKey = "-----BEGIN PRIVATE KEY-----\nMIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEA7P6DKm54NjLE7ajy\nTks298FEJeHJNxGT+7DjbTQgJdZKjQ6X9lYW8ittiMnvds6qDL95eYFgZCvO22YT\nd1vU1QIDAQABAkBEzTajEOMRSPfmzw9ZL3jLwG3aWYwi0pWVkirUPze+A8MTp1Gj\njaGgR3sPinZ3EqtiTA+PveMQqBsCv0rKA8NZAiEA/swxaCp2TnJ4zDHyUTipvJH2\nqe+KTPBHMvOAX5zLNNcCIQDuHM/gISL2hF2FZHBBMT0kGFOCcWBW1FMbsUqtWcpi\nMwIhAM5s0a5JkHV3qkQMRvvkgydBvevpJEu28ofl3OAZYEwbAiBJHKmrfSE6Jlx8\n5+Eb8119psaFiAB3yMwX9bEjVy2wRwIgd5X3n2wD8tQXcq1T6S9nr1U1dmTz7407\n1UbKzu4J8GQ=\n-----END PRIVATE KEY-----\n"
 publicKey = "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOz+gypueDYyxO2o8k5LNvfBRCXhyTcR\nk/uw4200ICXWSo0Ol/ZWFvIrbYjJ73bOqgy/eXmBYGQrzttmE3db1NUCAwEAAQ==\n-----END PUBLIC KEY-----\n"
 
+trInterval = 1000 # interval between transactions
+
 logT30 = []
 logT31 = []
 # input = getattr(__builtin__, 'raw_input', input)
@@ -368,7 +370,8 @@ def simDevBlockAndTrans(blk, trans):
     numTrans=trans
     devPubK,devPrivK = generateRSAKeyPair()
     # trInterval is amount of time to wait before send the next tr in ms
-    trInterval = 1000 #1000
+    global trInterval
+    
     counter = 0
     AESKey = addBlockOnChainv2(devPubK,devPrivK)
     while (AESKey == False):
@@ -743,10 +746,13 @@ if __name__ == '__main__':
             logger.info("Connected to gateway: " + gatewayURI.asString())
             InteractiveMain()
         else:
+            global trInterval
+
             blocks = sys.argv[5]
             transactions = sys.argv[6]
             consensus = sys.argv[7]
             numContexts = sys.argv[8]
+            trInterval = sys.arv[9]
 
             gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
