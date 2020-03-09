@@ -371,7 +371,7 @@ def simDevBlockAndTrans(blk, trans):
     devPubK,devPrivK = generateRSAKeyPair()
     # trInterval is amount of time to wait before send the next tr in ms
     global trInterval
-    
+
     counter = 0
     AESKey = addBlockOnChainv2(devPubK,devPrivK)
     while (AESKey == False):
