@@ -726,6 +726,7 @@ if __name__ == '__main__':
         # ---->
         # os.system("clear")
         # print("running automatically")
+    global trInterval
     if len(sys.argv[1:])<4:
         print("Command line syntax:")
         print("  python DeviceSimulator.py <name server IP> <name server port> <gateway name> <device name>")
@@ -746,7 +747,7 @@ if __name__ == '__main__':
             logger.info("Connected to gateway: " + gatewayURI.asString())
             InteractiveMain()
         else:
-            global trInterval
+
 
             blocks = sys.argv[5]
             transactions = sys.argv[6]
