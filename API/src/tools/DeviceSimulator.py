@@ -752,7 +752,7 @@ if __name__ == '__main__':
             transactions = sys.argv[6]
             consensus = sys.argv[7]
             numContexts = sys.argv[8]
-            trInterval = sys.arv[9]
+            trInterval = sys.argv[9]
 
             gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
