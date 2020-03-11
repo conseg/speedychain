@@ -83,7 +83,7 @@ gwPvt = ""
 gwPub = ""
 myOwnBlock = ""
 orchestratorObject = ""
-consensus = "PoA"  # it can be None, dBFT, PBFT, PoW, PoA, Witness3
+consensus = "PBFT"  # it can be None, dBFT, PBFT, PoW, PoA, Witness3
 nameServerIP =""
 nameServerPort=""
 # list of votes for new orchestrator votes are: voter gwPub, voted gwPub, signature
@@ -108,7 +108,7 @@ transactionSharedPool = []
 # [["0001", [(devKey1, tr1),(devKey2,tr2], (devKey3,tr3)],["0002",[]]]
 blockContext = "0001"
 # should have all context here
-gwContextConsensus = [("0001", "PoA"),("0002", "PoA"),("0003", "PoA")]
+gwContextConsensus = [("0001", "PBFT"),("0002", "PBFT"),("0003", "PBFT")]
 sizePool = 1
 # list of votes for new orchestrator votes are: context, voter gwPub, voted gwPub, signature
 votesForNewContextOrchestrator =[]
