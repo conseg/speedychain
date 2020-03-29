@@ -33,8 +33,12 @@ publicKey = "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOz+gyp
 
 trInterval = 1000 # interval between transactions
 
+logT27 = []
+logT27.append("test;T27")
 logT30 = []
 logT31 = []
+startTime=0
+endTime=0
 # input = getattr(__builtin__, 'raw_input', input)
 
 def getMyIP():
@@ -45,9 +49,18 @@ def getMyIP():
      # s.connect(("8.8.8.8", 80))
      # myIP = s.getsockname()[0]
      # s.close()
-     hostname = socket.gethostname()
-     IPAddr = socket.gethostbyname(hostname)
-     myIP = IPAddr
+     # hostname = socket.gethostname()
+     # IPAddr = socket.gethostbyname(hostname)
+     # myIP = IPAddr
+
+     try:
+         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+         s.connect(("10.255.255.255", 1))
+         myIP = s.getsockname()[0]
+     except:
+         myIP = '127.0.0.1'
+     finally:
+         s.close()
      return myIP
 
 def generateRSAKeyPair():
@@ -342,6 +355,7 @@ def setContexts(numContexts):
 
 
 def saveDeviceLog():
+    global logT27
     global logT30
     global logT31
 
@@ -354,6 +368,12 @@ def saveDeviceLog():
         logger.info(logT31[i])
     print("Log T31 saved")
     logT31 = []
+
+    for i in range(len(logT27)):
+        logger.info(logT27[i])
+    print("Log T27 saved")
+    logT27 = []
+
 
 def consensusTrans():
     # for i in range(1,100):
@@ -371,6 +391,7 @@ def simDevBlockAndTrans(blk, trans):
     devPubK,devPrivK = generateRSAKeyPair()
     # trInterval is amount of time to wait before send the next tr in ms
     global trInterval
+    global startTime
 
     counter = 0
     AESKey = addBlockOnChainv2(devPubK,devPrivK)
@@ -386,6 +407,8 @@ def simDevBlockAndTrans(blk, trans):
     for tr in range(0, numTrans):
         # logger.info("Sending transaction blk #" + str(blk) + "tr #" + str(tr) + "...")
         if (tr == 0):
+            if (startTime==0):
+                startTime = (time.time())*1000
             logger.info("Sending transaction blk #" + str(blk) +"tr #"+ str(tr) + "...")
         if (tr == int(numTrans/2)):
             logger.info("Sending transaction blk #" + str(blk) + "tr #" + str(tr) + "...")
@@ -436,6 +459,9 @@ def automa(blocks, trans):
     time.sleep(5)
     server.startTransactionsConsThreads()
     time.sleep(5)
+    global endTime
+    global startTime
+    global logT27
 
     arrayDevicesThreads = []*blocks
     for blk in range(0, blocks):
@@ -447,7 +473,9 @@ def automa(blocks, trans):
     for blk in range(0, blocks):
         arrayDevicesThreads[blk].join()
 
-    time.sleep(60)
+    endTime = (time.time())*1000
+    logT27.append("Device;" + deviceName + ";T27; Time run all transactions in ms;" + str((endTime - startTime)))
+    time.sleep(10)
     print("saving Gw logs")
     try:
         gwSaveLog()

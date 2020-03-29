@@ -34,13 +34,17 @@ def getMyIP():
     """ Return the IP from the gateway
     @return str
     """
-    # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # s.connect(("8.8.8.8", 80))
-    # myIP = s.getsockname()[0]
-    # s.close()
-    hostname = socket.gethostname()
-    IPAddr = socket.gethostbyname(hostname)
-    myIP = IPAddr
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("10.255.255.255", 1))
+        myIP = s.getsockname()[0]
+    except:
+        myIP = '127.0.0.1'
+    finally:
+        s.close()
+        # hostname = socket.gethostname()
+        # IPAddr = socket.gethostbyname(hostname)
+        # myIP = IPAddr
 
     return myIP
 
@@ -1066,10 +1070,14 @@ class R2ac(object):
                         nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
 
                     ChainFunctions.addBlockTransaction(blk, transaction)
+                    candidateDevInfo = deviceInfo
+                    candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+                    originalTimestamp = float(candidateDevInfo.timestamp)
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
                     # logger.debug("Block #" + str(blk.index) + " added locally")
                     # logger.debug("Sending block #" +
                     #             str(blk.index) + " to peers...")
-
+                    logT26.append("gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str((currentTimestamp - originalTimestamp) / 1000))
                     # --->> this function should be run in a different thread.
                     candidatePooltoSend.append((devPublicKey, transaction))
                     # instead of sending transactions individually, it will be sent in batch
@@ -1942,9 +1950,7 @@ class R2ac(object):
                 currentTimestamp = float (((time.time())*1000)*1000)
                 logT20.append("gateway;" + gatewayName +";Context;" +blk.blockContext + ";T20;Transaction Latency;" + str((currentTimestamp - originalTimestamp)/1000))
                 if(isFirst):
-                    logT26.append(
-                    "gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str(
-                        (currentTimestamp - originalTimestamp) / 1000))
+                    logT26.append("gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str((currentTimestamp - originalTimestamp) / 1000))
                 # logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
                 # logger.info(
                 #     "gateway;" + gatewayName + ";" + consensus + ";T21;Time to process Tr is;" + str(
