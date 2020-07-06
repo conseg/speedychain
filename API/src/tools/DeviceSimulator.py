@@ -30,8 +30,8 @@ serverAESEncKey = ""
 serverAESKey = ""
 privateKey = "-----BEGIN PRIVATE KEY-----\nMIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEA7P6DKm54NjLE7ajy\nTks298FEJeHJNxGT+7DjbTQgJdZKjQ6X9lYW8ittiMnvds6qDL95eYFgZCvO22YT\nd1vU1QIDAQABAkBEzTajEOMRSPfmzw9ZL3jLwG3aWYwi0pWVkirUPze+A8MTp1Gj\njaGgR3sPinZ3EqtiTA+PveMQqBsCv0rKA8NZAiEA/swxaCp2TnJ4zDHyUTipvJH2\nqe+KTPBHMvOAX5zLNNcCIQDuHM/gISL2hF2FZHBBMT0kGFOCcWBW1FMbsUqtWcpi\nMwIhAM5s0a5JkHV3qkQMRvvkgydBvevpJEu28ofl3OAZYEwbAiBJHKmrfSE6Jlx8\n5+Eb8119psaFiAB3yMwX9bEjVy2wRwIgd5X3n2wD8tQXcq1T6S9nr1U1dmTz7407\n1UbKzu4J8GQ=\n-----END PRIVATE KEY-----\n"
 publicKey = "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOz+gypueDYyxO2o8k5LNvfBRCXhyTcR\nk/uw4200ICXWSo0Ol/ZWFvIrbYjJ73bOqgy/eXmBYGQrzttmE3db1NUCAwEAAQ==\n-----END PUBLIC KEY-----\n"
-
-trInterval = 1000 # interval between transactions
+keysArray =[] # structure to save private, public, and aes key from a device
+trInterval = 10000 # interval between transactions
 
 logT27 = []
 logT27.append("test;T27")
@@ -272,6 +272,7 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
     """ Read the sensor data, encrypt it and send it as a transaction to be validated by the peers """
     global logT30
     global logT31
+    global keysArray
     temperature = readSensorTemperature()
     t = ((time.time() * 1000) * 1000)
     timeStr = "{:.0f}".format(t)
@@ -288,7 +289,7 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
 
     except:
         logger.error("was not possible to encrypt... verify aeskey: "+ str(AESKey) +" in blk: " + str(blk) + "tr: " + str(trans))
-        newKeyPair()
+        devPubK, devPrivateK = generateRSAKeyPair()
         AESKey = addBlockOnChainv2(devPubK, devPrivateK) # this will force gateway to recreate the aes key
         # logger.error("New aeskey is: "+ str(AESKey))
         t = ((time.time() * 1000) * 1000)
@@ -310,15 +311,15 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
         # print("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
         if(transactionStatus=="ok!"):
             # logger.error("everything good now")
-            return AESKey
+            return devPubK,devPrivateK,AESKey
         else:
             # logger.error("Used AESKey was: " + str(AESKey))
             logger.error("something went wrong when sending data in blk: " + str(blk) + "tr: " + str(trans))
             logger.error("Transaction status problem: " + transactionStatus)
-            return AESKey
+            return devPubK,devPrivateK,AESKey
     except:
         logger.error("some exception with addTransaction now...in blk: " + str(blk) + "tr: " + str(trans))
-        return AESKey
+        return devPubK,devPrivateK,AESKey
 
 
 def defineAutomaNumbers():
@@ -386,29 +387,74 @@ def consensusTrans():
 
 
 # for parallel simulation of devices and insertions use this
+def simDevBlockAndTransSequential(blk, trans):
+    numTrans = trans
+    # trInterval is amount of time to wait before send the next tr in ms
+    global trInterval
+    global startTime
+    global keysArray
+
+    if (trans == 0):
+        devPubK, devPrivK = generateRSAKeyPair()
+        counter = 0
+        AESKey = addBlockOnChainv2(devPubK, devPrivK)
+        keysArray.append([devPubK, devPrivK, AESKey])
+        while (AESKey == False):
+            logger.error("ERROR: creating a new key pair and trying to create a new block")
+            devPubK, devPrivK = generateRSAKeyPair()
+            AESKey = addBlockOnChainv2(devPubK, devPrivK)
+            keysArray[blk]=[devPubK, devPrivK, AESKey]
+            counter = counter + 1
+            if (counter > 10):
+                break
+        if (startTime==0):
+            startTime = (time.time())*1000*1000
+        logger.info("Sending transaction blk #" + str(blk) + "tr #" + str(trans) + "...")
+    # t1 = time.time()
+
+    devPubK=keysArray[blk][0]
+    devPrivK=keysArray[blk][1]
+    AESKey=keysArray[blk][2]
+    while (not (server.isBlockInTheChain(devPubK))):
+        time.sleep(0.001)
+        # continue
+        # time.sleep(1)
+    devPubK, devPrivK, AESKey = multSend(devPubK, devPrivK, AESKey, trans, blk)
+    if (AESKey != False):
+        keysArray[blk][2]=AESKey
+    # t2 = time.time()
+    #
+    # if ((t2 - t1) * 1000 < trInterval):
+    #     t2 = time.time()
+    #     # trInterval is in ms and time.sleep is in s, so you should divide by 1000
+    #     time.sleep((trInterval - ((t2 - t1) * 1000)) / 1000)
+
 def simDevBlockAndTrans(blk, trans):
     numTrans=trans
     devPubK,devPrivK = generateRSAKeyPair()
     # trInterval is amount of time to wait before send the next tr in ms
     global trInterval
     global startTime
+    global keysArray
+
 
     counter = 0
     AESKey = addBlockOnChainv2(devPubK,devPrivK)
     while (AESKey == False):
         logger.error("ERROR: creating a new key pair and trying to create a new block")
-        newKeyPair()
+        devPubK, devPrivK = generateRSAKeyPair()
+        AESKey = addBlockOnChainv2(devPubK, devPrivK)
         counter = counter + 1
         if (counter > 10):
             break
     # brutePairAuth(blk)
     # wait a little bit before sending tx
-    time.sleep(60)
+    time.sleep(90)
     for tr in range(0, numTrans):
         # logger.info("Sending transaction blk #" + str(blk) + "tr #" + str(tr) + "...")
         if (tr == 0):
             if (startTime==0):
-                startTime = (time.time())*1000
+                startTime = (time.time())*1000*1000
             logger.info("Sending transaction blk #" + str(blk) +"tr #"+ str(tr) + "...")
         if (tr == int(numTrans/2)):
             logger.info("Sending transaction blk #" + str(blk) + "tr #" + str(tr) + "...")
@@ -419,7 +465,7 @@ def simDevBlockAndTrans(blk, trans):
             time.sleep(0.001)
             # continue
             # time.sleep(1)
-        AESKey = multSend(devPubK, devPrivK, AESKey, tr, blk)
+        devPubK, devPrivK, AESKey = multSend(devPubK, devPrivK, AESKey, tr, blk)
         t2=time.time()
         #
         if((t2-t1)*1000 < trInterval):
@@ -463,19 +509,11 @@ def automa(blocks, trans):
     global startTime
     global logT27
 
-    arrayDevicesThreads = []*blocks
-    for blk in range(0, blocks):
-        logger.info("Adding block #" + str(blk) + "...")
-        # for parallel devices use threading option
-        arrayDevicesThreads.append(threading.Thread(target=simDevBlockAndTrans, args=(blk, trans)))
-        arrayDevicesThreads[blk].start()
-        # for sequential devices insertion use method seqDevSim()
-    for blk in range(0, blocks):
-        arrayDevicesThreads[blk].join()
+    simulateDevices(blocks,trans,"sequential")
 
-    endTime = (time.time())*1000
-    logT27.append("Device;" + deviceName + ";T27; Time run all transactions in ms;" + str((endTime - startTime)))
-    time.sleep(10)
+    endTime = (time.time())*1000*1000
+    logT27.append("Device;" + deviceName + ";T27; Time run all transactions in ms;" + str((endTime - startTime)/1000))
+    time.sleep(90)
     print("saving Gw logs")
     try:
         gwSaveLog()
@@ -502,6 +540,30 @@ def automa(blocks, trans):
         #         continue
         #         # time.sleep(1)
         #     bruteSend(tr)
+
+def simulateDevices(blocks,trans,mode):
+    global trInterval
+    if(mode=="sequential"):
+        for tr in range(0, trans):
+            t1 = time.time()
+            for blk in range(0, blocks):
+                # print("SEQUENTIAL"+str(tr)+"transaction sent")
+                simDevBlockAndTransSequential(blk,tr)
+            t2= time.time()
+            if ((t2 - t1) * 1000 < trInterval):
+                time.sleep((trInterval - ((t2 - t1) * 1000)) / 1000)
+
+    else:
+        arrayDevicesThreads = []*blocks
+        for blk in range(0, blocks):
+            logger.info("Adding block #" + str(blk) + "...")
+            # for parallel devices use threading option
+            arrayDevicesThreads.append(threading.Thread(target=simDevBlockAndTrans, args=(blk, trans)))
+            arrayDevicesThreads[blk].start()
+            # for sequential devices insertion use method seqDevSim()
+        for blk in range(0, blocks):
+            arrayDevicesThreads[blk].join()
+
 
 
 def merkle():

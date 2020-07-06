@@ -555,7 +555,7 @@ class R2ac(object):
         if(consensus=="PoA"):
             while (True):
                 self.performTransactionPoolPoAConsensus(context)
-                time.sleep(0.05)
+                time.sleep(0.5)
         if(consensus=="PBFT"):
             # while(True):
                 for index in range(len(orchestratorContextObject)):
@@ -2607,15 +2607,16 @@ class R2ac(object):
     def setContexts(self, receivedContexts):
         global gwContextConsensus
 
-        if (receivedContexts != gwContextConsensus):
-            gwContextConsensus = receivedContexts
-
-            # print("Changed my consensus to " + consensus)
-            for p in peers:
-                obj = p.object
-
-                dumpedContexts = pickle.dumps(receivedContexts)
-                obj.setContextsRemote(dumpedContexts)
+        # @TODO change how contexts are updated
+        # if (receivedContexts != gwContextConsensus):
+        #     gwContextConsensus = receivedContexts
+        #
+        #     # print("Changed my consensus to " + consensus)
+        #     for p in peers:
+        #         obj = p.object
+        #
+        #         dumpedContexts = pickle.dumps(receivedContexts)
+        #         obj.setContextsRemote(dumpedContexts)
 
         print("Contexts set: "+ str(gwContextConsensus))
         return True
@@ -3821,12 +3822,35 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
     blockContext =gatewayContext
     # @TODO there is a temporary approach to set consensus of gw
     contextsToSend = []
+    #
+    # all gw with same contexts
+    #
+    # for i in range(int(gatewayContext)):
+    #     contextStr = "000" + str(i + 1)
+    #
+    #     contextConsensus = consensus # using this, it will use same consensus as for blocks for all gw
+    #     contextTuple = (contextStr, contextConsensus)
+    #     contextsToSend.append(contextTuple)
+    # gwContextConsensus=contextsToSend
+    #
+    # 5 gateways in each context
+    #
+    if (int(gatewayContext) == 0):
+        contextConsensus = consensus  # using this, it will use same consensus as for blocks for all gw
+        contextTuple = ("9999", contextConsensus)
+        contextsToSend.append(contextTuple)
     for i in range(int(gatewayContext)):
         contextStr = "000" + str(i + 1)
+        if((gatewayName=="gwa" or gatewayName=="gwb" or gatewayName=="gwc" or gatewayName=="gwd" or gatewayName=="gwe") and ((i+1) <= (int(gatewayContext)/2))):
+            contextConsensus = consensus # using this, it will use same consensus as for blocks for all gw
+            contextTuple = (contextStr, contextConsensus)
+            contextsToSend.append(contextTuple)
+        if ((gatewayName == "gwf" or gatewayName == "gwg" or gatewayName == "gwh" or gatewayName == "gwi" or gatewayName == "gwj") and (
+                (i + 1) > (int(gatewayContext) / 2))):
+            contextConsensus = consensus  # using this, it will use same consensus as for blocks for all gw
+            contextTuple = (contextStr, contextConsensus)
+            contextsToSend.append(contextTuple)
 
-        contextConsensus = consensus # using this, it will use same consensus as for blocks for all gw
-        contextTuple = (contextStr, contextConsensus)
-        contextsToSend.append(contextTuple)
     gwContextConsensus=contextsToSend
     # initialize Logger
     global logger
