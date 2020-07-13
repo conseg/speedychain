@@ -522,24 +522,34 @@ def automa(blocks, trans):
     print("Saved Gw logs, now saving Dev logs")
     saveDeviceLog()
 
-        # newKeyPair()
-        # counter = 0
-        # while(addBlockOnChain()==False):
-        #     logger.error("ERROR: creating a new key pair and trying to create a new block")
-        #     newKeyPair()
-        #     counter= counter + 1
-        #     if (counter > 10):
-        #         break
-        #
-        # # brutePairAuth(blk)
-        # for tr in range(0, trans):
-        #     logger.info("Sending transaction #" + str(tr) + "...")
-        #     # sendData()
-        #     while (not (server.isBlockInTheChain(publicKey))):
-        #         time.sleep(0.0001)
-        #         continue
-        #         # time.sleep(1)
-        #     bruteSend(tr)
+def old_automa(blocks, trans):
+    global endTime
+    global startTime
+    time.sleep(5)
+    for blk in range(0, blocks):
+        newKeyPair()
+        counter = 0
+        while(addBlockOnChain()==False):
+            logger.error("ERROR: creating a new key pair and trying to create a new block")
+            newKeyPair()
+            counter= counter + 1
+            if (counter > 10):
+                break
+
+        # brutePairAuth(blk)
+        startTime = (time.time()) * 1000 * 1000
+        for tr in range(0, trans):
+            logger.info("Sending transaction #" + str(tr) + "...")
+            # sendData()
+            while (not (server.isBlockInTheChain(publicKey))):
+                time.sleep(0.0001)
+                continue
+                # time.sleep(1)
+            bruteSend(tr)
+    endTime = (time.time()) * 1000 * 1000
+    logT27.append(
+        "Device;" + deviceName + ";T27; Time run all transactions in ms;" + str((endTime - startTime) / 1000))
+    time.sleep(60)
 
 def simulateDevices(blocks,trans,mode):
     global trInterval
@@ -852,6 +862,8 @@ if __name__ == '__main__':
             time.sleep(10)
             logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
             automa(int(blocks), int(transactions))
+            # FOR OLD VERSION  - WITHOUT CONSENSUS use old_automa
+            # old_automa(int(blocks), int(transactions))
             logger.info("Finishing Execution of Device"+deviceName)
 
         # else:

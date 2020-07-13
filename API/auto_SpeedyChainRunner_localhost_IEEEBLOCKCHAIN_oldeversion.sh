@@ -3,12 +3,12 @@
 #echo $GOPATH /home/roben/go
 
 #pool size for PYRO => required when running many parallel instances
-export PYRO_THREADPOOL_SIZE=1000
+export PYRO_THREADPOOL_SIZE=100
 
 numDev=100
 numTr=100
 contexts=0001
-poolSize=10000
+poolSize=1
 nsIP=127.0.0.1
 run=0
 consensus=PBFT
@@ -16,7 +16,7 @@ txInterval=10000
 mypathRunner=~/PycharmProjects/speedychain/API/runner.py
 mypathDevice=~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py
 
-for c in {2..10}
+for c in {1..1}
 do
   for run in {1..2}
   do

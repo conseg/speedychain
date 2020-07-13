@@ -214,6 +214,15 @@ def sendTransactionToPeers(devPublicKey, transaction):
         # logger.debug("Sending transaction to peer " + peer.peerURI)
         trans = pickle.dumps(transaction)
         obj.updateBlockLedger(devPublicKey, trans)
+        trans.__class__ = Transaction.Transaction
+        candidateDevInfo = trans.data
+        candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+        originalTimestamp = float(candidateDevInfo.timestamp)
+
+        currentTimestamp = float(((time.time()) * 1000) * 1000)
+        logT20.append("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+            (currentTimestamp - originalTimestamp) / 1000))
+
 
 # class sendBlks(threading.Thread):
 #     def __init__(self, threadID, iotBlock):
@@ -876,7 +885,11 @@ class R2ac(object):
         #         validTransactionPool.append(votesPoolTotal[v][0])
 
         # commit
+
+        # TODO define how to update peers: all peers or only participating in consensus?
+        #
         if(self.commitContextPBFT(validTransactionPool,alivePeers)):
+        # if (self.commitContextPBFT(validTransactionPool, peers)):
             return True
 
         return False
@@ -1632,6 +1645,7 @@ class R2ac(object):
         # logger.debug("Transaction received")
         global gwPvt
         global gwPub
+
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
 
@@ -1681,6 +1695,15 @@ class R2ac(object):
                     #             str(blk.index) + " to peers...")
                     t2 = time.time()
                     logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    # new data collection
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info(
+                        "gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info(
+                        "gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done")
@@ -2658,7 +2681,10 @@ class R2ac(object):
         # set each block with a different context, e.g., based on the rest of division of bc size by number of contexts
         # @TODO define somehow a device is in a context
         # randomContext = random.randrange(0,len(gwContextConsensus))
-
+        # if(len(gwContextConsensus==0)):
+        #     logger.error("no contexts" + " My gw name is: " + gatewayName)
+        #     blockContext = "9999"
+        # else:
         blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
         blkCounter = blkCounter+1
         # if(random.randrange(1,3) == 1):
@@ -3833,25 +3859,27 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
     #     contextsToSend.append(contextTuple)
     # gwContextConsensus=contextsToSend
     #
-    # 5 gateways in each context
+    ## 5 gateways in each context IEEEBLOCKCHAIN
     #
-    if (int(gatewayContext) == 0):
-        contextConsensus = consensus  # using this, it will use same consensus as for blocks for all gw
-        contextTuple = ("9999", contextConsensus)
-        contextsToSend.append(contextTuple)
-    for i in range(int(gatewayContext)):
-        contextStr = "000" + str(i + 1)
-        if((gatewayName=="gwa" or gatewayName=="gwb" or gatewayName=="gwc" or gatewayName=="gwd" or gatewayName=="gwe") and ((i+1) <= (int(gatewayContext)/2))):
-            contextConsensus = consensus # using this, it will use same consensus as for blocks for all gw
-            contextTuple = (contextStr, contextConsensus)
-            contextsToSend.append(contextTuple)
-        if ((gatewayName == "gwf" or gatewayName == "gwg" or gatewayName == "gwh" or gatewayName == "gwi" or gatewayName == "gwj") and (
-                (i + 1) > (int(gatewayContext) / 2))):
-            contextConsensus = consensus  # using this, it will use same consensus as for blocks for all gw
-            contextTuple = (contextStr, contextConsensus)
-            contextsToSend.append(contextTuple)
-
-    gwContextConsensus=contextsToSend
+    # for i in range(int(gatewayContext)):
+    #     contextStr = "000" + str(i + 1)
+    #     if((gatewayName=="gwa" or gatewayName=="gwb" or gatewayName=="gwc" or gatewayName=="gwd" or gatewayName=="gwe") and ((i+1) <= (int(gatewayContext)/2))):
+    #         contextConsensus = consensus # using this, it will use same consensus as for blocks for all gw
+    #         contextTuple = (contextStr, contextConsensus)
+    #         contextsToSend.append(contextTuple)
+    #     if ((gatewayName == "gwa" or gatewayName == "gwb" or gatewayName == "gwc" or gatewayName == "gwd" or gatewayName == "gwe") and (
+    #             (int(gatewayContext) == 1))):
+    #         contextConsensus = consensus  # using this, it will use same consensus as for blocks for all gw
+    #         contextTuple = ("9999", contextConsensus)
+    #         contextsToSend.append(contextTuple)
+    #
+    #     if ((gatewayName == "gwf" or gatewayName == "gwg" or gatewayName == "gwh" or gatewayName == "gwi" or gatewayName == "gwj") and (
+    #             (i + 1) > (int(gatewayContext) / 2))):
+    #         contextConsensus = consensus  # using this, it will use same consensus as for blocks for all gw
+    #         contextTuple = (contextStr, contextConsensus)
+    #         contextsToSend.append(contextTuple)
+    # print(gatewayName + " has this contexts: " + str(contextsToSend))
+    # gwContextConsensus=contextsToSend
     # initialize Logger
     global logger
     logger = Logger.configure(gatewayName + ".log")
