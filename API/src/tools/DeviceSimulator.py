@@ -858,7 +858,7 @@ if __name__ == '__main__':
             gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
             logger.info("Connected to gateway: " + gatewayURI.asString())
-            setContexts(int(numContexts))
+            # setContexts(int(numContexts))
             time.sleep(10)
             logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
             automa(int(blocks), int(transactions))

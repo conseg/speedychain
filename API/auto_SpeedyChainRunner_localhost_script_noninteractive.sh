@@ -8,7 +8,7 @@ export PYRO_THREADPOOL_SIZE=100
 numDev=100
 numTr=100
 contexts=0001
-poolSize=1000
+poolSize=100
 nsIP=127.0.0.1
 run=0
 consensus=PBFT
@@ -16,19 +16,19 @@ txInterval=10000
 mypathRunner=~/PycharmProjects/speedychain/API/runner.py
 mypathDevice=~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py
 
-for c in {1..10}
+for c in {1..1}
 do
-  for run in {1..2}
+  for run in {1..1}
   do
     for x in {10..10.1}
     do
       #10 15 and 40 devices, for gives increment of 10
-      for i in {100..100..10}
+      for i in {10..10..10}
       do
       #  100,20,30 and 1000 transactions per device
         for j in {100..100..100}
         do
-          if [ $j -eq 100 ] || [ $j -eq 500 ] || [ $j -eq 1000 ]
+          if [ $j -eq 10 ] || [ $j -eq 100 ] || [ $j -eq 500 ] || [ $j -eq 1000 ]
           then
             contexts=$c
             numDev=$i
@@ -171,6 +171,7 @@ do
             numDev="_devices_"
             numTx="_Tx_"
             timestamp=$(date +%F_%T)
+            t3=$"T3.csv"
             t5=$"T5.csv"
             t6=$"T6.csv"
             t20=$"T20.csv"
@@ -184,8 +185,9 @@ do
             t30=$"T30.csv"
             t31=$"T31.csv"
             ERROR=$"ERROR.csv"
-            more gw* | grep T5 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t5
-            more gw* | grep T6 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t6
+            more gw* | grep T3 >  $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t3
+            more gw* | grep T5 >  $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t5
+            more gw* | grep T6 >  $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t6
             more gw* | grep T20 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t20
             more gw* | grep T21 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t21
             more gw* | grep T22 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t22
@@ -197,7 +199,7 @@ do
             more dev* | grep T30 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t30
             more dev* | grep T31 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t31
             more dev* | grep ERROR > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$ERROR
-            rm *.log*
+            #rm *.log*
           fi
         done
       done

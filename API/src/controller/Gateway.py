@@ -112,8 +112,9 @@ transactionSharedPool = []
 # [["0001", [(devKey1, tr1),(devKey2,tr2], (devKey3,tr3)],["0002",[]]]
 blockContext = "0001"
 # should have all context here
-gwContextConsensus = [("0001", "PBFT"),("0002", "PBFT"),("0003", "PBFT")]
-sizePool = 1
+# 
+gwContextConsensus = [("0001", "PoA"),("0002", "PoA"),("0003", "PoA")]
+sizePool = 100
 # list of votes for new orchestrator votes are: context, voter gwPub, voted gwPub, signature
 votesForNewContextOrchestrator =[]
 myVoteForNewContextOrchestrator =[]
@@ -2007,8 +2008,7 @@ class R2ac(object):
         t2 = time.time()
         # print("updating was done")
         logT3.append(
-            "gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in BL;" + '{0:.12f}'.format(
-                (t2 - t1) * 1000))
+            "gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in BL;" + '{0:.12f}'.format((t2 - t1) * 1000))
         # logger.info("gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
 
     def removeBlockConsensusCandidate(self, devPubKey):
@@ -2629,17 +2629,20 @@ class R2ac(object):
     # set context and consensus list for each gateway
     def setContexts(self, receivedContexts):
         global gwContextConsensus
-
-        # @TODO change how contexts are updated
-        # if (receivedContexts != gwContextConsensus):
-        #     gwContextConsensus = receivedContexts
-        #
+	
+	# receivedContexts = pickle.loads(dumpedContexts)
+        
+	        # @TODO change how contexts are updated
+        if (receivedContexts != gwContextConsensus):
+             print("Contexts CHANGED!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+             gwContextConsensus = receivedContexts
+        
         #     # print("Changed my consensus to " + consensus)
-        #     for p in peers:
-        #         obj = p.object
-        #
-        #         dumpedContexts = pickle.dumps(receivedContexts)
-        #         obj.setContextsRemote(dumpedContexts)
+             for p in peers:
+                 obj = p.object
+        
+                 dumpedContexts = pickle.dumps(receivedContexts)
+                 obj.setContextsRemote(dumpedContexts)
 
         print("Contexts set: "+ str(gwContextConsensus))
         return True
@@ -2669,7 +2672,7 @@ class R2ac(object):
     def runPBFT(self):
         """ Run the PBFT consensus to add a new block on the chain """
         # print("I am in runPBFT")
-        t1 = time.time()
+        t1 = float(((time.time()) * 1000) * 1000)
         global gwPvt
         global blockContext
         global gwContextConsensus
@@ -2700,15 +2703,16 @@ class R2ac(object):
         if ((PBFTConsensus(blk, gwPub, devPubKey)) == False):
             logger.error("Consensus not finished")
             return False
-        t2 = time.time()
-        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        t2 = float(((time.time()) * 1000) * 1000)
+        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus;" +  str((t2 - t1) / 1000))
+        # logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return True
         # print("Finish PBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
 
     def rundBFT(self):
         """ Run the dBFT consensus to add a new block on the chain """
         # print("I am in rundBFT")
-        t1 = time.time()
+        t1 = float(((time.time()) * 1000) * 1000)
         global gwPvt
         global blockContext
         global logT5
@@ -2727,8 +2731,9 @@ class R2ac(object):
             logger.error("Consensus not finished")
             return False
         # logger.info("Consensus finished")
-        t2 = time.time()
-        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with dBFT consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        t2 = float(((time.time()) * 1000) * 1000)
+        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with dBFT consensus;" + str((t2 - t1) / 1000))
+        # logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with dBFT consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return True
         # print("Finish dBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
 
@@ -2736,7 +2741,7 @@ class R2ac(object):
         # Consensus PoW
         """ Run the PoW consensus to add a new block on the chain """
         # print("I am in runPoW")
-        t1 = time.time()
+        t1 = float(((time.time()) * 1000) * 1000)
         global gwPvt
         global blockContext
         global logT5
@@ -2751,18 +2756,19 @@ class R2ac(object):
         # print("Device PubKey (insire runPoW): " + str(devPubKey))
 
         if (PoWConsensus(blk, gwPub, devPubKey)):
-            t2 = time.time()
-            logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with PoW consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
+            t2 = float(((time.time()) * 1000) * 1000)
+            logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with PoW consensus;" + str((t2 - t1) / 1000))
+            # logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with PoW consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
             # # print("Finish PoW consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
         else:
-            t2 = time.time()
+            t2 = float(((time.time()) * 1000) * 1000)
             logger.error("(Something went wrong) time to execute PoW Block Consensus = " +
                          '{0:.12f}'.format((t2 - t1) * 1000))
             # print("I finished runPoW - Wrong")
 
     def runNoConsesus(self):
         # print("Running without consensus")
-        t1 = time.time()
+        t1 = float(((time.time()) * 1000) * 1000)
         global peers
         global blockContext
         global logT5
@@ -2781,14 +2787,17 @@ class R2ac(object):
             return False
         ChainFunctions.addBlockHeader(newBlock)
         sendBlockToPeers(newBlock)
-        t2 = time.time()
-        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        t2 = float(((time.time()) * 1000) * 1000)
+        logT5.append(
+            "gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with no consensus;" + str(
+                (t2 - t1) / 1000))
+        # logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
         # print("Finish adding Block without consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
         return True
 
     def runPoA(self):
         # print("Running without consensus")
-        t1 = time.time()
+        t1 = float(((time.time()) * 1000) * 1000)
         global peers
         global blockContext
         global logT5
@@ -2807,8 +2816,11 @@ class R2ac(object):
             return False
         ChainFunctions.addBlockHeader(newBlock)
         sendBlockToPeers(newBlock)
-        t2 = time.time()
-        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        t2 = float(((time.time()) * 1000) * 1000)
+        logT5.append(
+            "gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with PoA consensus;" + str(
+                (t2 - t1) / 1000))
+        # logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
         # print("Finish adding Block without consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
         return True
 
@@ -3851,13 +3863,13 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
     #
     # all gw with same contexts
     #
-    # for i in range(int(gatewayContext)):
-    #     contextStr = "000" + str(i + 1)
+    for i in range(int(gatewayContext)):
+        contextStr = "000" + str(i + 1)
     #
-    #     contextConsensus = consensus # using this, it will use same consensus as for blocks for all gw
-    #     contextTuple = (contextStr, contextConsensus)
-    #     contextsToSend.append(contextTuple)
-    # gwContextConsensus=contextsToSend
+        contextConsensus = consensus # using this, it will use same consensus as for blocks for all gw
+        contextTuple = (contextStr, contextConsensus)
+        contextsToSend.append(contextTuple)
+    gwContextConsensus=contextsToSend
     #
     ## 5 gateways in each context IEEEBLOCKCHAIN
     #
