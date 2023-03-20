@@ -1,6 +1,6 @@
 #!/bin/bash
 #export PATH=$PATH:/usr/local/go/bin
-#echo $GOPATH /home/roben/go
+#echo $GOPATH /home/appendable/go
 
 #pool size for PYRO => required when running many parallel instances
 export PYRO_THREADPOOL_SIZE=100
@@ -9,12 +9,12 @@ numDev=100
 numTr=100
 contexts=0001
 poolSize=100
-nsIP=127.0.0.1
+nsIP=10.0.2.15
 run=0
 consensus=PBFT
 txInterval=10000
-mypathRunner=~/PycharmProjects/speedychain/API/runner.py
-mypathDevice=~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py
+mypathRunner=runner.py
+mypathDevice=src/tools/DeviceSimulator.py
 
 for c in {1..1}
 do
@@ -33,19 +33,19 @@ do
             contexts=$c
             numDev=$i
             numTr=$j
-            python -m Pyro4.naming -n $nsIP -p 9090 &
+            python2 -m Pyro4.naming -n $nsIP -p 9090 &
             PIDPyroNS=$!
             sleep 1
-            python $mypathRunner -n $nsIP -p 9090 -G gwa -C $contexts -S $poolSize &
+            python2 $mypathRunner -n $nsIP -p 9090 -G gwa -C $contexts -S $poolSize &
             PIDGwa=$!
             sleep 1
-            python $mypathRunner -n $nsIP -p 9090 -G gwb -C $contexts -S $poolSize &
+            python2 $mypathRunner -n $nsIP -p 9090 -G gwb -C $contexts -S $poolSize &
             PIDGwb=$!
             sleep 1
-            python $mypathRunner -n $nsIP -p 9090 -G gwc -C $contexts -S $poolSize &
+            python2 $mypathRunner -n $nsIP -p 9090 -G gwc -C $contexts -S $poolSize &
             PIDGwc=$!
             sleep 1
-            python $mypathRunner -n $nsIP -p 9090 -G gwd -C $contexts -S $poolSize &
+            python2 $mypathRunner -n $nsIP -p 9090 -G gwd -C $contexts -S $poolSize &
             PIDGwd=$!
             sleep 1
 #            if [ $x -eq 5 ]
@@ -54,25 +54,25 @@ do
 #              PIDGwe=$!
 #              sleep 1
 #            fi
-            python $mypathRunner -n $nsIP -p 9090 -G gwe -C $contexts -S $poolSize &
+            python2 $mypathRunner -n $nsIP -p 9090 -G gwe -C $contexts -S $poolSize &
             PIDGwe=$!
             sleep 1
-            python $mypathRunner -n $nsIP -p 9090 -G gwf -C $contexts -S $poolSize &
+            python2 $mypathRunner -n $nsIP -p 9090 -G gwf -C $contexts -S $poolSize &
             PIDGwf=$!
             sleep 1
-            python $mypathRunner -n $nsIP -p 9090 -G gwg -C $contexts -S $poolSize &
+            python2 $mypathRunner -n $nsIP -p 9090 -G gwg -C $contexts -S $poolSize &
             PIDGwg=$!
             sleep 1
-            python $mypathRunner -n $nsIP -p 9090 -G gwh -C $contexts -S $poolSize &
+            python2 $mypathRunner -n $nsIP -p 9090 -G gwh -C $contexts -S $poolSize &
             PIDGwh=$!
             sleep 1
-            python $mypathRunner -n $nsIP -p 9090 -G gwi -C $contexts -S $poolSize &
+            python2 $mypathRunner -n $nsIP -p 9090 -G gwi -C $contexts -S $poolSize &
             PIDGwi=$!
             sleep 1
-            python $mypathRunner -n $nsIP -p 9090 -G gwj -C $contexts -S $poolSize &
+            python2 $mypathRunner -n $nsIP -p 9090 -G gwj -C $contexts -S $poolSize &
             PIDGwj=$!
             sleep 1
-            #python $mypathRunner -n $nsIP -p 9090 -G gwk -C $contexts -S $poolSize &
+            #python2 $mypathRunner -n $nsIP -p 9090 -G gwk -C $contexts -S $poolSize &
             #PIDGwk=$!
             #sleep 1
             #python $mypathRunner -n $nsIP -p 9090 -G gwl -C $contexts -S $poolSize &
@@ -90,32 +90,32 @@ do
             sleep 10
             #gnome-terminal -e "bash -c \"python ~/speedychain_varruda/speedychain-master/src/tools/DeviceSimulator.py $nsIP 9090 gwa dev-a     50   10 PoW 1; exec bash\""
             #for automated running devices calls should pass as arguments Pyro-NS_IP PORT GatewayNameToConnect DeviceName numBlocks numTx blockConsensus numContexts
-            python $mypathDevice $nsIP 9090 gwa dev-a $numDev $numTr $consensus $contexts $txInterval &
+            python2 $mypathDevice $nsIP 9090 gwa dev-a $numDev $numTr $consensus $contexts $txInterval &
             PIDDeva=$!
-            python $mypathDevice $nsIP 9090 gwb dev-b $numDev $numTr $consensus $contexts $txInterval &
+            python2 $mypathDevice $nsIP 9090 gwb dev-b $numDev $numTr $consensus $contexts $txInterval &
             PIDDevb=$!
-            python $mypathDevice $nsIP 9090 gwc dev-c $numDev $numTr $consensus $contexts $txInterval &
+            python2 $mypathDevice $nsIP 9090 gwc dev-c $numDev $numTr $consensus $contexts $txInterval &
             PIDDevc=$!
-            python $mypathDevice $nsIP 9090 gwd dev-d $numDev $numTr $consensus $contexts $txInterval &
+            python2 $mypathDevice $nsIP 9090 gwd dev-d $numDev $numTr $consensus $contexts $txInterval &
             PIDDevd=$!
 #            if [ $x -eq 5 ]
 #            then
 #              python $mypathDevice $nsIP 9090 gwe dev-e $numDev $numTr $consensus $contexts $txInterval &
 #              PIDDeve=$!
 #            fi
-            python $mypathDevice $nsIP 9090 gwe dev-e $numDev $numTr $consensus $contexts $txInterval &
+            python2 $mypathDevice $nsIP 9090 gwe dev-e $numDev $numTr $consensus $contexts $txInterval &
             PIDDeve=$!
-            python $mypathDevice $nsIP 9090 gwf dev-f $numDev $numTr $consensus $contexts $txInterval &
+            python2 $mypathDevice $nsIP 9090 gwf dev-f $numDev $numTr $consensus $contexts $txInterval &
             PIDDevf=$!
-            python $mypathDevice $nsIP 9090 gwg dev-g $numDev $numTr $consensus $contexts $txInterval &
+            python2 $mypathDevice $nsIP 9090 gwg dev-g $numDev $numTr $consensus $contexts $txInterval &
             PIDDevg=$!
-            python $mypathDevice $nsIP 9090 gwh dev-h $numDev $numTr $consensus $contexts $txInterval &
+            python2 $mypathDevice $nsIP 9090 gwh dev-h $numDev $numTr $consensus $contexts $txInterval &
             PIDDevh=$!
-            python $mypathDevice $nsIP 9090 gwi dev-i $numDev $numTr $consensus $contexts $txInterval &
+            python2 $mypathDevice $nsIP 9090 gwi dev-i $numDev $numTr $consensus $contexts $txInterval &
             PIDDevi=$!
-            python $mypathDevice $nsIP 9090 gwj dev-j $numDev $numTr $consensus $contexts $txInterval &
+            python2 $mypathDevice $nsIP 9090 gwj dev-j $numDev $numTr $consensus $contexts $txInterval &
             PIDDevj=$!
-            #python $mypathDevice $nsIP 9090 gwk dev-k $numDev $numTr $consensus $contexts $txInterval &
+            #python2 $mypathDevice $nsIP 9090 gwk dev-k $numDev $numTr $consensus $contexts $txInterval &
             #PIDDevk=$!
             #python $mypathDevice $nsIP 9090 gwl dev-l $numDev $numTr $consensus $contexts $txInterval &
             #PIDDevl=$!
