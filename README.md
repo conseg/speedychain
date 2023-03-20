@@ -1,4 +1,4 @@
-![SpeedyCHAIN](pages/assets/images/speedychain-logo.svg)
+![SpeedyCHAIN](API/pages/assets/images/speedychain-logo.svg)
 
 This is the source code for a blockchain prototype, designed to run on IoT devices.
 
