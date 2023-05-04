@@ -69,6 +69,8 @@ consensus = "None"  # it can be None, dBFT, PBFT, PoW, Witness3
 votesForNewOrchestrator = []
 myVoteForNewOrchestrator = []  # my gwPub, voted gwPub, my signed vote
 
+componentsId = []
+components = ["CPU", "RAM", "SSD", "VID"]
 
 def bootstrapChain2():
     """ generate the RSA key pair for the gateway and create the chain"""
@@ -403,22 +405,28 @@ class R2ac(object):
         global gwPub
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPublicKey)
+        
         if (blk != False and blk.index > 0):
             devAESKey = findAESKey(devPublicKey)
             if (devAESKey != False):
-                # logger.info("Appending transaction to block #" +
-                #             str(blk.index) + "...")
+                #logger.info("Appending transaction to block #" + str(blk.index) + "...")
+                print("Appending transaction to block #" + str(blk.index) + "...")
                 # plainObject contains [Signature + Time + Data]
 
                 plainObject = CryptoFunctions.decryptAES(
                     encryptedObj, devAESKey)
-                signature = plainObject[:-20]  # remove the last 20 chars
+                #print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars      #signature = plainObject[:-20]  # remove the last 20 chars
+                #print("signature = " + str(signature))
                 # remove the 16 char of timestamp
-                devTime = plainObject[-20:-4]
-                # retrieve the las 4 chars which are the data
-                deviceData = plainObject[-4:]
+                devTime = split[1]  # plainObject[88:104]
+                #print("devTime = " + str(devTime))
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                #print("deviceData = " + str(deviceData))
 
-                d = devTime+deviceData
+                d = " "+devTime+" "+deviceData
                 isSigned = CryptoFunctions.signVerify(
                     d, signature, devPublicKey)
 
@@ -430,12 +438,11 @@ class R2ac(object):
                     signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
                     gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
                     # code responsible to create the hash between Info nodes.
-                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
-                        ChainFunctions.getLatestBlockTransaction(blk))
-
+                    prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
+                    
                     transaction = Transaction.Transaction(
                         nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
-
+                    #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
                     # send to consensus
                     # if not consensus(newBlockLedger, gwPub, devPublicKey):
                     #    return "Not Approved"
@@ -447,7 +454,7 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #             str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    print("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done")
@@ -702,14 +709,16 @@ class R2ac(object):
         """
         global gwPub
         global consensusLock
-        # print("addingblock... DevPubKey:" + devPubKey)
+        #print("addingblock... DevPubKey:" + devPubKey)
         # logger.debug("|---------------------------------------------------------------------|")
         # logger.info("Block received from device")
         aesKey = ''
         t1 = time.time()
-        blk = ChainFunctions.findBlock(devPubKey)
+        blk = ChainFunctions.findBlock(devPubKey)        
+        print("consensus:" + str(consensus))
         if (blk != False and blk.index > 0):
-            # print("inside first if")
+            #print("blk:" + str(blk.index))
+            #print("inside first if")
             aesKey = findAESKey(devPubKey)
 
             if aesKey == False:
@@ -719,7 +728,7 @@ class R2ac(object):
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
                 t2 = time.time()
         else:
-            # print("inside else")
+            #print("inside else")
             # logger.debug("***** New Block: Chain size:" +
             #              str(ChainFunctions.getBlockchainSize()))
             pickedKey = pickle.dumps(devPubKey)
@@ -764,6 +773,7 @@ class R2ac(object):
                 self.addBlockConsensusCandidate(pickedKey)
                 self.runPoW()
             if(consensus == "None"):
+                #print("inside NONE consensus")
                 self.addBlockConsensusCandidate(pickedKey)
                 self.runNoConsesus()
 
@@ -863,7 +873,9 @@ class R2ac(object):
         print("Showing Transactions data for peer: " + myURI)
         # logger.info("Showing Trasactions data for peer: " + myURI)
         blk = ChainFunctions.getBlockByIndex(index)
-        print("Block for index"+str(index))
+        if blk == False:
+            return "Block does not exist"
+        #print("Block for index: "+str(index))
         size = len(blk.transactions)
         # logger.info("Block Ledger size: " + str(size))
         # logger.info("-------")
@@ -1300,6 +1312,226 @@ class R2ac(object):
             # print("fim\n")
             s.close()
         return True
+
+#############################################################################
+#############################################################################
+################          Lifecycle Events (Rodrigo)         ################
+#############################################################################
+#############################################################################
+
+    def storeChainToFile(self):
+        """ Store the entire chain to a text file
+            The gateway keys from all peers
+            The blocks and the transactions\n
+        """
+        open('chain2.txt', 'w').close()
+        f = open("chain2.txt", "a")
+        storeKeysFromPeers(f)
+
+        f.write("\n")
+
+        theChain = ChainFunctions.getFullChain()
+        for b in theChain[1:]:
+            block = b.strBlockToSave()
+            print("block= " + block)
+            f.write("block= " + block + "\n")
+            for t in b.transactions[1:]:
+                transaction = t.strtransactionToSave()
+                print("transaction= " + transaction)
+                f.write("transaction= " + transaction + "\n")
+        f.close()
+        return True
+
+    def restoreChainFromFile(self):
+        """ Restore the entire chain from a text file
+            The gateway keys from all peers
+            The blocks and the transactions\n
+        """
+        keys = []
+        f = open("chain.txt", "r")
+
+        for line in f:
+            stripped_line = line.rstrip('\n')
+            #print("line = " + str(stripped_line))
+            if (str(stripped_line) == ""):
+                print("BREAK!")
+                break
+            split = stripped_line.split('  ')
+            publicKey = split[0].replace('\\n', '\n')
+            privateKey = split[1].replace('\\n', '\n')
+            key = [publicKey, privateKey]
+            #print("Public Key = " + str(publicKey))
+            #print("Private Key = " + str(privateKey))
+            keys.append(key)
+        
+        print (keys)
+
+        # Get how many peers from file
+        # Get gw private/public keys, send them to each peer
+            # Each peer updates its keys and restart the chain (ChainFunctions.restartChain())
+        restartChains(keys)
+        
+        # Gets the blocks/transations
+        devPubKey = ""
+        for line in f:
+            print ("")
+            stripped_line = line.rstrip('\n')
+            split_aux = stripped_line.split('= ')
+            split = split_aux[1].split('  ')
+            print(str(stripped_line))
+            #print(split)
+            if (stripped_line.startswith('block')):
+                devPubKey = split[0].replace('\\n', '\n')
+                #print("Dev Public Key = " + str(devPubKey))
+                blockContext = split[1]
+                timestamp = split[2]
+                nonce = split[3]
+                signature = split[4]
+                blockData = split[5]
+                newBlock = ChainFunctions.generateNextBlock2(blockData, devPubKey, signature, blockContext, timestamp, nonce)
+                ChainFunctions.addBlockHeader(newBlock)
+                print(newBlock.strBlock())
+                sendBlockToPeers(newBlock)
+            if (stripped_line.startswith('transaction')):
+                blk = ChainFunctions.findBlock(devPubKey)        
+                if (blk != False and blk.index > 0):
+                    print("Block found!")
+                    nextInt = blk.transactions[len(blk.transactions) - 1].index + 1
+                    prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
+                    #print("Timestamp = " + str(split[0]))
+                    #print("Device info = " + str(split[1]))
+                    #print("Sign data = " + str(split[2]))
+                    #print("Nonce = " + str(split[3]))
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, split[0], split[1], split[2], split[3])
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    print(transaction.strBlock())
+                    sendTransactionToPeers(devPubKey, transaction)
+
+        f.close()
+        return True
+
+    def updateGatewayKeys(self, pubKey, privKey, gwName):
+        """ Update the gateway private and public keys, receiving it on restore from file\n
+            @param pubKey - the public key to be added\n
+            @param privKey - the private key to be added\n
+            @param gwName - the name of the gateway that sent the keys\n
+        """
+        global gwPub
+        global gwPvt
+
+        print("Received from = "+ str(gwName))
+        pubKey = pickle.loads(pubKey)
+        privKey = pickle.loads(privKey)
+        #print("Public Key = "+ str(pubKey))
+        #print("Private Key = "+ str(privKey))
+        t1 = time.time()
+        
+        gwPub = pubKey
+        gwPvt = privKey
+        print("gwPub = "+ str(gwPub))
+        print("gwPvt = "+ str(gwPvt))
+        ChainFunctions.restartChain()
+        size = ChainFunctions.getBlockchainSize()
+        print("Blockchain size = "+ str(size))
+
+        t2 = time.time()
+        # print("updating was done")
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";T3;Time to update keys;" + '{0:.12f}'.format((t2 - t1) * 1000))
+
+    def storeGatewayKeys(self, gwName):
+        """ Store the gateway keys to the text file\n
+            @param gwName - the name of the gateway that will store the keys\n
+        """
+        print("Received from = "+ str(gwName))
+
+        f = open("chain2.txt", "a")
+        
+        print("gwPub = "+ str(gwPub))
+        print("gwPvt = "+ str(gwPvt))
+
+        pub = gwPub.replace('\n', '\\n')
+        pvt = gwPvt.replace('\n', '\\n')
+
+        f.write(pub + "  " + pvt + "\n")
+
+        f.close()
+    
+    def addTransactionStructure(self, devPublicKey, encryptedObj, type):
+        """ Receive a new transaction to be add to the chain, 
+            the data will be created as a LifecycleEvent structure
+            add the transaction to a block and send it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+        blk = ChainFunctions.findBlock(devPublicKey)
+        
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                #logger.info("Appending transaction to block #" + str(blk.index) + "...")
+                print("Appending transaction to block #" + str(blk.index) + "...")
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+                print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars
+                print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                print("devTime = " + str(devTime))
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                print("deviceData = " + str(deviceData))
+
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerify(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
+                    
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
+                    #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    print("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+                    # print("all done")
+                    return "ok!"
+                else:
+                    # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    return "Invalid Signature"
+            # logger.debug("--Transaction not appended--Key not found")
+            return "key not found"
 
 def addNewBlockToSyncList(devPubKey):
     """ Add a new block to a syncronized list through the peers\n
@@ -1982,6 +2214,63 @@ def saveURItoFile(uri):
     # text_file.close()
 
 
+#############################################################################
+#############################################################################
+################          Lifecycle Events (Rodrigo)         ################
+#############################################################################
+#############################################################################
+
+def restartChains(keys):
+    """ Store the gateway keys to the text file\n
+        @param keys - all the gateways keys read from file to start the chain\n
+    """
+    global peers
+    global gwPub
+    global gwPvt
+
+    # Update the local keys
+    key = keys[0]
+    gwPub = key[0]
+    gwPvt = key[1]
+    print ("public = " + str(gwPub) + ", private = " + str(gwPvt))
+
+    ChainFunctions.restartChain()
+    size = ChainFunctions.getBlockchainSize()
+    print("Blockchain size = "+ str(size))
+    # print("sending block to peers")
+    # logger.debug("Running through peers")
+    i = 1
+    for peer in peers:
+        # Send each key pair to each peer
+        key = keys[i]
+        print ("public = " + str(key[0]) + ", private = " + str(key[1]))
+        obj = peer.object
+        print("sending KEY to: " + str(peer.peerURI))
+        # logger.debug("Sending block to peer " + str(peer.peerURI))
+        pubKey = pickle.dumps(key[0])
+        privKey = pickle.dumps(key[1])
+        obj.updateGatewayKeys(pubKey, privKey, myName)
+        i = i + 1
+
+def storeKeysFromPeers(f):
+    """ Store the gateway keys to the text file\n
+        @param f - the file to store the local keys\n
+    """
+
+    print("gwPub = "+ str(gwPub))
+    print("gwPvt = "+ str(gwPvt))
+
+    pub = gwPub.replace('\n', '\\n')
+    pvt = gwPvt.replace('\n', '\\n')
+
+    f.write(pub + "  " + pvt + "\n")
+
+    for peer in peers:
+        obj = peer.object
+        print("sending request to: " + str(peer.peerURI))
+        obj.storeGatewayKeys(myName)
+
+
 """ Main function initiate the system"""
 
 
@@ -1989,6 +2278,7 @@ def main():
 
     global myURI
     global votesForNewOrchestrator
+    global componentsId
 
     nameServerIP = sys.argv[1]
     nameServerPort = int(sys.argv[2])
@@ -2001,6 +2291,10 @@ def main():
 
     # create the blockchain
     bootstrapChain2()
+
+    # initialzie some components mocked identification
+    for comp in components:
+        componentsId.append("SN1234_"+comp+"_"+str(gatewayName))
 
     # print ("Please copy the server address: PYRO:chain.server...... as shown and use it in deviceSimulator.py")
     #with Pyro4.Daemon(getMyIP()) as daemon:

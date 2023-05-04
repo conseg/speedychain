@@ -1,3 +1,5 @@
+import CryptoFunctions
+
 class Transaction:
     def __init__(self, index, previousHash, timestamp, data, signature, nonce):
         self.index = index
@@ -6,6 +8,7 @@ class Transaction:
         self.data = data
         self.signature = signature
         self.nonce = nonce
+        self.hash = CryptoFunctions.calculateTransactionHash(self)
 
     def __str__(self):
         return "%s,%s,%s,%s,%s" % (
@@ -17,5 +20,13 @@ class Transaction:
     def strBlock(self):
         txt = "Index: " + str(self.index) + "\n Previous Hash: " + str(self.previousHash) + "\n Time Stamp: " + str(
             self.timestamp) + "\n Data: " + str(self.data) + "\n Signature: " + str(
-            self.signature) + "\n" + str(self.nonce) + "\n"
+            self.signature) + "\n Nonce: " + str(self.nonce) + "\n Hash: " + str(self.hash) + "\n"
         return txt
+
+    def strtransactionToSave(self):
+        txt = str(self.timestamp) + "  " + str(self.data) + "  " + str(
+            self.signature) + "  " + str(self.nonce)
+        return txt
+    
+    def setHash(self, hash):
+        self.hash = hash

@@ -27,3 +27,10 @@ class BlockHeader:
             self.publicKey) + "\n Block Context: " + str(self.blockContext) + "\n Number of transactions: " + str(len(self.transactions)) + "\n"
 
         return txt
+
+    def strBlockToSave(self):
+        transaction = self.transactions[0]
+        txt = str(self.publicKey).replace('\n', '\\n') + "  " + str(self.blockContext) + "  " + str(self.timestamp) + "  " + str(
+            self.nonce) + "  " + str(transaction.signature) + "  " + str(transaction.data)
+
+        return txt

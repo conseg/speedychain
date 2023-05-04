@@ -98,7 +98,10 @@ def getBlockByIndex(index):
     #     if (b.index == index):
     #         return b
     # return False
-    return BlockHeaderChain[index]
+    if (len(BlockHeaderChain) > index):
+        return BlockHeaderChain[index]
+    else:
+        return False
 
 def getGenesisBlock():
     """ Create the genesis block\n
@@ -139,3 +142,24 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
     inf = Transaction.Transaction(0, nextHash, nextTimestamp, blockData, sign, 0)
 
     return BlockHeader.BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, nonce, pubKey, blockContext)
+
+def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce):
+    """ Receive the information of a new block and create it\n
+    @param blockData - information of the new block\n
+    @param pubKey - public key of the device how wants to generate the new block\n
+    @param gwPvtKey - private key of the gateway\n
+    @param consensus - it is specified current consensus adopted
+    @return BlockHeader - the new block
+    """
+    previousBlock = getLatestBlock()
+    nextIndex = previousBlock.index + 1
+    previousBlockHash = CryptoFunctions.calculateHashForBlock(previousBlock)
+    nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, timestamp, nonce, pubKey, blockContext)
+    inf = Transaction.Transaction(0, nextHash, timestamp, blockData, sign, 0)
+
+    return BlockHeader.BlockHeader(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey, blockContext)
+
+def restartChain():
+    """ Clear the entire chain """
+    BlockHeaderChain = []
+    BlockHeaderChain.append(getGenesisBlock())

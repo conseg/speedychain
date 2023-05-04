@@ -21,7 +21,7 @@ import CryptoFunctions
 
 logger = Logger.logging.getLogger("speedychain")
 deviceName = ""
-consensus = ""
+consensus = "None"
 
 fname = socket.gethostname()
 
@@ -30,6 +30,9 @@ serverAESEncKey = ""
 serverAESKey = ""
 privateKey = "-----BEGIN PRIVATE KEY-----\nMIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEA7P6DKm54NjLE7ajy\nTks298FEJeHJNxGT+7DjbTQgJdZKjQ6X9lYW8ittiMnvds6qDL95eYFgZCvO22YT\nd1vU1QIDAQABAkBEzTajEOMRSPfmzw9ZL3jLwG3aWYwi0pWVkirUPze+A8MTp1Gj\njaGgR3sPinZ3EqtiTA+PveMQqBsCv0rKA8NZAiEA/swxaCp2TnJ4zDHyUTipvJH2\nqe+KTPBHMvOAX5zLNNcCIQDuHM/gISL2hF2FZHBBMT0kGFOCcWBW1FMbsUqtWcpi\nMwIhAM5s0a5JkHV3qkQMRvvkgydBvevpJEu28ofl3OAZYEwbAiBJHKmrfSE6Jlx8\n5+Eb8119psaFiAB3yMwX9bEjVy2wRwIgd5X3n2wD8tQXcq1T6S9nr1U1dmTz7407\n1UbKzu4J8GQ=\n-----END PRIVATE KEY-----\n"
 publicKey = "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOz+gypueDYyxO2o8k5LNvfBRCXhyTcR\nk/uw4200ICXWSo0Ol/ZWFvIrbYjJ73bOqgy/eXmBYGQrzttmE3db1NUCAwEAAQ==\n-----END PUBLIC KEY-----\n"
+
+lifecycleMethods = []
+lifecycleTypes = []
 
 # input = getattr(__builtin__, 'raw_input', input)
 
@@ -61,7 +64,8 @@ def setServer():
     """ Ask for the user to input the server URI and put it in the global var 'server' """
     global server
     #server = raw_input('Gateway IP:')
-    uri = input("Enter the uri of the gateway: ").strip()
+    uri = raw_input("Enter the uri of the gateway: ").strip()
+    print("gateway URI: " + uri)
     server = Pyro4.Proxy(uri)
 
 def addBlockOnChain():
@@ -96,11 +100,15 @@ def sendData():
     timeStr = "{:.0f}".format(t)
     data = timeStr + temperature
     logger.debug("data = "+data)
+    # print ("data = "+data)
     signedData = CryptoFunctions.signInfo(privateKey, data)
+    # print ("###Signature lenght: " + str(len(signedData)))
     toSend = signedData + timeStr + temperature
     logger.debug("ServeAESKEY = " + serverAESKey)
     encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
-    server.addTransaction(publicKey, encobj)
+    # print ("encobj = "+encobj)
+    res = server.addTransaction(publicKey, encobj)
+    # print ("result = "+str(res))
 
 def sendDataSC(stringSC):
     t = ((time.time() * 1000) * 1000)
@@ -138,8 +146,8 @@ def listBlockHeader():
 def listTransactions():
     """ Ask for the user to input an index and show all transaction of the block with that index """
     index = input("Which IoT Block do you want to print?")
-    server.showBlockLedger(int(index))
-
+    status = server.showBlockLedger(int(index))
+    #print (status)
 
 def listPeers():
     """ List all peers in the network """
@@ -153,6 +161,8 @@ def newKeyPair():
     publicKey, privateKey = generateRSAKeyPair()
     while len(publicKey) < 10 or len(privateKey) < 10:
         publicKey, privateKey = generateRSAKeyPair()
+    
+    #print(publicKey)
 
 def brutePairAuth(retry):
     """ Add a block on the chain with brute force until it's add"""
@@ -345,7 +355,7 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     # ----> Adicionado por Arruda
     ns = Pyro4.locateNS(host=nameServerIP, port=nameServerPort)
     gatewayURI = ns.lookup(gatewayName)
-    # print(gatewayURI)
+    print(gatewayURI)
     global server
     # fname = socket.gethostname()
     # text_file = open("localhost", "r")
@@ -360,12 +370,129 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
 
 #############################################################################
 #############################################################################
+################          Lifecycle Events (Rodrigo)         ################
+#############################################################################
+#############################################################################
+
+# CPU: Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz   2.90 GHz
+# RAM: MEMORIA CORSAIR VENGEANCE LPX, 8GB, 2666MHZ, DDR4
+# SSD: SSD KINGSTON A400, 480GB, LEITURA 500MB/S, GRAVACAO 450MB/S
+# VID: PLACA DE VIDEO ASUS NVIDIA GEFORCE GTX 1660TI, 6GB GDDR6, 12 Gb/s
+
+def sendLifecycleEventsAsText():      
+    """ send each lifecycle event to be added as transaction
+        the data is a plaintext\n
+    """
+    for i in range(4):
+        val, valStr = lifecycleMethods[i]()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = " {:.0f}".format(t)
+        data = timeStr + valStr
+        print("")
+        print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
+        
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        print ("###Signature lenght: " + str(len(signedData)))
+        toSend = signedData + data
+        print ("toSend = "+toSend)
+        #logger.debug("ServeAESKEY = " + serverAESKey)
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        print ("encobj = "+encobj)
+        res = server.addTransactionStructure(publicKey, encobj, lifecycleTypes[i])
+        print ("result = "+str(res))
+
+        if i == 0 and val < 1500:
+            print("CPU is slow")
+        if i == 1 and val < 1400:
+            print("RAM is slow")
+        if i == 2 and val < 280:
+            print("SSD is slow")
+        if i == 3 and val < 6:
+            print("VID is slow")
+
+def sendLifecycleEventsAsStructure():    
+    """ send each lifecycle event to be added as transaction
+        the data will be stored as a LifecycleEvent structure\n
+    """
+    for i in range(4):
+        val, valStr = lifecycleMethods[i]()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = " {:.0f}".format(t)
+        data = timeStr + valStr
+        print("")
+        print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
+        
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        print ("###Signature lenght: " + str(len(signedData)))
+        toSend = signedData + data
+        print ("toSend = "+toSend)
+        #logger.debug("ServeAESKEY = " + serverAESKey)
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        print ("encobj = "+encobj)
+        res = server.addTransaction(publicKey, encobj)
+        print ("result = "+str(res))
+
+        if i == 0 and val < 1500:
+            print("CPU is slow")
+        if i == 1 and val < 1400:
+            print("RAM is slow")
+        if i == 2 and val < 280:
+            print("SSD is slow")
+        if i == 3 and val < 6:
+            print("VID is slow")
+
+def readSpeedCPU():
+    """ Generates random data like '1700MHz' """
+    cpu = random.randint(1400, 2900)
+    cpuStr = " " + str(cpu) + "MHz"
+    return cpu, cpuStr
+
+def readSpeedRAM():
+    """ Generates random data like '2300MHz' """
+    ram = random.randint(1300, 2666)
+    ramStr = " " + str(ram) + "MHz"
+    return ram, ramStr
+
+def readSpeedSSD():
+    """ Generates random data like '300MB/s' """
+    ssd = random.randint(250, 500)
+    ssdStr = " " + str(ssd) + "MB/s"
+    return ssd, ssdStr
+
+def readSpeedVid():
+    """ Generates random data like '7GB/s' """
+    video = random.randint(5, 12)
+    videoStr = " " + str(video) + "GB/s"
+    return video, videoStr
+
+def storeChainToFile():
+    """ store the entire chain to a text file\n
+    """
+    server.storeChainToFile()
+
+    return True
+
+def restoreChainFromFile():
+    """ restore the entire chain from a text file\n
+    """
+    server.restoreChainFromFile()
+
+    return True
+
+#############################################################################
+#############################################################################
 ######################          Main         ################################
 #############################################################################
 #############################################################################
 def InteractiveMain():
     """ Creates an interactive screen for the user with all option of a device"""
     global server
+    global lifecycleMethods
+    global lifecycleTypes
+
+    lifecycleMethods = [readSpeedCPU, readSpeedRAM, readSpeedSSD, readSpeedVid]
+    lifecycleTypes = ["CPU", "RAM", "SSD", "VID"]
+
     options = {
         1: setServer,
         2: addPeer,
@@ -383,7 +510,12 @@ def InteractiveMain():
         14: showLastTransactionData,
         15: callEVMInterface,
         16: evmConnector,
-        17: executeEVM
+        17: executeEVM,
+        18: sendLifecycleEventsAsText,
+        19: sendLifecycleEventsAsStructure,
+        20: sendLifecycleEventsAsText,
+        21: storeChainToFile,
+        22: restoreChainFromFile
     }
 
     mode = -1
@@ -410,6 +542,11 @@ def InteractiveMain():
         print("15 - Call Smart Contract")
         # print("16 - EVM connector")
         # print("17 - execute EVM code")
+        print("18 - Send all lifecycle events as text to block, one transaction for each data")
+        print("19 - Send all lifecycle events as a structure to block, one transaction for each data")
+        print("20 - Send all lifecycle events to block")
+        print("21 - Store the entire chain to a file")
+        print("22 - Restore the entire chain from a file")
 
         try:
             mode = int(input('Input:'))
@@ -420,7 +557,7 @@ def InteractiveMain():
         options[mode]()
 
 if __name__ == '__main__':
-
+    
     # if len(sys.argv[1:]) > 1:
         # ----> Adicionado por Arruda
         # print ("Command Line usage:")
@@ -438,6 +575,7 @@ if __name__ == '__main__':
         gatewayName = sys.argv[3]
         deviceName = sys.argv[4]
         logger = Logger.configure(deviceName + ".log")
+
         logger.info("Running device " + deviceName + " in " + getMyIP())
 
         gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
