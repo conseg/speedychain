@@ -22,7 +22,7 @@ class BlockHeader:
             str(self.publicKey), str(self.blockContext))
 
     def strBlock(self):
-        txt = "Index: " + str(self.index) + "\n Previous Hash: " + str(self.previousHash) + "\n Time Stamp: " + str(
+        txt = " Index: " + str(self.index) + "\n Previous Hash: " + str(self.previousHash) + "\n Time Stamp: " + str(
             self.timestamp) + "\n Hash: " + str(self.hash) + "\n Nonce:" + str(self.nonce) + "\n Public Key: " + str(
             self.publicKey) + "\n Block Context: " + str(self.blockContext) + "\n Number of transactions: " + str(len(self.transactions)) + "\n"
 

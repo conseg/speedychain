@@ -25,6 +25,7 @@ import PeerInfo
 import DeviceInfo
 import DeviceKeyMapping
 import Transaction
+import LifecycleEvent
 
 
 def getMyIP():
@@ -76,7 +77,7 @@ def bootstrapChain2():
     """ generate the RSA key pair for the gateway and create the chain"""
     global gwPub
     global gwPvt
-    ChainFunctions.startBlockChain()
+    ChainFunctions.startBlockChain(time.time())
     gwPub, gwPvt = CryptoFunctions.generateRSAKeyPair()
 
 #############################################################################
@@ -715,7 +716,7 @@ class R2ac(object):
         aesKey = ''
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPubKey)        
-        print("consensus:" + str(consensus))
+        #print("consensus:" + str(consensus))
         if (blk != False and blk.index > 0):
             #print("blk:" + str(blk.index))
             #print("inside first if")
@@ -1483,16 +1484,16 @@ class R2ac(object):
 
                 plainObject = CryptoFunctions.decryptAES(
                     encryptedObj, devAESKey)
-                print("plainObject = " + str(plainObject))
+                #print("plainObject = " + str(plainObject))
                 split = plainObject.split()
                 signature = split[0]  #plainObject[:88] # get first 88 chars
-                print("signature = " + str(signature))
+                #print("signature = " + str(signature))
                 # remove the 16 char of timestamp
                 devTime = split[1]  # plainObject[88:104]
-                print("devTime = " + str(devTime))
+                #print("devTime = " + str(devTime))
                 # retrieve the last chars which are the data
                 deviceData = split[2]  # plainObject[104:]
-                print("deviceData = " + str(deviceData))
+                #print("deviceData = " + str(deviceData))
 
                 d = " "+devTime+" "+deviceData
                 isSigned = CryptoFunctions.signVerify(
@@ -1501,6 +1502,10 @@ class R2ac(object):
                 if isSigned:
                     deviceInfo = DeviceInfo.DeviceInfo(
                         signature, devTime, deviceData)
+                    matching = [s for s in componentsId if type in s]
+                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching[0], deviceInfo)
+                    #print("LifecycleEvent: "+str(lifecycleEvent.strEvent()))
+
                     nextInt = blk.transactions[len(
                         blk.transactions) - 1].index + 1
                     signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
@@ -1509,7 +1514,8 @@ class R2ac(object):
                     prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
                     
                     transaction = Transaction.Transaction(
-                        nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
+                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData,0)
+                    #print("Transaction: "+str(transaction.strBlock()))
                     #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
                     # send to consensus
                     # if not consensus(newBlockLedger, gwPub, devPublicKey):

@@ -7,9 +7,11 @@ import CryptoFunctions
 BlockHeaderChain = []
 
 ##@Roben inserted "consensus" to verify if PoW was selected
-def startBlockChain():
-    """ Add the genesis block to the chain """
-    BlockHeaderChain.append(getGenesisBlock())
+def startBlockChain(t):
+    """ Add the genesis block to the chain 
+    @param t - Current timestamp \n
+    """
+    BlockHeaderChain.append(getGenesisBlock(t))
 
 def createNewBlock(devPubKey, gwPvt, blockContext, consensus):
     """ Receive the device public key and the gateway private key then it generates a new block \n
@@ -103,8 +105,9 @@ def getBlockByIndex(index):
     else:
         return False
 
-def getGenesisBlock():
+def getGenesisBlock(t):
     """ Create the genesis block\n
+    @param t - current timestamp\n
     @return BlockHeader - with the genesis block
     """
     k = """-----BEGIN PUBLIC KEY-----
@@ -112,8 +115,12 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAM39ONP614uHF5m3C7nEh6XrtEaAk2ys
 LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
 -----END PUBLIC KEY-----"""
     inf = Transaction.Transaction(0, "0", "0", "0", '', 0)
-    blk = BlockHeader.BlockHeader(0, "0", 1465154705, inf,
-                                        "816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7", 0, k, "0000")
+    index = 0
+    previousHash = "0"
+    nonce = 0
+    blockContext = "0000"
+    hash = CryptoFunctions.calculateHash(index, previousHash, t, nonce, k, blockContext)
+    blk = BlockHeader.BlockHeader(index, previousHash, t, inf, hash, nonce, k, blockContext)
     return blk
 
 def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus):

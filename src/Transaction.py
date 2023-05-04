@@ -11,14 +11,14 @@ class Transaction:
         self.hash = CryptoFunctions.calculateTransactionHash(self)
 
     def __str__(self):
-        return "%s,%s,%s,%s,%s" % (
-            str(self.index), str(self.previousHash), str(self.timestamp), str(self.data), str(self.signature), str(self.signature))
+        return "%s, %s, %s, %s, %s" % (
+            str(self.index), str(self.previousHash), str(self.timestamp), str(self.data), str(self.signature), str(self.nonce))
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
     def strBlock(self):
-        txt = "Index: " + str(self.index) + "\n Previous Hash: " + str(self.previousHash) + "\n Time Stamp: " + str(
+        txt = " Index: " + str(self.index) + "\n Previous Hash: " + str(self.previousHash) + "\n Time Stamp: " + str(
             self.timestamp) + "\n Data: " + str(self.data) + "\n Signature: " + str(
             self.signature) + "\n Nonce: " + str(self.nonce) + "\n Hash: " + str(self.hash) + "\n"
         return txt

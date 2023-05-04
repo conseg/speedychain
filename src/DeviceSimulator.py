@@ -398,7 +398,7 @@ def sendLifecycleEventsAsText():
         #logger.debug("ServeAESKEY = " + serverAESKey)
         encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
         print ("encobj = "+encobj)
-        res = server.addTransactionStructure(publicKey, encobj, lifecycleTypes[i])
+        res = server.addTransaction(publicKey, encobj)
         print ("result = "+str(res))
 
         if i == 0 and val < 1500:
@@ -429,7 +429,7 @@ def sendLifecycleEventsAsStructure():
         #logger.debug("ServeAESKEY = " + serverAESKey)
         encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
         print ("encobj = "+encobj)
-        res = server.addTransaction(publicKey, encobj)
+        res = server.addTransactionStructure(publicKey, encobj, lifecycleTypes[i])
         print ("result = "+str(res))
 
         if i == 0 and val < 1500:
