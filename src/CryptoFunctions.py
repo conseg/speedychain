@@ -36,7 +36,7 @@ def calculateTransactionHash(blockLedger):
     """
     shaFunc = hashlib.sha256()
     shaFunc.update((str(blockLedger.index) + str(blockLedger.previousHash) + str(blockLedger.timestamp) + str(
-        blockLedger.data) + str(blockLedger.signature)+ str(blockLedger.nonce)).encode('utf-8'))
+        blockLedger.data) + str(blockLedger.signature)+ str(blockLedger.nonce)+ str(blockLedger.identification)).encode('utf-8'))
     val = shaFunc.hexdigest()
     return val
 

@@ -1,12 +1,12 @@
 import time
 
-import BlockHeader
+import BlockHeaderMulti
 import Transaction
 import CryptoFunctions
 
 BlockHeaderChain = []
 
-##@Roben inserted "consensus" to verify if PoW was selected
+##This code manages the chain functions with multiple transaction chains
 def startBlockChain(t):
     """ Add the genesis block to the chain 
     @param t - Current timestamp \n
@@ -32,12 +32,13 @@ def addBlockHeader(newBlockHeader):
     global BlockHeaderChain
     BlockHeaderChain.append(newBlockHeader)
 
-def addBlockTransaction(block, transaction):
+def addBlockTransaction(block, transaction, index):
     """ Receive a block and add to it a list of transactions \n
     @param block - BlockHeader \n
-    @param transaction - list of transaction
+    @param transaction - list of transaction \n
+    @param index - index of chain of transactions
     """
-    block.transactions.append(transaction)
+    block.transactions[index].append(transaction)
 
 def getLatestBlock():
     """ Return the latest block on the chain \n
@@ -46,20 +47,23 @@ def getLatestBlock():
     global BlockHeaderChain
     return BlockHeaderChain[len(BlockHeaderChain) - 1]
 
-def getLatestBlockTransaction(blk):
+def getLatestBlockTransaction(blk, index):
     """ Return the latest transaction on a block \n
+    @param blk - BlockHeader object \n
+    @param index - Transaction chain index\n
     @return Transaction
     """
-    return blk.transactions[len(blk.transactions) - 1]
+    return blk.transactions[index][len(blk.transactions[index]) - 1]
 
-def blockContainsTransaction(block, transaction):
+def blockContainsTransaction(block, transaction, index):
     """ Verify if a block contains a transaction \n
     @param block - BlockHeader object \n
     @param transaction - Transaction object\n
+    @param index - Transaction chain index\n
     @return True - the transaction is on the block\n
     @return False - the transcation is not on the block
     """
-    for tr in block.transactions:
+    for tr in block.transactions[index]:
         if tr == transaction:
             return True
 
@@ -108,7 +112,7 @@ def getBlockByIndex(index):
 def getGenesisBlock(t):
     """ Create the genesis block\n
     @param t - current timestamp\n
-    @return BlockHeader - with the genesis block
+    @return BlockHeaderMulti - with the genesis block
     """
     k = """-----BEGIN PUBLIC KEY-----
 MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAM39ONP614uHF5m3C7nEh6XrtEaAk2ys
@@ -120,7 +124,7 @@ LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
     blockContext = "0000"
     hash = CryptoFunctions.calculateHash(index, previousHash, t, nonce, k, blockContext)
     inf = Transaction.Transaction(0, hash, "0", "0", '', 0)
-    blk = BlockHeader.BlockHeader(index, previousHash, t, inf, hash, nonce, k, blockContext)
+    blk = BlockHeaderMulti.BlockHeaderMulti(index, previousHash, t, inf, hash, nonce, k, blockContext)
     return blk
 
 def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus):
@@ -148,7 +152,7 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
     sign = CryptoFunctions.signInfo(gwPvtKey, nextHash)
     inf = Transaction.Transaction(0, nextHash, nextTimestamp, blockData, sign, 0)
 
-    return BlockHeader.BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, nonce, pubKey, blockContext)
+    return BlockHeaderMulti.BlockHeaderMulti(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, nonce, pubKey, blockContext)
 
 def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce):
     """ Receive the information of a new block and create it\n
@@ -164,7 +168,7 @@ def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce):
     nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, timestamp, nonce, pubKey, blockContext)
     inf = Transaction.Transaction(0, nextHash, timestamp, blockData, sign, 0)
 
-    return BlockHeader.BlockHeader(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey, blockContext)
+    return BlockHeaderMulti.BlockHeaderMulti(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey, blockContext)
 
 def restartChain():
     """ Clear the entire chain """

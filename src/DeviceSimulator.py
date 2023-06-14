@@ -379,6 +379,29 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
 # SSD: SSD KINGSTON A400, 480GB, LEITURA 500MB/S, GRAVACAO 450MB/S
 # VID: PLACA DE VIDEO ASUS NVIDIA GEFORCE GTX 1660TI, 6GB GDDR6, 12 Gb/s
 
+def addBlockOnChainMulti():
+    """ Take the value of 'publicKey' var, and add it to the chain as a block"""
+    global serverAESEncKey
+    # print("###addBlockonChain in devicesimulator, publicKey")
+    # print(publicKey)
+    serverAESEncKey = server.addBlockMulti(publicKey)
+    # print("###addBlockonChain in devicesimulator, serverAESEncKey")
+    # print(serverAESEncKey)
+    # while len(serverAESEncKey) < 10:
+    #    serverAESEncKey = server.addBlock(publicKey)
+    decryptAESKey(serverAESEncKey)
+    # print("###after decrypt aes")
+
+def listBlockHeaderMulti():
+    """ Log all blocks """
+    server.showIoTLedgerMulti()
+
+def listTransactionsMulti():
+    """ Ask for the user to input an index and show all transaction of the block with that index """
+    index = input("Which IoT Block do you want to print?")
+    status = server.showBlockLedgerMulti(int(index))
+    #print (status)
+
 def sendLifecycleEventsAsText():      
     """ send each lifecycle event to be added as transaction
         the data is a plaintext\n
@@ -398,7 +421,7 @@ def sendLifecycleEventsAsText():
         #logger.debug("ServeAESKEY = " + serverAESKey)
         encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
         print ("encobj = "+encobj)
-        res = server.addTransaction(publicKey, encobj)
+        res = server.addLifecycleEvent(publicKey, encobj)
         print ("result = "+str(res))
 
         if i == 0 and val < 1500:
@@ -429,17 +452,30 @@ def sendLifecycleEventsAsStructure():
         #logger.debug("ServeAESKEY = " + serverAESKey)
         encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
         print ("encobj = "+encobj)
-        res = server.addTransactionStructure(publicKey, encobj, lifecycleTypes[i])
+        res = server.addLifecycleEventStructure(publicKey, encobj, lifecycleTypes[i])
         print ("result = "+str(res))
 
-        if i == 0 and val < 1500:
-            print("CPU is slow")
-        if i == 1 and val < 1400:
-            print("RAM is slow")
-        if i == 2 and val < 280:
-            print("SSD is slow")
-        if i == 3 and val < 6:
-            print("VID is slow")
+def sendLifecycleEventsMulti():
+    """
+    All "Multi" methods are related to multiple transaction chains
+    """
+    for i in range(4):
+        val, valStr = lifecycleMethods[i]()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = " {:.0f}".format(t)
+        data = timeStr + valStr
+        print("")
+        print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
+        
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        print ("###Signature lenght: " + str(len(signedData)))
+        toSend = signedData + data
+        print ("toSend = "+toSend)
+        #logger.debug("ServeAESKEY = " + serverAESKey)
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        print ("encobj = "+encobj)
+        res = server.addLifecycleEventMulti(publicKey, encobj, lifecycleTypes[i], i)
+        print ("result = "+str(res))
 
 def readSpeedCPU():
     """ Generates random data like '1700MHz' """
@@ -511,11 +547,14 @@ def InteractiveMain():
         15: callEVMInterface,
         16: evmConnector,
         17: executeEVM,
-        18: sendLifecycleEventsAsText,
-        19: sendLifecycleEventsAsStructure,
-        20: sendLifecycleEventsAsText,
-        21: storeChainToFile,
-        22: restoreChainFromFile
+        18: storeChainToFile,
+        19: restoreChainFromFile,
+        20: addBlockOnChainMulti,
+        21: listBlockHeaderMulti,
+        22: listTransactionsMulti,
+        23: sendLifecycleEventsAsText,
+        24: sendLifecycleEventsAsStructure,
+        25: sendLifecycleEventsMulti,
     }
 
     mode = -1
@@ -542,11 +581,14 @@ def InteractiveMain():
         print("15 - Call Smart Contract")
         # print("16 - EVM connector")
         # print("17 - execute EVM code")
-        print("18 - Send all lifecycle events as text to block, one transaction for each data")
-        print("19 - Send all lifecycle events as a structure to block, one transaction for each data")
-        print("20 - Send all lifecycle events to block")
-        print("21 - Store the entire chain to a file")
-        print("22 - Restore the entire chain from a file")
+        print("18 - Store the entire chain to a file")
+        print("19 - Restore the entire chain from a file")
+        print("20 - Add block on chain with multiple transactions chains")
+        print("21 - List Block Headers with multiple transactions chains from connected Gateway")
+        print("22 - List Transactions from multiple chains for a given Block Header")
+        print("23 - Send all lifecycle events as text to block, one transaction for each data")
+        print("24 - Send all lifecycle events as a structure to block, one transaction for each data")
+        print("25 - Send all lifecycle events as a structure to block, one transaction on each transaction chain")
 
         try:
             mode = int(input('Input:'))
