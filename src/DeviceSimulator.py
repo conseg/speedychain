@@ -74,12 +74,15 @@ def addBlockOnChain():
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
     serverAESEncKey = server.addBlock(publicKey)
-    # print("###addBlockonChain in devicesimulator, serverAESEncKey")
-    # print(serverAESEncKey)
-    # while len(serverAESEncKey) < 10:
-    #    serverAESEncKey = server.addBlock(publicKey)
-    decryptAESKey(serverAESEncKey)
-    # print("###after decrypt aes")
+    if serverAESEncKey == "":
+        print("Block already added with this public key") 
+    else:
+        # print("###addBlockonChain in devicesimulator, serverAESEncKey")
+        # print(serverAESEncKey)
+        # while len(serverAESEncKey) < 10:
+        #    serverAESEncKey = server.addBlock(publicKey)
+        decryptAESKey(serverAESEncKey)
+        # print("###after decrypt aes")
 
 def sendDataTest():
     """ Send fake data to test the system """
@@ -597,6 +600,7 @@ def InteractiveMain():
         if (mode == 0):
             break
         options[mode]()
+        print ("")      # Just print a new line 
 
 if __name__ == '__main__':
     

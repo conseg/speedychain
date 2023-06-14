@@ -712,6 +712,7 @@ class R2ac(object):
         #print("addingblock... DevPubKey:" + devPubKey)
         # logger.debug("|---------------------------------------------------------------------|")
         # logger.info("Block received from device")
+        encKey = ""
         aesKey = ''
         t1 = time.time()
         blk = ChainFunctions.findBlock(devPubKey)        
@@ -722,7 +723,7 @@ class R2ac(object):
             aesKey = findAESKey(devPubKey)
 
             if aesKey == False:
-                # print("inside second if")
+                #print("inside second if")
                 # logger.info("Using existent block data")
                 aesKey = generateAESKey(blk.publicKey)
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
@@ -806,13 +807,13 @@ class R2ac(object):
                 # print("ConsensusLocks released!")
             ######end of lock consensus################
 
-        # print("Before encription of rsa2")
+            # print("Before encription of rsa2")
 
-        t3 = time.time()
-        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
-        # logger.debug("|---------------------------------------------------------------------|")
-        # print("block added")
+            t3 = time.time()
+            # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
+            logger.info("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
+            # logger.debug("|---------------------------------------------------------------------|")
+            # print("block added")
         return encKey
 
     def addPeer(self, peerURI, isFirst):
