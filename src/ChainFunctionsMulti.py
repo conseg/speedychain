@@ -7,11 +7,10 @@ import CryptoFunctions
 BlockHeaderChain = []
 
 ##This code manages the chain functions with multiple transaction chains
-def startBlockChain(t):
+def startBlockChain():
     """ Add the genesis block to the chain 
-    @param t - Current timestamp \n
     """
-    BlockHeaderChain.append(getGenesisBlock(t))
+    BlockHeaderChain.append(getGenesisBlock())
 
 def createNewBlock(devPubKey, gwPvt, blockContext, consensus):
     """ Receive the device public key and the gateway private key then it generates a new block \n
@@ -109,7 +108,7 @@ def getBlockByIndex(index):
     else:
         return False
 
-def getGenesisBlock(t):
+def getGenesisBlock():
     """ Create the genesis block\n
     @param t - current timestamp\n
     @return BlockHeaderMulti - with the genesis block
@@ -122,6 +121,7 @@ LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
     previousHash = "0"
     nonce = 0
     blockContext = "0000"
+    t = 1465154705
     hash = CryptoFunctions.calculateHash(index, previousHash, t, nonce, k, blockContext)
     inf = Transaction.Transaction(0, hash, "0", "0", '', 0)
     blk = BlockHeaderMulti.BlockHeaderMulti(index, previousHash, t, inf, hash, nonce, k, blockContext)
@@ -137,7 +137,7 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
     @return BlockHeader - the new block
     """
     nextIndex = previousBlock.index + 1    
-    nextTimestamp = time.time()
+    nextTimestamp = "{:.0f}".format(((time.time() * 1000) * 1000))
     previousBlockHash = CryptoFunctions.calculateHashForBlock(previousBlock)
     nonce = 0
     nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp, nonce, pubKey, blockContext)

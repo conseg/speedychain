@@ -1,7 +1,7 @@
 class LifecycleEvent:
     #Nonce field added for PoW
-    def __init__(self, type, id, data):
-        self.index = 0
+    def __init__(self, type, id, data, index = 0):
+        self.index = index
         self.type = type
         self.id = id
         self.data = data
