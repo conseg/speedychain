@@ -1350,19 +1350,17 @@ class R2ac(object):
     def storeMultiChainToFile(self):
         open(chainFileMulti, 'w').close()
         f = open(chainFileMulti, "a")
-        #storeKeysFromPeers(f)
 
-        f.write("\n")
-
-        # theChain = ChainFunctions.getFullChain()
-        # for b in theChain[1:]:
-        #     block = b.strBlockToSave()
-        #     print("block= " + block)
-        #     f.write("block= " + block + "\n")
-        #     for t in b.transactions[1:]:
-        #         transaction = t.strTransactionToSave()
-        #         print("transaction= " + transaction)
-        #         f.write("transaction= " + transaction + "\n")
+        theChain = ChainFunctionsMulti.getFullChain()
+        for b in theChain[1:]:
+            block = b.strBlockToSave()
+            print("block= " + block)
+            f.write("block= " + block + "\n")
+            for i in range(b.numTransactionChains):
+                for t in b.transactions[i][1:]:
+                    transaction = t.strTransactionToSave()
+                    print("transaction " + str(i) + "= " + transaction)
+                    f.write("transaction " + str(i) + "= " + transaction + "\n")
         f.close()
         return True
 
@@ -1455,67 +1453,52 @@ class R2ac(object):
             The gateway keys from all peers
             The blocks and the transactions\n
         """
-        keys = []
-        f = open(chainFile, "r")
-
-        # for line in f:
-        #     stripped_line = line.rstrip('\n')
-        #     #print("line = " + str(stripped_line))
-        #     if (str(stripped_line) == ""):
-        #         print("BREAK!")
-        #         break
-        #     split = stripped_line.split('  ')
-        #     publicKey = split[0].replace('\\n', '\n')
-        #     privateKey = split[1].replace('\\n', '\n')
-        #     key = [publicKey, privateKey]
-        #     #print("Public Key = " + str(publicKey))
-        #     #print("Private Key = " + str(privateKey))
-        #     keys.append(key)
+        f = open(chainFileMulti, "r")
         
-        # print (keys)
+        # Gets the blocks/transations
+        devPubKey = ""
+        for line in f:
+            print ("")
+            stripped_line = line.rstrip('\n')
+            split_aux = stripped_line.split('= ', 1)
+            split = split_aux[1].split('  ')
+            print(str(stripped_line))
+            if (stripped_line.startswith('block')):
+                devPubKey = split[0].replace('\\n', '\n')
+                #print("Dev Public Key = " + str(devPubKey))
+                blockContext = split[1]
+                timestamp = split[2]
+                nonce = split[3]
+                signature = split[4]
+                blockData = split[5]
+                numTransactionChains = split[6]
+                newBlock = ChainFunctionsMulti.generateNextBlock2(blockData, devPubKey, signature, 
+                                                                  blockContext, timestamp, nonce, numTransactionChains)
+                ChainFunctionsMulti.addBlockHeader(newBlock)
+                #print("NewBlock: " + newBlock.strBlock())
+                sendBlockToPeersMulti(newBlock)
+            if (stripped_line.startswith('transaction')):
+                chainIndexList = [int(x) for x in split_aux[0].split() if x.isdigit()]
+                chainIndex = chainIndexList[0]
+                #print("ChainIndex = " + str(chainIndex))
+                blk = ChainFunctionsMulti.findBlock(devPubKey)      
+                if (blk != False and blk.index > 0):
+                    #print("Block found!")
+                    lastBlk = (ChainFunctionsMulti.getLatestBlockTransaction(blk, chainIndex))
+                    nextInt = lastBlk.index + 1
+                    prevInfoHash = lastBlk.hash
+                    data = split[1]
+                    dataSplit = data.split(', ')
+                    #print("Timestamp = " + str(split[0]))
+                    #print("Device info = " + str(split[1]))
+                    #print("Sign data = " + str(split[2]))
+                    #print("Nonce = " + str(split[3]))
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, split[0], data, split[2], split[3], dataSplit[2])
 
-        # # Get how many peers from file
-        # # Get gw private/public keys, send them to each peer
-        #     # Each peer updates its keys and restart the chain (ChainFunctions.restartChain())
-        # restartChains(keys)
-        
-        # # Gets the blocks/transations
-        # devPubKey = ""
-        # for line in f:
-        #     print ("")
-        #     stripped_line = line.rstrip('\n')
-        #     split_aux = stripped_line.split('= ')
-        #     split = split_aux[1].split('  ')
-        #     print(str(stripped_line))
-        #     #print(split)
-        #     if (stripped_line.startswith('block')):
-        #         devPubKey = split[0].replace('\\n', '\n')
-        #         #print("Dev Public Key = " + str(devPubKey))
-        #         blockContext = split[1]
-        #         timestamp = split[2]
-        #         nonce = split[3]
-        #         signature = split[4]
-        #         blockData = split[5]
-        #         newBlock = ChainFunctions.generateNextBlock2(blockData, devPubKey, signature, blockContext, timestamp, nonce)
-        #         ChainFunctions.addBlockHeader(newBlock)
-        #         print(newBlock.strBlock())
-        #         sendBlockToPeers(newBlock)
-        #     if (stripped_line.startswith('transaction')):
-        #         blk = ChainFunctions.findBlock(devPubKey)        
-        #         if (blk != False and blk.index > 0):
-        #             print("Block found!")
-        #             nextInt = blk.transactions[len(blk.transactions) - 1].index + 1
-        #             prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
-        #             #print("Timestamp = " + str(split[0]))
-        #             #print("Device info = " + str(split[1]))
-        #             #print("Sign data = " + str(split[2]))
-        #             #print("Nonce = " + str(split[3]))
-        #             transaction = Transaction.Transaction(
-        #                 nextInt, prevInfoHash, split[0], split[1], split[2], split[3])
-
-        #             ChainFunctions.addBlockTransaction(blk, transaction)
-        #             print(transaction.strBlock())
-        #             sendTransactionToPeers(devPubKey, transaction)
+                    ChainFunctionsMulti.addBlockTransaction(blk, transaction, chainIndex)
+                    #print(transaction.strBlock())
+                    sendTransactionToPeersMulti(devPubKey, transaction, chainIndex)
 
         f.close()
         return True
@@ -1541,7 +1524,10 @@ class R2ac(object):
         #print("gwPub = "+ str(gwPub))
         #print("gwPvt = "+ str(gwPvt))
         ChainFunctions.restartChain()
+        ChainFunctionsMulti.restartChain()
         #blk = ChainFunctions.getLatestBlock()
+        #print("BlockGenesis = "+ str(blk.strBlock()))
+        #blk = ChainFunctionsMulti.getLatestBlock()
         #print("BlockGenesis = "+ str(blk.strBlock()))
 
         t2 = time.time()
@@ -1765,7 +1751,6 @@ class R2ac(object):
                 # retrieve the last chars which are the data
                 deviceData = split[2]  # plainObject[104:]
                 #print("deviceData = " + str(deviceData))
-
                 d = " "+devTime+" "+deviceData
                 isSigned = CryptoFunctions.signVerify(
                     d, signature, devPublicKey)
@@ -2771,7 +2756,8 @@ def restartChains(keys):
     #print ("public = " + str(gwPub) + ", private = " + str(gwPvt))
 
     ChainFunctions.restartChain()
-    #blk = ChainFunctions.getLatestBlock()
+    ChainFunctionsMulti.restartChain()
+    #blk = ChainFunctionsMulti.getLatestBlock()
     #print("BlockGenesis = "+ str(blk.strBlock()))
     # print("sending block to peers")
     # logger.debug("Running through peers")
@@ -2805,7 +2791,6 @@ def storeKeysFromPeers(f):
         obj = peer.object
         print("sending request to: " + str(peer.peerURI))
         obj.storeGatewayKeys(myName)
-
 
 """ Main function initiate the system"""
 

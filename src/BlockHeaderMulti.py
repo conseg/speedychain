@@ -1,11 +1,12 @@
 class BlockHeaderMulti:
     #Nonce field added for PoW
-    def __init__(self, index, previousHash, timestamp, transaction, hash, nonce, publicKey, blockContext):
+    def __init__(self, index, previousHash, timestamp, transaction, hash, nonce, publicKey, blockContext, numTransactionChains = 4):
         self.index = index
         self.previousHash = previousHash
         self.timestamp = timestamp
         self.transactions = []
-        for i in range(4):
+        self.numTransactionChains = int(numTransactionChains)
+        for i in range(self.numTransactionChains):
             a = []
             a.append(transaction)
             self.transactions.append(a)
@@ -27,16 +28,21 @@ class BlockHeaderMulti:
     def strBlock(self):
         txt = " Index: " + str(self.index) + "\n Previous Hash: " + str(self.previousHash) + "\n Time Stamp: " + str(
             self.timestamp) + "\n Hash: " + str(self.hash) + "\n Nonce:" + str(self.nonce) + "\n Public Key: " + str(
-            self.publicKey) + "\n Block Context: " + str(self.blockContext) + "\n Number of transactions[0]: " + str(
-            len(self.transactions[0])) + "\n Number of transactions[1]: " + str(len(self.transactions[1])
-            ) + "\n Number of transactions[2]: " + str(len(self.transactions[2])) + "\n Number of transactions[3]: " + str(
-            len(self.transactions[3])) + "\n"
+            self.publicKey) + "\n Block Context: " + str(self.blockContext) + "\n Number of transaction chains: " + str(
+            self.numTransactionChains)
+        
+        i = 0
+        for transactionChain in self.transactions:
+            txt = txt + "\n Number of transactions " + str(i) + ": " + str(len(transactionChain))
+            i = i + 1
 
+        txt = txt + "\n"
         return txt
 
     def strBlockToSave(self):
-        transaction = self.transactions[0]
+        transaction = self.transactions[0][0]
         txt = str(self.publicKey).replace('\n', '\\n') + "  " + str(self.blockContext) + "  " + str(self.timestamp) + "  " + str(
-            self.nonce) + "  " + str(transaction.signature) + "  " + str(transaction.data)
+            self.nonce) + "  " + str(transaction.signature) + "  " + str(transaction.data) + "  " + str(
+            self.numTransactionChains)
 
         return txt
