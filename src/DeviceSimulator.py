@@ -63,17 +63,19 @@ def generateRSAKeyPair():
 def setServer():
     """ Ask for the user to input the server URI and put it in the global var 'server' """
     global server
+    global gatewayName
     #server = raw_input('Gateway IP:')
     uri = raw_input("Enter the uri of the gateway: ").strip()
-    print("gateway URI: " + uri)
     server = Pyro4.Proxy(uri)
+    gatewayName = server.getGatewayName()
+    print("gateway URI: " + uri + ", with name: " + gatewayName)
 
 def addBlockOnChain():
     """ Take the value of 'publicKey' var, and add it to the chain as a block"""
     global serverAESEncKey
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
-    serverAESEncKey = server.addBlock(publicKey)
+    serverAESEncKey = server.addBlock(publicKey, gatewayName)
     if serverAESEncKey == "":
         print("Block already added with this public key") 
     else:
@@ -387,7 +389,7 @@ def addBlockOnChainMulti():
     global serverAESEncKey
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
-    serverAESEncKey = server.addBlockMulti(publicKey)
+    serverAESEncKey = server.addBlockMulti(publicKey, gatewayName)
     # print("###addBlockonChain in devicesimulator, serverAESEncKey")
     # print(serverAESEncKey)
     # while len(serverAESEncKey) < 10:
@@ -518,6 +520,16 @@ def restoreChainFromFile():
 
     return True
 
+def listBlocksWithId():
+    deviceId = raw_input("Which device ID do you want to search on blocks?").strip()
+    status = server.showBlockWithId(deviceId)
+    status = server.showBlockWithIdMulti(deviceId)
+
+def listTransactionsWithId():
+    deviceId = raw_input("Which component ID do you want to search?").strip()
+    status = server.showTransactionWithId(deviceId)
+    status = server.showTransactionWithIdMulti(deviceId)
+
 #############################################################################
 #############################################################################
 ######################          Main         ################################
@@ -558,6 +570,8 @@ def InteractiveMain():
         23: sendLifecycleEventsAsText,
         24: sendLifecycleEventsAsStructure,
         25: sendLifecycleEventsMulti,
+        26: listBlocksWithId,
+        27: listTransactionsWithId,
     }
 
     mode = -1
@@ -592,6 +606,8 @@ def InteractiveMain():
         print("23 - Send all lifecycle events as text to block, one transaction for each data")
         print("24 - Send all lifecycle events as a structure to block, one transaction for each data")
         print("25 - Send all lifecycle events as a structure to block, one transaction on each transaction chain")
+        print("26 - Get blocks by device ID (gateway name)")
+        print("27 - Get transactions by component ID (e.g.: SN1234_VID_gwa)")
 
         try:
             mode = int(input('Input:'))

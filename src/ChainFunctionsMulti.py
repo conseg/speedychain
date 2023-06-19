@@ -175,3 +175,31 @@ def restartChain():
     """ Clear the entire chain """
     BlockHeaderChain = []
     BlockHeaderChain.append(getGenesisBlock())
+
+def getBlocksById(id):
+    """ Return the blocks with a specific device ID\n
+    @param id - Block ID name based on device ID\n
+    @return Blocks 
+    """
+    blocks = []
+    global BlockHeaderChain
+
+    for b in BlockHeaderChain:
+        if (b.blockContext in id):
+            blocks.append(b)
+    
+    return blocks
+
+def getTransactionsWithId(componentId):
+    """ Return the transactions with a specific component ID\n
+    @param componentId - Transaction ID name based on component ID\n
+    @return Transactions 
+    """
+    blocks = getBlocksById(componentId)
+    transactions = []
+    for b in blocks:
+        for i in range(b.numTransactionChains):
+            if (len(b.transactions[i]) > 1 and b.transactions[i][1].identification == componentId):
+                transactions = transactions + b.transactions[i]
+    
+    return transactions

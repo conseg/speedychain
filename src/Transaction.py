@@ -26,7 +26,7 @@ class Transaction:
 
     def strTransactionToSave(self):
         txt = str(self.timestamp) + "  " + str(self.data) + "  " + str(
-            self.signature) + "  " + str(self.nonce)
+            self.signature) + "  " + str(self.nonce) + "  " + str(self.identification)
         return txt
     
     def setHash(self, hash):
