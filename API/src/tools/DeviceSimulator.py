@@ -22,7 +22,7 @@ import CryptoFunctions
 
 logger = Logger.logging.getLogger("speedychain")
 deviceName = ""
-consensus = ""
+consensus = "None"
 fname = socket.gethostname()
 
 server = "localhost"
@@ -40,6 +40,9 @@ logT31 = []
 startTime=0
 endTime=0
 # input = getattr(__builtin__, 'raw_input', input)
+
+lifecycleMethods = []
+lifecycleTypes = []
 
 def getMyIP():
      """ Return the IP from the gateway
@@ -79,25 +82,31 @@ def generateRSAKeyPair():
 
 def setServer():
     """ Ask for the user to input the server URI and put it in the global var 'server' """
-    global server
+    global server    
+    global deviceName
     #server = raw_input('Gateway IP:')
     uri = input("Enter the uri of the gateway: ").strip()
-    server = Pyro4.Proxy(uri)
+    server = Pyro4.Proxy(uri) 
+    deviceName = server.getDeviceName()
+    print("gateway URI: " + uri + ", with name: " + deviceName)
 
 def addBlockOnChain():
     """ Take the value of 'publicKey' var, and add it to the chain as a block"""
     global serverAESEncKey
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
-    serverAESEncKey = server.addBlock(publicKey)
-    if (len(str(serverAESEncKey))<10):
+    serverAESEncKey = server.addBlock(publicKey, deviceName)
+    if serverAESEncKey == "":
+        print("Block already added with this public key")
         logger.error("it was not possible to add block - problem in the key")
         return False
-    # print("###addBlockonChain in devicesimulator, serverAESEncKey")
-    # print(serverAESEncKey)
-    # while len(serverAESEncKey) < 10:
-    #    serverAESEncKey = server.addBlock(publicKey)
-    decryptAESKey(serverAESEncKey)
+    else:
+        # print("###addBlockonChain in devicesimulator, serverAESEncKey")
+        # print(serverAESEncKey)
+        # while len(serverAESEncKey) < 10:
+        #    serverAESEncKey = server.addBlock(publicKey)
+        decryptAESKey(serverAESEncKey)
+        # print("###after decrypt aes")
     return True
     # print("###after decrypt aes")
 
@@ -739,6 +748,209 @@ def gwSaveLog():
 
 #############################################################################
 #############################################################################
+################          Lifecycle Events (Rodrigo)         ################
+#############################################################################
+#############################################################################
+
+# CPU: Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz   2.90 GHz
+# RAM: MEMORIA CORSAIR VENGEANCE LPX, 8GB, 2666MHZ, DDR4
+# SSD: SSD KINGSTON A400, 480GB, LEITURA 500MB/S, GRAVACAO 450MB/S
+# VID: PLACA DE VIDEO ASUS NVIDIA GEFORCE GTX 1660TI, 6GB GDDR6, 12 Gb/s
+
+def addBlockOnChainMulti():
+    """ Take the value of 'publicKey' var, and add it to the chain as a block"""
+    global serverAESEncKey
+    # print("###addBlockonChain in devicesimulator, publicKey")
+    # print(publicKey)
+    serverAESEncKey = server.addBlockMulti(publicKey, gatewayName)
+    if serverAESEncKey == "":
+        print("Block already added with this public key")
+        logger.error("it was not possible to add block - problem in the key")
+        return False
+    else:
+        # print("###addBlockonChain in devicesimulator, serverAESEncKey")
+        # print(serverAESEncKey)
+        # while len(serverAESEncKey) < 10:
+        #    serverAESEncKey = server.addBlock(publicKey)
+        decryptAESKey(serverAESEncKey)
+    return True
+    # print("###after decrypt aes")
+
+def listBlockHeaderMulti():
+    """ Log all blocks """
+    server.showIoTLedgerMulti()
+
+def listTransactionsMulti():
+    """ Ask for the user to input an index and show all transaction of the block with that index """
+    index = input("Which IoT Block do you want to print?")
+    status = server.showBlockLedgerMulti(int(index))
+    #print (status)
+
+def sendLifecycleEventsAsText():      
+    """ send each lifecycle event to be added as transaction
+        the data is a plaintext\n
+    """
+    for i in range(4):
+        val, valStr = lifecycleMethods[i]()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = " {:.0f}".format(t)
+        data = timeStr + valStr
+        #logger.debug("data = "+data)
+        print("")
+        print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
+
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        print ("###Signature lenght: " + str(len(signedData)))
+        toSend = signedData + data
+        print ("toSend = "+toSend)
+        #logger.debug("ServeAESKEY = " + serverAESKey)
+        try:
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        except:
+            logger.error("was not possible to encrypt... verify aeskey")
+            newKeyPair()
+            addBlockOnChain() # this will force gateway to recreate the aes key
+            signedData = CryptoFunctions.signInfo(privateKey, data)
+            toSend = signedData + data
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            logger.error("passed through sendData except")
+        try:
+            print ("encobj = "+encobj)
+            res = server.addLifecycleEvent(publicKey, encobj)
+            print ("result = "+str(res))
+
+            if i == 0 and val < 1500:
+                print("CPU is slow")
+            if i == 1 and val < 1400:
+                print("RAM is slow")
+            if i == 2 and val < 280:
+                print("SSD is slow")
+            if i == 3 and val < 6:
+                print("VID is slow")
+        except:
+            logger.error("some exception with sendLifecycleEventsAsText now...")
+
+def sendLifecycleEventsAsStructure():    
+    """ send each lifecycle event to be added as transaction
+        the data will be stored as a LifecycleEvent structure\n
+    """
+    for i in range(4):
+        val, valStr = lifecycleMethods[i]()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = " {:.0f}".format(t)
+        data = timeStr + valStr
+        #logger.debug("data = "+data)
+        print("")
+        print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
+
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        print ("###Signature lenght: " + str(len(signedData)))
+        toSend = signedData + data
+        print ("toSend = "+toSend)
+        #logger.debug("ServeAESKEY = " + serverAESKey)
+        try:
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        except:
+            logger.error("was not possible to encrypt... verify aeskey")
+            newKeyPair()
+            addBlockOnChain() # this will force gateway to recreate the aes key
+            signedData = CryptoFunctions.signInfo(privateKey, data)
+            toSend = signedData + data
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            logger.error("passed through sendData except")
+        try:
+            print ("encobj = "+encobj)
+            res = server.addLifecycleEventStructure(publicKey, encobj, lifecycleTypes[i])
+            print ("result = "+str(res))
+        except:
+            logger.error("some exception with sendLifecycleEventsAsStructure now...")
+
+
+def sendLifecycleEventsMulti():
+    """
+    All "Multi" methods are related to multiple transaction chains
+    """
+    for i in range(4):
+        val, valStr = lifecycleMethods[i]()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = " {:.0f}".format(t)
+        data = timeStr + valStr
+        #logger.debug("data = "+data)
+        print("")
+        print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
+
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        print ("###Signature lenght: " + str(len(signedData)))
+        toSend = signedData + data
+        print ("toSend = "+toSend)
+        #logger.debug("ServeAESKEY = " + serverAESKey)
+        try:
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        except:
+            logger.error("was not possible to encrypt... verify aeskey")
+            newKeyPair()
+            addBlockOnChainMulti() # this will force gateway to recreate the aes key
+            signedData = CryptoFunctions.signInfo(privateKey, data)
+            toSend = signedData + data
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            logger.error("passed through sendData except")
+        try:
+            print ("encobj = "+encobj)
+            res = server.addLifecycleEventMulti(publicKey, encobj, lifecycleTypes[i], i)
+            print ("result = "+str(res))
+        except:
+            logger.error("some exception with sendLifecycleEventsMulti now...")
+
+def readSpeedCPU():
+    """ Generates random data like '1700MHz' """
+    cpu = random.randint(1400, 2900)
+    cpuStr = " " + str(cpu) + "MHz"
+    return cpu, cpuStr
+
+def readSpeedRAM():
+    """ Generates random data like '2300MHz' """
+    ram = random.randint(1300, 2666)
+    ramStr = " " + str(ram) + "MHz"
+    return ram, ramStr
+
+def readSpeedSSD():
+    """ Generates random data like '300MB/s' """
+    ssd = random.randint(250, 500)
+    ssdStr = " " + str(ssd) + "MB/s"
+    return ssd, ssdStr
+
+def readSpeedVid():
+    """ Generates random data like '7GB/s' """
+    video = random.randint(5, 12)
+    videoStr = " " + str(video) + "GB/s"
+    return video, videoStr
+
+def storeChainToFile():
+    """ store the entire chain to a text file\n
+    """
+    server.storeChainToFile()
+
+    return True
+
+def restoreChainFromFile():
+    """ restore the entire chain from a text file\n
+    """
+    server.restoreChainFromFile()
+
+    return True
+
+def listBlocksWithId():
+    deviceId = input("Which device ID do you want to search on blocks?").strip()
+    status = server.showBlockWithId(deviceId)
+    status = server.showBlockWithIdMulti(deviceId)
+
+def listTransactionsWithId():
+    deviceId = input("Which component ID do you want to search?").strip()
+    status = server.showTransactionWithId(deviceId)
+    status = server.showTransactionWithIdMulti(deviceId)
+
+#############################################################################
+#############################################################################
 ######################          Main         ################################
 #############################################################################
 #############################################################################
@@ -747,6 +959,12 @@ def gwSaveLog():
 def InteractiveMain():
     """ Creates an interactive screen for the user with all option of a device"""
     global server
+    global lifecycleMethods
+    global lifecycleTypes
+
+    lifecycleMethods = [readSpeedCPU, readSpeedRAM, readSpeedSSD, readSpeedVid]
+    lifecycleTypes = ["CPU", "RAM", "SSD", "VID"]
+
     options = {
         1: setServer,
         2: addPeer,
@@ -767,6 +985,16 @@ def InteractiveMain():
         # 17: executeEVM,
         17: defineContextsAutomaNumbers,
         18: gwSaveLog,
+        19: storeChainToFile,
+        20: restoreChainFromFile,
+        21: addBlockOnChainMulti,
+        22: listBlockHeaderMulti,
+        23: listTransactionsMulti,
+        24: sendLifecycleEventsAsText,
+        25: sendLifecycleEventsAsStructure,
+        26: sendLifecycleEventsMulti,
+        27: listBlocksWithId,
+        28: listTransactionsWithId,
     }
 
     mode = -1
@@ -792,10 +1020,19 @@ def InteractiveMain():
         print("13 - Create a block for Smart Contract")
         print("14 - Show data from last transaction from block Index")
         print("15 - Call Smart Contract")
+        # print("16 - EVM connector")
         print("17 - Define number of Contexts, Devices per Gw, and Tx per Device")
         print("18 - Save Gw log T20")
-
-        # print("16 - EVM connector")
+        print("19 - Store the entire chain to a file")
+        print("20 - Restore the entire chain from a file")
+        print("21 - Add block on chain with multiple transactions chains")
+        print("22 - List Block Headers with multiple transactions chains from connected Gateway")
+        print("23 - List Transactions from multiple chains for a given Block Header")
+        print("24 - Send all lifecycle events as text to block, one transaction for each data")
+        print("25 - Send all lifecycle events as a structure to block, one transaction for each data")
+        print("26 - Send all lifecycle events as a structure to block, one transaction on each transaction chain")
+        print("27 - Get blocks by device ID (gateway name)")
+        print("28 - Get transactions by component ID (e.g.: SN1234_VID_gwa)")
 
         print("#############################################################")
 
@@ -807,11 +1044,12 @@ def InteractiveMain():
             mode = -1
 
         if (mode == 0):
-            print("See you soon, Thanks for using SpeedyChain =) ");
-            print("Powered by CONSEG group");
-            break;
+            print("See you soon, Thanks for using SpeedyChain =) ")
+            print("Powered by CONSEG group")
+            break
         try:
             options[mode]()
+            print ("")      # Just print a new line 
         except:
             print("Not a valid input, try again")
             mode = -1
