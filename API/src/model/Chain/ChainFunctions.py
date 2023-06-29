@@ -118,7 +118,7 @@ LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
     time = 1465154705
     hash = CryptoFunctions.calculateHash(index, previousHash, time, nonce, k, blockContext)
     inf = Transaction.Transaction(0, hash, "0", "0", '', 0)
-    blk = BlockHeader.BlockHeader(index, previousHash, time, inf, hash, nonce, k, blockContext)
+    blk = BlockHeader(index, previousHash, time, inf, hash, nonce, k, blockContext)
     return blk
 
 def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus):
@@ -162,7 +162,7 @@ def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, 
     nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, timestamp, nonce, pubKey, blockContext)
     inf = Transaction.Transaction(0, nextHash, timestamp, blockData, sign, 0)
 
-    return BlockHeader.BlockHeader(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey, blockContext)
+    return BlockHeader(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey, blockContext)
 
 def restartChain():
     """ Clear the entire chain """

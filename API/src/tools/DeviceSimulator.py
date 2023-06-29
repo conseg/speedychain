@@ -730,7 +730,7 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     # ----> Adicionado por Arruda
     ns = Pyro4.locateNS(host=nameServerIP, port=nameServerPort)
     gatewayURI = ns.lookup(gatewayName)
-    # print(gatewayURI)
+    print("gatewayURI = " + str(gatewayURI))
     global server
     # fname = socket.gethostname()
     # text_file = open("localhost", "r")
@@ -1079,7 +1079,7 @@ if __name__ == '__main__':
 
 
         if (len(sys.argv) < 6): #when it is not called with number of blocks/transactions and consensus, it is called interactive mode
-            consensus = "PBFT"
+            consensus = "None"
             gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
             logger.info("Connected to gateway: " + gatewayURI.asString())

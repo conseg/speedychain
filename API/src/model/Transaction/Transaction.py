@@ -1,4 +1,4 @@
-from tools import CryptoFunctions
+from ...tools import CryptoFunctions
 
 class Transaction:
     def __init__(self, index, previousHash, timestamp, data, signature, nonce, id = "id"):

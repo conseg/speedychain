@@ -125,7 +125,7 @@ LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
     t = 1465154705
     hash = CryptoFunctions.calculateHash(index, previousHash, t, nonce, k, blockContext)
     inf = Transaction.Transaction(0, hash, "0", "0", '', 0)
-    blk = BlockHeaderMulti.BlockHeaderMulti(index, previousHash, t, inf, hash, nonce, k, blockContext)
+    blk = BlockHeaderMulti(index, previousHash, t, inf, hash, nonce, k, blockContext)
     return blk
 
 def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus):
@@ -153,7 +153,7 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
     sign = CryptoFunctions.signInfo(gwPvtKey, nextHash)
     inf = Transaction.Transaction(0, nextHash, nextTimestamp, blockData, sign, 0)
 
-    return BlockHeaderMulti.BlockHeaderMulti(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, nonce, pubKey, blockContext)
+    return BlockHeaderMulti(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, nonce, pubKey, blockContext)
 
 def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, numTransactionChains, index):
     """ Receive the information of a new block and create it\n
@@ -169,7 +169,7 @@ def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, 
     nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, timestamp, nonce, pubKey, blockContext)
     inf = Transaction.Transaction(0, nextHash, timestamp, blockData, sign, 0)
 
-    return BlockHeaderMulti.BlockHeaderMulti(nextIndex, previousBlockHash, timestamp, inf, nextHash, 
+    return BlockHeaderMulti(nextIndex, previousBlockHash, timestamp, inf, nextHash, 
                                              nonce, pubKey, blockContext, numTransactionChains)
 
 def restartChain():
