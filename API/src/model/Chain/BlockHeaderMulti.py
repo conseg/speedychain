@@ -43,6 +43,6 @@ class BlockHeaderMulti:
         transaction = self.transactions[0][0]
         txt = str(self.publicKey).replace('\n', '\\n') + "  " + str(self.blockContext) + "  " + str(self.timestamp) + "  " + str(
             self.nonce) + "  " + str(transaction.signature) + "  " + str(transaction.data) + "  " + str(
-            self.numTransactionChains)
+            self.numTransactionChains)  + "  " + str(self.index) 
 
         return txt

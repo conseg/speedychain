@@ -155,7 +155,7 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
 
     return BlockHeaderMulti.BlockHeaderMulti(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, nonce, pubKey, blockContext)
 
-def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, numTransactionChains):
+def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, numTransactionChains, index):
     """ Receive the information of a new block and create it\n
     @param blockData - information of the new block\n
     @param pubKey - public key of the device how wants to generate the new block\n
@@ -164,7 +164,7 @@ def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, 
     @return BlockHeader - the new block
     """
     previousBlock = getLatestBlock()
-    nextIndex = previousBlock.index + 1
+    nextIndex = index
     previousBlockHash = CryptoFunctions.calculateHashForBlock(previousBlock)
     nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, timestamp, nonce, pubKey, blockContext)
     inf = Transaction.Transaction(0, nextHash, timestamp, blockData, sign, 0)
@@ -174,8 +174,9 @@ def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, 
 
 def restartChain():
     """ Clear the entire chain """
+    global BlockHeaderChain
     BlockHeaderChain = []
-    BlockHeaderChain.append(getGenesisBlock())
+    startBlockChain()
 
 def getBlocksById(id):
     """ Return the blocks with a specific device ID\n

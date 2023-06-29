@@ -130,6 +130,7 @@ componentsId = []
 components = ["CPU", "RAM", "SSD", "VID"]
 chainFile = "chain3.txt"
 chainFileMulti = "chainmulti.txt"
+deviceName = "dev-"
 
 # example from: www.stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-pyhton
 class ThreadWithReturn(Thread):
@@ -3062,8 +3063,8 @@ class R2ac(object):
 #############################################################################
 
     def getDeviceName(self):
-        global gatewayName
-        return gatewayName
+        global deviceName
+        return deviceName
     
     def storeChainToFile(self):
         """ Store the entire chain to a text file
@@ -3162,7 +3163,8 @@ class R2ac(object):
                 nonce = split[3]
                 signature = split[4]
                 blockData = split[5]
-                newBlock = ChainFunctions.generateNextBlock2(blockData, devPubKey, signature, blockContext, timestamp, nonce)
+                index = split[6]
+                newBlock = ChainFunctions.generateNextBlock2(blockData, devPubKey, signature, blockContext, timestamp, nonce, index)
                 ChainFunctions.addBlockHeader(newBlock)
                 #print(newBlock.strBlock())
                 sendBlockToPeers(newBlock)
@@ -3217,8 +3219,9 @@ class R2ac(object):
                 signature = split[4]
                 blockData = split[5]
                 numTransactionChains = split[6]
+                index = split[7]
                 newBlock = ChainFunctionsMulti.generateNextBlock2(blockData, devPubKey, signature, 
-                                                                  blockContext, timestamp, nonce, numTransactionChains)
+                                                                  blockContext, timestamp, nonce, numTransactionChains, index)
                 ChainFunctionsMulti.addBlockHeader(newBlock)
                 #print("NewBlock: " + newBlock.strBlock())
                 sendBlockToPeersMulti(newBlock)
@@ -3358,7 +3361,15 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #             str(blk.index) + " to peers...")
                     t2 = time.time()
-                    print("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info(
+                        "gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info(
+                        "gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done")
@@ -3368,6 +3379,9 @@ class R2ac(object):
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
             return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
 
     def addLifecycleEventStructure(self, devPublicKey, encryptedObj, type):
         """ Receive a new transaction to be add to the chain, 
@@ -3445,7 +3459,14 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #             str(blk.index) + " to peers...")
                     t2 = time.time()
-                    print("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info(
+                        "gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info(
+                        "gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeers(devPublicKey, transaction)
                     # print("all done")
@@ -3455,6 +3476,9 @@ class R2ac(object):
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
             return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
     
     def addLifecycleEventMulti(self, devPublicKey, encryptedObj, type, index):
         """ Receive a new transaction to be add to the chain, 
@@ -3526,7 +3550,14 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #             str(blk.index) + " to peers...")
                     t2 = time.time()
-                    print("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info(
+                        "gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info(
+                        "gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
                     # --->> this function should be run in a different thread.
                     sendTransactionToPeersMulti(devPublicKey, transaction, index)
                     # print("all done")
@@ -3536,6 +3567,9 @@ class R2ac(object):
                     return "Invalid Signature"
             # logger.debug("--Transaction not appended--Key not found")
             return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
 
     def addBlockMulti(self, devPubKey, deviceName):
         """ Receive a device public key from a device and link it to a block on the chain\n
@@ -3545,24 +3579,35 @@ class R2ac(object):
         """
         global gwPub
         global consensusLock
+        global orchestratorObject
         #print("addingblock... DevPubKey:" + devPubKey)
         # logger.debug("|---------------------------------------------------------------------|")
         # logger.info("Block received from device")
         aesKey = ''
+        encKey = ''
         t1 = time.time()
         blk = ChainFunctionsMulti.findBlock(devPubKey)        
         #print("consensus:" + str(consensus))
         if (blk != False and blk.index > 0):
             #print("blk:" + str(blk.index))
             #print("inside first if")
+            logger.error("It may be already be registered, generating another aeskey")
             aesKey = findAESKey(devPubKey)
-
-            if aesKey == False:
-                # print("inside second if")
-                # logger.info("Using existent block data")
+            logger.error("passed by findAESKEY")
+            if ((aesKey == False) or (len(aesKey) != 32)):
+                logger.error("aeskey had a problem...")
+                removeAESKey(aesKey)
                 aesKey = generateAESKey(blk.publicKey)
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
-                t2 = time.time()
+                return encKey
+                # t2 = time.time()
+            logger.error("actually it didn't had problem with the key")
+            logger.error("publick key received was: " + str(devPubKey) + "blk key was: " + str(blk.publicKey) + " ...")
+            removeAESKey(aesKey)
+            aesKey = generateAESKey(blk.publicKey)
+            encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
+            return encKey
+            # t2 = time.time()
         else:
             #print("inside else")
             # logger.debug("***** New Block: Chain size:" +
@@ -3573,7 +3618,7 @@ class R2ac(object):
             # print(pickedKey)
 
             encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
-            t2 = time.time()
+            # t2 = time.time()
             # Old No Consensus
             # bl = ChainFunctions.createNewBlock(devPubKey, gwPvt)
             # sendBlockToPeers(bl)
@@ -3585,10 +3630,20 @@ class R2ac(object):
                 self.lockForConsensus()
                 # print("ConsensusLocks acquired!")
                 self.electNewOrchestrator()
+                # print("New Orchestrator URI: " + str(orchestratorObject.exposedURI()))
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                orchestratorObject.runPBFTMulti(deviceName)
+                counter_fails = 0
+                while(orchestratorObject.runPBFTMulti()==False): # deviceName
+                    # logger.info("##### second attmept for a block")
+                    orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                    # print("$$$$$$$second trial")
+                    self.electNewOrchestrator()
+                    orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                    counter_fails = counter_fails + 1
+                    if (counter_fails > 200):
+                        return -1
             if(consensus == "dBFT" or consensus == "Witness3"):
-                print("indo pro dbft")
+                # print("indo pro dbft")
                 # consensusLock.acquire(1) # only 1 consensus can be running at same time
                 # for p in peers:
                 #     obj=p.object
@@ -3596,9 +3651,18 @@ class R2ac(object):
                 self.lockForConsensus()
 
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                print("blockadded!")
-                orchestratorObject.rundBFT()
-                print("after rundbft")
+                # print("blockadded!")
+                counter_fails = 0
+                while (orchestratorObject.rundBFT() == False):
+                    # logger.info("##### second attempt for a block")
+                    orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                    logger.error("Consensus not achieved, trying another one")
+                    self.electNewOrchestrator()
+                    orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                    counter_fails = counter_fails +1
+                    if (counter_fails > 200):
+                        return -1
+                # print("after rundbft")
             if(consensus == "PoW"):
                 # consensusLock.acquire(1) # only 1 consensus can be running at same time
                 # for p in peers:
@@ -3612,6 +3676,10 @@ class R2ac(object):
                 #print("inside NONE consensus")
                 self.addBlockConsensusCandidate(pickedKey)
                 self.runNoConsesusMulti(deviceName)
+            if(consensus == "PoA"):
+                self.lockForConsensus()
+                self.addBlockConsensusCandidate(pickedKey)
+                self.runPoA()
 
             # print("after orchestratorObject.addBlockConsensusCandidate")
             # try:
@@ -3646,34 +3714,41 @@ class R2ac(object):
 
         t3 = time.time()
         # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
+        logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
         # logger.debug("|---------------------------------------------------------------------|")
         # print("block added")
         return encKey
 
     def runNoConsesusMulti(self, deviceName):
         # print("Running without consensus")
-        t1 = time.time()
+        t1 = float(((time.time()) * 1000) * 1000)
         global peers
-        #global blockContext
+        global blockContext
+        global logT5
+        global blkCounter
         devPubKey = getBlockFromSyncList()
         #verififyKeyContext()
         #blockContext = "0001"
         #@TODO define somehow a device is in a context
-        newBlock = ChainFunctionsMulti.createNewBlock(devPubKey, gwPvt, deviceName, consensus)
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
+        newBlock = ChainFunctionsMulti.createNewBlock(devPubKey, gwPvt, blockContext, consensus) # deviceName
         signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers, True)
         if (signature == False):
-            # logger.info("Consesus was not achieved: block #" +
-            #             str(newBlock.index) + " will not be added")
+            logger.info("Consesus was not achieved: block #" +
+                        str(newBlock.index) + " will not be added")
             return False
         ChainFunctionsMulti.addBlockHeader(newBlock)
         sendBlockToPeersMulti(newBlock)
-        t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        t2 = float(((time.time()) * 1000) * 1000)
+        logT5.append(
+            "gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with no consensus;" + str(
+                (t2 - t1) / 1000))
+        # logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
         # print("Finish adding Block without consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
         return True
 
-    def runPBFTMulti(self):
+    def runPBFTMulti(self): # deviceName
         """ Run the PBFT consensus to add a new block on the chain """
         # print("I am in runPBFT")
         t1 = float(((time.time()) * 1000) * 1000)
@@ -3701,7 +3776,7 @@ class R2ac(object):
             # logger.error("******************Changed to 2****************")
         # blockContext = "0002"
 
-        blk = ChainFunctionsMulti.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
+        blk = ChainFunctionsMulti.createNewBlock(devPubKey, gwPvt, blockContext, consensus)  # deviceName
         # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
 
         if ((PBFTConsensus(blk, gwPub, devPubKey)) == False):
@@ -3743,6 +3818,7 @@ class R2ac(object):
             @param iotBlock - Block to be add\n
             @param gwName - sender peer's name
         """
+        global logT3
         # print("Updating IoT Block Ledger, in Gw: "+str(gwName))
         # logger.debug("updateIoTBlockLedger Function")
         b = pickle.loads(iotBlock)
@@ -3756,7 +3832,9 @@ class R2ac(object):
             ChainFunctionsMulti.addBlockHeader(b)
         t2 = time.time()
         # print("updating was done")
-        logger.info("gateway;" + gwName + ";" + consensus + ";T3;Time to add a new block in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logT3.append(
+            "gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in BL;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
 
     def showIoTLedgerMulti(self):
         """ Log all chain \n
@@ -3785,6 +3863,7 @@ class R2ac(object):
         print("Showing Transactions data for peer: " + myURI)
         # logger.info("Showing Trasactions data for peer: " + myURI)
         blk = ChainFunctionsMulti.getBlockByIndex(index)
+        print("Block for index"+str(index))
         if blk == False:
             return "Block does not exist"
         #print("Block for index: "+str(index))
@@ -3896,6 +3975,14 @@ def sendTransactionToPeersMulti(devPublicKey, transaction, index):
         trans = pickle.dumps(transaction)
         idx = pickle.dumps(index)
         obj.updateBlockLedgerMulti(devPublicKey, trans, idx)
+        trans.__class__ = Transaction.Transaction
+        candidateDevInfo = trans.data
+        candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+        originalTimestamp = float(candidateDevInfo.timestamp)
+
+        currentTimestamp = float(((time.time()) * 1000) * 1000)
+        logT20.append("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+            (currentTimestamp - originalTimestamp) / 1000))
 
 def sendBlockToPeersMulti(IoTBlock):
     """
@@ -4808,11 +4895,13 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
     global consensus
     global sizePool    
     global componentsId
+    global deviceName
 
     gatewayName = local_gatewayName
     nameServerIP = nameServerIP_received
     nameServerPort = nameServerPort_received
     sizePool = poolSize
+    deviceName = deviceName + gatewayName
 
     blockContext =gatewayContext
     # @TODO there is a temporary approach to set consensus of gw
