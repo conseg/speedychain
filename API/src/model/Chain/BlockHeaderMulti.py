@@ -1,6 +1,7 @@
 class BlockHeaderMulti:
     #Nonce field added for PoW
-    def __init__(self, index, previousHash, timestamp, transaction, hash, nonce, publicKey, blockContext, numTransactionChains = 4):
+    def __init__(self, index, previousHash, timestamp, transaction, hash, nonce, publicKey, blockContext, 
+                 device, numTransactionChains = 4):
         self.index = index
         self.previousHash = previousHash
         self.timestamp = timestamp
@@ -14,11 +15,12 @@ class BlockHeaderMulti:
         self.nonce = nonce
         self.publicKey = publicKey
         self.blockContext = blockContext
+        self.device = device
 
     def __str__(self):
-        return "%s,%s,%s,%s,%s,%s,%s,%s" % (
+        return "%s,%s,%s,%s,%s,%s,%s,%s,%s" % (
             str(self.index), str(self.previousHash), str(self.timestamp), str(self.transactions), str(self.hash), str(self.nonce),
-            str(self.publicKey), str(self.blockContext))
+            str(self.publicKey), str(self.blockContext), str(self.device))
 
     def __repr__(self):
         return "<%s, %s, %s, %s, %s, %s, %s, %s>" % (
@@ -28,8 +30,8 @@ class BlockHeaderMulti:
     def strBlock(self):
         txt = " Index: " + str(self.index) + "\n Previous Hash: " + str(self.previousHash) + "\n Time Stamp: " + str(
             self.timestamp) + "\n Hash: " + str(self.hash) + "\n Nonce:" + str(self.nonce) + "\n Public Key: " + str(
-            self.publicKey) + "\n Block Context: " + str(self.blockContext) + "\n Number of transaction chains: " + str(
-            self.numTransactionChains)
+            self.publicKey) + "\n Block Context: " + str(self.blockContext) + "\n Device: " + str(
+            self.device) + "\n Number of transaction chains: " + str(self.numTransactionChains)
         
         i = 0
         for transactionChain in self.transactions:
@@ -43,6 +45,6 @@ class BlockHeaderMulti:
         transaction = self.transactions[0][0]
         txt = str(self.publicKey).replace('\n', '\\n') + "  " + str(self.blockContext) + "  " + str(self.timestamp) + "  " + str(
             self.nonce) + "  " + str(transaction.signature) + "  " + str(transaction.data) + "  " + str(
-            self.numTransactionChains)  + "  " + str(self.index) 
+            self.numTransactionChains)  + "  " + str(self.index) + "  " + str(self.device)  
 
         return txt

@@ -43,6 +43,7 @@ endTime=0
 
 lifecycleMethods = []
 lifecycleTypes = []
+lifecycleDeviceName = ""
 
 def getMyIP():
      """ Return the IP from the gateway
@@ -83,19 +84,19 @@ def generateRSAKeyPair():
 def setServer():
     """ Ask for the user to input the server URI and put it in the global var 'server' """
     global server    
-    global deviceName
+    global lifecycleDeviceName
     #server = raw_input('Gateway IP:')
-    uri = input("Enter the uri of the gateway: ").strip()
+    uri = raw_input("Enter the uri of the gateway: ").strip()
     server = Pyro4.Proxy(uri) 
-    deviceName = server.getDeviceName()
-    print("gateway URI: " + uri + ", with name: " + deviceName)
+    lifecycleDeviceName = server.getDeviceName()
+    print("Lifecycle name: " + str(lifecycleDeviceName))
 
 def addBlockOnChain():
     """ Take the value of 'publicKey' var, and add it to the chain as a block"""
     global serverAESEncKey
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
-    serverAESEncKey = server.addBlock(publicKey, deviceName)
+    serverAESEncKey = server.addBlock(publicKey, lifecycleDeviceName)
     if serverAESEncKey == "":
         print("Block already added with this public key")
         logger.error("it was not possible to add block - problem in the key")
@@ -726,6 +727,7 @@ def executeEVM():
 
 def loadConnection(nameServerIP, nameServerPort, gatewayName):
     global deviceName
+    global lifecycleDeviceName
     """ Load the URI of the connection  """
     # ----> Adicionado por Arruda
     ns = Pyro4.locateNS(host=nameServerIP, port=nameServerPort)
@@ -740,6 +742,9 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     # text_file.close()
     # os.remove(fname)
     # ---->
+    lifecycleDeviceName = server.getDeviceName()
+    print("Lifecycle name: " + str(lifecycleDeviceName))
+
     defineConsensus(consensus)
     return gatewayURI
 
@@ -762,7 +767,7 @@ def addBlockOnChainMulti():
     global serverAESEncKey
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
-    serverAESEncKey = server.addBlockMulti(publicKey, gatewayName)
+    serverAESEncKey = server.addBlockMulti(publicKey, lifecycleDeviceName)
     if serverAESEncKey == "":
         print("Block already added with this public key")
         logger.error("it was not possible to add block - problem in the key")
@@ -1079,7 +1084,7 @@ if __name__ == '__main__':
 
 
         if (len(sys.argv) < 6): #when it is not called with number of blocks/transactions and consensus, it is called interactive mode
-            consensus = "None"
+            consensus = "PBFT"
             gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
             logger.info("Connected to gateway: " + gatewayURI.asString())

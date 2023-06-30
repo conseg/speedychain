@@ -10,16 +10,20 @@ BS = 32
 pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS)
 unpad = lambda s: s[0:-ord(s[-1])]
 
-def calculateHash(index, previousHash, timestamp, nonce, key, blockContext):
-    """ Calculate the hash of 4 infos concatenated index+previousHash+timestamp+key\n
+def calculateHash(index, previousHash, timestamp, nonce, key, blockContext, device):
+    """ Calculate the hash of all arguments concatenated in the order as declared\n
         @param index - block index\n
         @param previousHash - previous block hash\n
         @param timestamp - generation time of the block\n
+        @param nonce - nonce of the block\n
         @param key - key of the block\n
+        @param blockContext - blockContext of the block\n
+        @param device - device name of the block\n
         @return val - hash of it all
     """
     shaFunc = hashlib.sha256()
-    shaFunc.update((str(index) + str(previousHash) + str(timestamp) + str(nonce) + str(key) + str(blockContext)).encode('utf-8'))
+    shaFunc.update((str(index) + str(previousHash) + str(timestamp) + str(nonce) + str(
+        key) + str(blockContext) + str(device)).encode('utf-8'))
     val = shaFunc.hexdigest()
     return val
 
@@ -27,7 +31,8 @@ def calculateHashForBlock(block):
     """ Receive a block and calulates his hash using the index, previous block hash, timestamp and the public key of the block\n
         @return result of calculateHash function - a hash
     """
-    return calculateHash(block.index, block.previousHash, block.timestamp, block.nonce, block.publicKey, block.blockContext)
+    return calculateHash(block.index, block.previousHash, block.timestamp, block.nonce, 
+                         block.publicKey, block.blockContext, block.device)
 
 def calculateTransactionHash(blockLedger):
     """ Receive a transaction and calculate the hash\n

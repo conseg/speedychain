@@ -1,0 +1,11 @@
+gateway1PublicKey  gateway1PrivateKey
+gateway2PublicKey  gateway2PrivateKey
+gateway3PublicKey  gateway3PrivateKey
+gateway4PublicKey  gateway4PrivateKey
+
+block= publicKey1  blockContext1  timestamp1  nonce1  sign1  blockData1  index1  device1
+block= publicKey2  blockContext2  timestamp2  nonce2  sign2  blockData2  index2  device2
+transaction= timestamp1  deviceInfo1  signData1  nonce1  id1
+transaction= timestamp2  deviceInfo2  signData2  nonce2  id2
+block= publicKey3  blockContext3  timestamp3  nonce3  sign3  blockData3  index3  device3
+transaction= timestamp3  deviceInfo3  signData3  nonce3  id3

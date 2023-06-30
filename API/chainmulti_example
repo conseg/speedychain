@@ -1,0 +1,15 @@
+block= block1PublicKey  blockContext1  timestamp1  nonce1  sign1  blockData1  numOfTransactionChains1(4)  index1  device1
+block= block2PublicKey  blockContext2  timestamp2  nonce2  sign2  blockData2  numOfTransactionChains2(4)  index2  device2
+transaction 0= timestamp01  deviceInfo01  signData01  nonce01  id01
+transaction 0= timestamp02  deviceInfo02  signData02  nonce02  id02
+transaction 1= timestamp11  deviceInfo11  signData11  nonce11  id11
+transaction 1= timestamp12  deviceInfo12  signData12  nonce12  id12
+transaction 2= timestamp21  deviceInfo21  signData21  nonce21  id21
+transaction 2= timestamp22  deviceInfo22  signData22  nonce22  id22
+transaction 3= timestamp31  deviceInfo31  signData31  nonce31  id31
+transaction 3= timestamp32  deviceInfo32  signData32  nonce32  id32
+block= block3PublicKey  blockContext3  timestamp3  nonce3  sign3  blockData3  numOfTransactionChains3(4)  index3  device3
+transaction 0= timestamp01  deviceInfo01  signData01  nonce01  id01
+transaction 1= timestamp11  deviceInfo11  signData11  nonce11  id11
+transaction 2= timestamp21  deviceInfo21  signData21  nonce21  id21
+transaction 3= timestamp31  deviceInfo31  signData31  nonce31  id31
