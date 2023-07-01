@@ -114,3 +114,6 @@ venv.bak/
 # EVM files
 *.mod
 *.sum
+
+# Chain persistent files
+*.txt

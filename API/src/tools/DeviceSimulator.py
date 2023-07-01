@@ -945,14 +945,14 @@ def restoreChainFromFile():
     return True
 
 def listBlocksWithId():
-    deviceId = input("Which device ID do you want to search on blocks?").strip()
+    deviceId = raw_input("Which device ID do you want to search on blocks?").strip()
     status = server.showBlockWithId(deviceId)
     status = server.showBlockWithIdMulti(deviceId)
 
 def listTransactionsWithId():
-    deviceId = input("Which component ID do you want to search?").strip()
-    status = server.showTransactionWithId(deviceId)
-    status = server.showTransactionWithIdMulti(deviceId)
+    componentId = raw_input("Which component ID do you want to search?").strip()
+    status = server.showTransactionWithId(componentId)
+    status = server.showTransactionWithIdMulti(componentId)
 
 #############################################################################
 #############################################################################
@@ -1036,8 +1036,8 @@ def InteractiveMain():
         print("24 - Send all lifecycle events as text to block, one transaction for each data")
         print("25 - Send all lifecycle events as a structure to block, one transaction for each data")
         print("26 - Send all lifecycle events as a structure to block, one transaction on each transaction chain")
-        print("27 - Get blocks by device ID (gateway name)")
-        print("28 - Get transactions by component ID (e.g.: SN1234_VID_gwa)")
+        print("27 - Get blocks by device ID (e.g.: dev-gwa)")
+        print("28 - Get transactions by component ID (e.g.: SN1234_VID_dev-gwa)")
 
         print("#############################################################")
 

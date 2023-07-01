@@ -11,7 +11,7 @@ def startBlockChain():
     """ Add the genesis block to the chain """
     BlockHeaderChain.append(getGenesisBlock())
 
-def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device = "dev"):
+def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device = "device"):
     """ Receive the device public key and the gateway private key then it generates a new block \n
     @param devPubKey - Public key of the requesting device \n
     @param gwPvt - Private key of the gateway \n
@@ -117,13 +117,13 @@ LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
     nonce = 0
     blockContext = "0000"
     time = 1465154705
-    device = "dev"
+    device = "device"
     hash = CryptoFunctions.calculateHash(index, previousHash, time, nonce, k, blockContext, device)
     inf = Transaction.Transaction(0, hash, "0", "0", '', 0)
     blk = BlockHeader(index, previousHash, time, inf, hash, nonce, k, blockContext, device)
     return blk
 
-def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus, device = "dev"):
+def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus, device = "device"):
     """ Receive the information of a new block and create it\n
     @param blockData - information of the new block\n
     @param pubKey - public key of the device how wants to generate the new block\n
@@ -132,7 +132,7 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
     @param consensus - it is specified current consensus adopted
     @return BlockHeader - the new block
     """
-    nextIndex = previousBlock.index + 1    
+    nextIndex = previousBlock.index + 1
     nextTimestamp = "{:.0f}".format(((time.time() * 1000) * 1000))
     previousBlockHash = CryptoFunctions.calculateHashForBlock(previousBlock)
     nonce = 0
@@ -186,7 +186,7 @@ def getBlocksById(id):
     global BlockHeaderChain
 
     for b in BlockHeaderChain:
-        if (b.blockContext in id):
+        if (b.device in id):
             blocks.append(b)
 
     return blocks

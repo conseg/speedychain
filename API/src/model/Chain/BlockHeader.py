@@ -1,6 +1,6 @@
 class BlockHeader:
     #Nonce field added for PoW
-    def __init__(self, index, previousHash, timestamp, transaction, hash, nonce, publicKey, blockContext, device = "dev"):
+    def __init__(self, index, previousHash, timestamp, transaction, hash, nonce, publicKey, blockContext, device = "device"):
         self.index = index
         self.previousHash = previousHash
         self.timestamp = timestamp

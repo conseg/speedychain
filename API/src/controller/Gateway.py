@@ -225,11 +225,8 @@ def sendTransactionToPeers(devPublicKey, transaction):
         res = obj.updateBlockLedger(devPublicKey, trans)
         # print ("sendTransactionToPeers res = "+res)
         # transaction.__class__ = Transaction.Transaction
-        # print("oi1")
         # candidateDevInfo = transaction.data
-        # print("oi2")
         # candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
-        # print("oi3")
         # t = ((time.time() * 1000) * 1000)
         # print(t)
         # t2 = "{:.0f}".format(((time.time() * 1000) * 1000))
@@ -238,13 +235,10 @@ def sendTransactionToPeers(devPublicKey, transaction):
         # print(candidateDevInfo)
         # print(candidateDevInfo.timestamp)
         # originalTimestamp = float(candidateDevInfo.timestamp)
-        # print("oi4")
 
         # currentTimestamp = float(((time.time()) * 1000) * 1000)
-        # print("oi5")
         # logT20.append("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
         #     (currentTimestamp - originalTimestamp) / 1000))
-        # print("oi6")
 
 
 # class sendBlks(threading.Thread):
@@ -528,11 +522,11 @@ def isValidBlock(self, data, gatewayPublicKey, devicePublicKey, peer):
 
 
 def isTransactionValid(transaction, pubKey):
-    data = str(transaction.data)[-22:-2]
-    signature = str(transaction.data)[:-22]
+    #data = str(transaction.data)[-22:-2]
+    data, signature = transaction.getDataAndSignatureInsideLifecycle()
+    #signature = str(transaction.data)[:-22]
     res = CryptoFunctions.signVerify(data, signature, pubKey)
     return res
-
 
 def isBlockValid(block):
     # Todo Fix the comparison between the hashes... for now is just a mater to simulate the time spend calculating the hashes...
@@ -3177,7 +3171,7 @@ class R2ac(object):
                 nonce = split[3]
                 signature = split[4]
                 blockData = split[5]
-                index = split[6]
+                index = int(split[6])
                 device = split[7]
                 newBlock = ChainFunctions.generateNextBlock2(blockData, devPubKey, signature, blockContext, 
                                                              timestamp, nonce, index, device)
@@ -3236,7 +3230,7 @@ class R2ac(object):
                 signature = split[4]
                 blockData = split[5]
                 numTransactionChains = split[6]
-                index = split[7]
+                index = int(split[7])
                 device = split[8]
                 newBlock = ChainFunctionsMulti.generateNextBlock2(blockData, devPubKey, signature, blockContext, 
                                                 timestamp, nonce, numTransactionChains, index, device)
@@ -4920,7 +4914,7 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
 
     # initialzie some components mocked identification
     for comp in components:
-        componentsId.append("SN1234_"+comp+"_"+str(gatewayName))
+        componentsId.append("SN1234_"+comp+"_"+str(deviceName))
 
     # print ("Please copy the server address: PYRO:chain.server...... as shown and use it in deviceSimulator.py")
     #with Pyro4.Daemon(getMyIP()) as daemon:

@@ -124,7 +124,7 @@ LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
     nonce = 0
     blockContext = "0000"
     t = 1465154705
-    device = "dev"
+    device = "device"
     hash = CryptoFunctions.calculateHash(index, previousHash, t, nonce, k, blockContext, device)
     inf = Transaction.Transaction(0, hash, "0", "0", '', 0)
     blk = BlockHeaderMulti(index, previousHash, t, inf, hash, nonce, k, blockContext, device)

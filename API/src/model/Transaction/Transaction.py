@@ -31,3 +31,14 @@ class Transaction:
 
     def setHash(self, hash):
         self.hash = hash
+    
+    def getDataAndSignatureInsideLifecycle(self):
+        """ Gets the data and signature inside the transaction data\n
+        The transaction data is a LifecycleEvent with DeviceInfo inside
+        """
+        splitData = str(self.data).split(', ')
+        deviceInfo = splitData[len(splitData)-1]
+        splitDeviceInfo = deviceInfo.split(',')
+        d = " " + splitDeviceInfo[1]+ " " +splitDeviceInfo[2]
+        sig = splitDeviceInfo[0]
+        return d, sig
