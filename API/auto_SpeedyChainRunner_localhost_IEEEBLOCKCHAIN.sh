@@ -13,8 +13,8 @@ nsIP=127.0.0.1
 run=0
 consensus=PBFT
 txInterval=10000
-mypathRunner=~/PycharmProjects/speedychain/API/runner.py
-mypathDevice=~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py
+mypathRunner=runner.py            # ~/PycharmProjects/speedychain/API/runner.py
+mypathDevice=src/tools/DeviceSimulator.py         #~/PycharmProjects/speedychain/API/src/tools/DeviceSimulator.py
 
 for c in {1..10}
 do
@@ -165,6 +165,7 @@ do
             #kill -9 $PIDGwm
             #kill -9 $PIDGwn
             #kill -9 $PIDGwo
+            folder="csv/"
             numRun="repetion_"
             numContexts="_contexts_"
             numGw="_Gws_"
@@ -184,19 +185,19 @@ do
             t30=$"T30.csv"
             t31=$"T31.csv"
             ERROR=$"ERROR.csv"
-            more gw* | grep T5 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t5
-            more gw* | grep T6 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t6
-            more gw* | grep T20 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t20
-            more gw* | grep T21 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t21
-            more gw* | grep T22 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t22
-            more gw* | grep T23 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t23
-            more gw* | grep T24 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t24
-            more gw* | grep T25 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t25
-            more gw* | grep T26 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t26
-            more dev* | grep T27 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t27
-            more dev* | grep T30 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t30
-            more dev* | grep T31 > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t31
-            more dev* | grep ERROR > $numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$ERROR
+            more gw* | grep T5 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t5
+            more gw* | grep T6 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t6
+            more gw* | grep T20 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t20
+            more gw* | grep T21 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t21
+            more gw* | grep T22 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t22
+            more gw* | grep T23 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t23
+            more gw* | grep T24 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t24
+            more gw* | grep T25 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t25
+            more gw* | grep T26 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t26
+            more dev* | grep T27 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t27
+            more dev* | grep T30 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t30
+            more dev* | grep T31 > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$t31
+            more dev* | grep ERROR > $folder$numRun$numContexts$contexts$numGw$x$numDev$i$numTx$j$ERROR
             rm *.log*
           fi
         done

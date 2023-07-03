@@ -4387,10 +4387,10 @@ def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeer
     """
     blockValidation = True
     if isMulti:
-        print("Inside verifyBlockCandidate, with MULTI")
+        #print("Inside verifyBlockCandidate, with MULTI")
         lastBlk = ChainFunctionsMulti.getLatestBlock()
     else:
-        print("Inside verifyBlockCandidate, with NORMAL")
+        #print("Inside verifyBlockCandidate, with NORMAL")
         lastBlk = ChainFunctions.getLatestBlock()
     # logger.debug("last block:"+str(lastBlk.strBlock()))
     lastBlkHash = CryptoFunctions.calculateHashForBlock(lastBlk)

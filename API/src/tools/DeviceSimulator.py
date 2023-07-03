@@ -116,7 +116,7 @@ def addBlockOnChainv2(devPubKey, devPrivKey):
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
     # pickedDevPubKey = pickle.dumps(devPubKey)
-    serverAESEncKey = server.addBlock(devPubKey)
+    serverAESEncKey = server.addBlock(devPubKey, lifecycleDeviceName)
     if (len(str(serverAESEncKey))<10):
         logger.error("it was not possible to add block - problem in the key")
         return False
