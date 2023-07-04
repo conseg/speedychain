@@ -18,12 +18,11 @@ import requests
 import traceback
 
 from Crypto.PublicKey import RSA
+from Crypto.PublicKey import RSA
 
 # SpeedCHAIN modules
 import Logger as Logger
 import CryptoFunctions
-
-from Crypto.PublicKey import RSA
 
 global server
 global privateKey
@@ -127,7 +126,7 @@ argpaerser.add_argument('-file', type=str, help='file name', required=True)
 args = argpaerser.parse_args()
 
 #Connecting to server
-print "Conectando " + args.ip + ":" + args.port 
+print ("Conectando " + args.ip + ":" + args.port )
 nameServerIP = args.ip 
 nameServerPort = args.port 
 gatewayName = args.gn
@@ -136,13 +135,13 @@ gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
 
 #Loading csv
-print "Carregando " + args.file 
+print ("Carregando " + args.file)
 
 with open(args.file) as csvfile:
     reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
 
     for row in reader: #Starting Batch
-        time.sleep(5)
+        #time.sleep(5)
         if row['Command'] == "1":
             createBlockForSC2(row['SK'], row['PK'])
             #continue
@@ -157,4 +156,4 @@ with open(args.file) as csvfile:
             #continue
 
 #Closing
-print "Finalizando"
+print ("Finalizando")

@@ -14,15 +14,14 @@ import requests
 import traceback
 
 from Crypto.PublicKey import RSA
-
 # SpeedCHAIN modules
-import Logger as Logger
-import CryptoFunctions
+from API.src.tools import Logger
+from API.src.tools import CryptoFunctions
 
 logger = Logger.logging.getLogger("speedychain")
 deviceName = ""
 consensus = ""
-
+running = True;
 fname = socket.gethostname()
 
 server = "localhost"
@@ -62,7 +61,11 @@ def setServer():
     global server
     #server = raw_input('Gateway IP:')
     uri = input("Enter the uri of the gateway: ").strip()
-    server = Pyro4.Proxy(uri)
+    try:
+        server = Pyro4.Proxy(uri)
+    except:
+        print("Failed to set a new Server")
+        print("Returning to main menu")
 
 def addBlockOnChain():
     """ Take the value of 'publicKey' var, and add it to the chain as a block"""
@@ -70,12 +73,17 @@ def addBlockOnChain():
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
     serverAESEncKey = server.addBlock(publicKey)
+    if (len(str(serverAESEncKey))<10):
+        logger.error("it was not possible to add block - problem in the key")
+        return False
     # print("###addBlockonChain in devicesimulator, serverAESEncKey")
     # print(serverAESEncKey)
     # while len(serverAESEncKey) < 10:
     #    serverAESEncKey = server.addBlock(publicKey)
     decryptAESKey(serverAESEncKey)
+    return True
     # print("###after decrypt aes")
+
 
 def sendDataTest():
     """ Send fake data to test the system """
@@ -98,9 +106,27 @@ def sendData():
     logger.debug("data = "+data)
     signedData = CryptoFunctions.signInfo(privateKey, data)
     toSend = signedData + timeStr + temperature
-    logger.debug("ServeAESKEY = " + serverAESKey)
-    encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
-    server.addTransaction(publicKey, encobj)
+
+    try:
+
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+    except:
+        logger.error("was not possible to encrypt... verify aeskey")
+        newKeyPair()
+        addBlockOnChain() # this will force gateway to recreate the aes key
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        toSend = signedData + timeStr + temperature
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        logger.error("passed through sendData except")
+    try:
+        if(server.addTransaction(publicKey, encobj)=="ok!"):
+            # logger.error("everything good now")
+            return True
+        else:
+            logger.error("something went wrong when sending data")
+    except:
+        logger.error("some exception with addTransaction now...")
+
 
 def sendDataSC(stringSC):
     t = ((time.time() * 1000) * 1000)
@@ -117,7 +143,10 @@ def sendDataSC(stringSC):
 def decryptAESKey(data):
     """ Receive a encrypted data, decrypt it and put it in the global var 'serverAESKey' """
     global serverAESKey
-    serverAESKey = CryptoFunctions.decryptRSA2(privateKey, data)
+    try:
+        serverAESKey = CryptoFunctions.decryptRSA2(privateKey, data)
+    except:
+        logger.error("problem decrypting the AES key")
 
 def readSensorTemperature():
     """ Generates random data like '23 C' """
@@ -128,31 +157,57 @@ def addPeer():
     """ Ask for the user to inform a peer URI and add it to the server """
     # if sys.version_info < (3, 0):
     #     input = raw_input
-    uri = input("Enter the PEER uri: ").strip()
-    server.addPeer(uri, True)
+    try:
+        uri = input("Enter the PEER uri: ").strip()
+        server.addPeer(uri, True);
+    except:
+        print("An exception occurred");
+        print("Not adding peer...");
+        print("Returning to the main menu...");
 
 def listBlockHeader():
     """ Log all blocks """
-    server.showIoTLedger()
+    try:
+        server.showIoTLedger()
+    except:
+        print("Failed to show list of Blocks")
+        print("Returning to main menu...")
 
 def listTransactions():
     """ Ask for the user to input an index and show all transaction of the block with that index """
     index = input("Which IoT Block do you want to print?")
-    server.showBlockLedger(int(index))
-
+    try:
+        server.showBlockLedger(int(index))
+    except:
+        print("Failed to show transactions of the requested block...")
+        print("Returning to main menu...")
 
 def listPeers():
     """ List all peers in the network """
     logger.debug("calling server...")
-    server.listPeer()
+    try:
+        server.listPeer()
+    except:
+        print("Failed to list peers")
+        print("Returning to main menu...")
 
 def newKeyPair():
     """ Generates a new pair of keys and put is on global vars 'privateKey' and 'publicKey' """
     global privateKey
     global publicKey
-    publicKey, privateKey = generateRSAKeyPair()
-    while len(publicKey) < 10 or len(privateKey) < 10:
+    oldPrK = privateKey
+    oldPuK = publicKey
+    try:
         publicKey, privateKey = generateRSAKeyPair()
+        while len(publicKey) < 10 or len(privateKey) < 10:
+            publicKey, privateKey = generateRSAKeyPair()
+    except:
+        privateKey = oldPrK
+        publicKey = oldPuK
+        print("Failed to generate a new pair of keys...")
+        print("No changes made...")
+        print("Returning to main menu... ")
+
 
 def brutePairAuth(retry):
     """ Add a block on the chain with brute force until it's add"""
@@ -165,7 +220,7 @@ def brutePairAuth(retry):
         except KeyboardInterrupt:
             sys.exit()
         except:
-            logger.error("failed to execute:"+str(retry))
+            logger.error("failed to execute pairauth:"+str(retry))
             isOk = True
 
 def bruteSend(retry):
@@ -178,18 +233,24 @@ def bruteSend(retry):
         except KeyboardInterrupt:
             sys.exit()
         except:
-            logger.error("failed to execute:"+str(retry))
+            logger.error("failed to execute send tr:"+str(retry))
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.error("*** print_exception:\n" + str(traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2, file=sys.stdout)))
             #global serverAESKey
             # print("the size of the serverAESKey is: "+str(len(serverAESKey)))
-            return  # addBlockConsensusCandiate
+            # time.sleep(0.001)
+            return False # addBlockConsensusCandiate
 
 def defineAutomaNumbers():
     """ Ask for the user to input how many blocks and transaction he wants and calls the function automa()"""
     blocks = int(input('How many Blocks:'))
     trans = int(input('How many Transactions:'))
-    automa(blocks, trans)
+    try:
+        automa(blocks, trans)
+    except:
+        print("An exception occurred");
+        print("Not adding block to the Blockchain...");
+        print("Returning to the main menu...");
 
 def automa(blocks, trans):
     """ Adds a specifc number of blocks and transaction to the chain\n
@@ -199,34 +260,60 @@ def automa(blocks, trans):
     for blk in range(0, blocks):
         logger.info("Adding block #" + str(blk) + "...")
         newKeyPair()
-        addBlockOnChain()
+        counter = 0
+        while(addBlockOnChain()==False):
+            logger.error("ERROR: creating a new key pair and trying to create a new block")
+            newKeyPair()
+            counter= counter + 1
+            if (counter > 10):
+                break
+
         # brutePairAuth(blk)
         for tr in range(0, trans):
             logger.info("Sending transaction #" + str(tr) + "...")
             # sendData()
             while (not (server.isBlockInTheChain(publicKey))):
+                time.sleep(0.0001)
                 continue
                 # time.sleep(1)
             bruteSend(tr)
 
 def merkle():
     """ Calculates the hash markle tree of the block """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    blk = int(input("Which block you want to create the merkle tree:"))
-    server.calcMerkleTree(blk)  # addBlockConsensusCandiate
-    # print ("done")
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        blk = int(input("Which block you want to create the merkle tree:"))
+        server.calcMerkleTree(blk)  # addBlockConsensusCandiate
+        # print ("done")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    except:
+        print("An exception occurred");
+        print("Not creating the merkle  tree..");
+        print("Returning to the main menu...");
 
 def newElection():
-    server.electNewOrchestrator()
-    return True
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ###WHAT???###
+    try:
+        server.electNewOrchestrator()
+        return True
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ###WHAT???###
+    except:
+        print("An exception occurred");
+        print("Failed to elect a new Orchestrator...");
+        print("Returning to the main menu...");
 
 def defineInteractiveConsensus():
-    receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
-    print("after receiving consensus string: "+receivedConsensus)
-    server.setConsensus(receivedConsensus)
-    return True
+    try:
+        receivedConsensus = str(input('Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
+        # print("after receiving consensus string: "+receivedConsensus)
+        while(not(receivedConsensus == "None" or receivedConsensus == "PBFT" or receivedConsensus == "dBFT" or receivedConsensus == "PoW" or receivedConsensus == "Witness3")):
+            receivedConsensus = str(
+                input('Not a consensus, type again... Set a consensus ("None", "PBFT", "PoW", "dBFT" or "Witness3") (None is default) : '))
+        server.setConsensus(receivedConsensus);
+        return True;
+    except:
+        print("An exception occurred");
+        print("Not setting any Consensus...");
+        print("Returning to the main menu...");
 
 def defineConsensus(receivedConsensus):
     #receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
@@ -247,8 +334,12 @@ def createBlockForSC():
 
 def showLastTransactionData():
     blockIndex = int(input('Type the index to show the last transaction data: '))
-    lastDataTransactionData = server.showLastTransactionData(blockIndex)
-    return lastDataTransactionData
+    try:
+        lastDataTransactionData = server.showLastTransactionData(blockIndex)
+        return lastDataTransactionData
+    except:
+        print("Failed to show last transaction data...")
+        print("Returning to main menu...")
 
 def callEVMInterface():
     # Create a TCP
@@ -363,32 +454,41 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
 ######################          Main         ################################
 #############################################################################
 #############################################################################
+def exitApplication():
+    print("See you soon, Thanks for using SpeedyChain =) ");
+    print("Powered by CONSEG group");
+    global running;
+    running = False;
+
+
 def InteractiveMain():
     """ Creates an interactive screen for the user with all option of a device"""
     global server
     options = {
-        1: setServer,
-        2: addPeer,
+        0: exitApplication, #Done
+        1: setServer, #Done
+        2: addPeer, #Done
         3: addBlockOnChain,
         4: sendData,
-        5: listBlockHeader,
-        6: listTransactions,
-        7: listPeers,
-        8: newKeyPair,
-        9: defineAutomaNumbers,
-        10: merkle,
-        11: newElection,
-        12: defineInteractiveConsensus,
+        5: listBlockHeader, #Done
+        6: listTransactions, #Done
+        7: listPeers, #Done
+        8: newKeyPair, #Done
+        9: defineAutomaNumbers, #Done
+        10: merkle, #Done
+        11: newElection, #Done
+        12: defineInteractiveConsensus, #Done
         13: createBlockForSC,
-        14: showLastTransactionData,
+        14: showLastTransactionData, #Done
         15: callEVMInterface,
         16: evmConnector,
         17: executeEVM
     }
 
     mode = -1
-    while True:
+    while running:
         print("Choose your option [" + str(server) + "]")
+        print("#############################################################")
         print("0 - Exit")
         print("1 - Set Server Address[ex:PYRO:chain.server@blablabala:00000]")
         print("2 - Add Peer")
@@ -410,46 +510,47 @@ def InteractiveMain():
         print("15 - Call Smart Contract")
         # print("16 - EVM connector")
         # print("17 - execute EVM code")
+        print("#############################################################")
 
         try:
             mode = int(input('Input:'))
-        except ValueError:
+        except:
             print ("Not a number")
+            mode = -1
+
         if (mode == 0):
             break
-        options[mode]()
+        try:
+            options[mode]()
+        except:
+            print("Not a valid input, try again")
+            mode = -1
 
-if __name__ == '__main__':
 
-    # if len(sys.argv[1:]) > 1:
-        # ----> Adicionado por Arruda
-        # print ("Command Line usage:")
-        # print (
-        #     "    python deviceSimulator.py <name server IP> <gateway name> <blocks> <transactions>")
-        # ---->
-        # os.system("clear")
-        # print("running automatically")
-    if len(sys.argv[1:])<4:
+def connectDeviceAndRun(arg1, arg2, arg3, dev, blocks=None, transactions=None, consensus=None):
+    if (arg1 == None or arg2 == None or arg3 == None or dev == None):
         print("Command line syntax:")
         print("  python DeviceSimulator.py <name server IP> <name server port> <gateway name> <device name>")
     else:
-        nameServerIP = sys.argv[1]
-        nameServerPort = int(sys.argv[2])
-        gatewayName = sys.argv[3]
-        deviceName = sys.argv[4]
+        nameServerIP = arg1
+        nameServerPort = arg2
+        gatewayName = arg3
+        deviceName = dev
         logger = Logger.configure(deviceName + ".log")
         logger.info("Running device " + deviceName + " in " + getMyIP())
 
-        gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
+        if (
+                blocks == None or transactions == None or consensus == None):  # when it is not called with number of blocks/transactions and consensus, it is called interactive mode
+            consensus = "None"
+            gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
-        logger.info("Connected to gateway: " + gatewayURI.asString())
-
-        if (len(sys.argv) < 6): #when it is not called with number of blocks/transactions and consensus, it is called interactive mode
+            logger.info("Connected to gateway: " + gatewayURI.asString())
             InteractiveMain()
         else:
-            blocks = sys.argv[5]
-            transactions = sys.argv[6]
-            consensus = sys.argv[7]
+
+            gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
+
+            logger.info("Connected to gateway: " + gatewayURI.asString())
 
             logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
             automa(int(blocks), int(transactions))

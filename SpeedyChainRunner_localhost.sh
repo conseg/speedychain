@@ -1,17 +1,35 @@
 #!/bin/bash
+
+read -p "Enter Pyro and Gateway IP: " ip
+read -p "Enter Pyro and Gateway Port: " port
+
+
 export PATH=$PATH:/usr/local/go/bin
 echo $GOPATH /home/roben/go
-gnome-terminal -e "bash -c \"python -m Pyro4.naming -n 127.0.0.1 -p 9090; exec bash\""
+gnome-terminal -e "bash -c \"python -m Pyro4.naming -n $ip -p $port; exec bash\""
 sleep 1
-gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/src/Gateway.py 127.0.0.1 9090 gwa; exec bash\""
-sleep 1
-gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/src/Gateway.py 127.0.0.1 9090 gwb; exec bash\""
-sleep 1
-gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/src/Gateway.py 127.0.0.1 9090 gwc; exec bash\""
-sleep 1
-gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/src/Gateway.py 127.0.0.1 9090 gwd; exec bash\""
-sleep 1
-#gnome-terminal -e "bash -c \"python ~/speedychain_varruda/speedychain-master/src/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a     50   10 PoW; exec bash\""
-gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/src/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a; exec bash\""
-gnome-terminal -e "bash -c \"go run ~/go/src/EVM/main.go; exec bash\""
+
+read -p "How Many Gateways?: " numG
+
+for (( c=1; c<=numG; c++ ))
+do
+  read -p "Enter Gateway name: " gName
+  gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/API/runner.py -n $ip -p $port -G $gName -C 0001; exec bash\""
+  sleep 1
+done
+
+read -p "How Many Devices?: " numD
+for (( c=1; c<=numD; c++ ))
+do
+  read -p "Enter Device name: " dName
+  read -p "Enter Gateway name to connect: " gName
+  gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/runDevice.py -n $ip -p $port -G $gName -D $dName; exec bash\""
+  sleep 1
+done
+
+gnome-terminal -e "bash -c \"~/PycharmProjects/speedychain/API/EVM/EVM; exec bash\""
 gnome-terminal -e "bash -c \"gedit ~/go/src/EVM/howto.txt; exec bash\""
+#sleep 1
+#gnome-terminal -e "bash -c \"python ~/PycharmProjects/speedychain/runDevice.py $ip $port; exec bash\""
+
+
