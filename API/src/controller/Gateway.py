@@ -3173,8 +3173,11 @@ class R2ac(object):
                 blockData = split[5]
                 index = int(split[6])
                 device = split[7]
+                previousExpiredBlockHash = split[8]
+                previousBlockSignature = split[9]
                 newBlock = ChainFunctions.generateNextBlock2(blockData, devPubKey, signature, blockContext, 
-                                                             timestamp, nonce, index, device)
+                                                             timestamp, nonce, index, device, 
+                                                             previousExpiredBlockHash, previousBlockSignature)
                 ChainFunctions.addBlockHeader(newBlock)
                 #print(newBlock.strBlock())
                 sendBlockToPeers(newBlock)
@@ -3232,8 +3235,11 @@ class R2ac(object):
                 numTransactionChains = split[6]
                 index = int(split[7])
                 device = split[8]
+                previousExpiredBlockHash = split[9]
+                previousBlockSignature = split[10]
                 newBlock = ChainFunctionsMulti.generateNextBlock2(blockData, devPubKey, signature, blockContext, 
-                                                timestamp, nonce, numTransactionChains, index, device)
+                                                timestamp, nonce, numTransactionChains, index, device, 
+                                                previousExpiredBlockHash, previousBlockSignature)
                 ChainFunctionsMulti.addBlockHeader(newBlock)
                 #print("NewBlock: " + newBlock.strBlock())
                 sendBlockToPeersMulti(newBlock)
@@ -3905,8 +3911,6 @@ class R2ac(object):
         blocks = ChainFunctions.getBlocksById(deviceId)
         t2 = time.time()
         print("Time to get blocks: " + '{0:.12f}'.format((t2 - t1) * 1000))
-        # logger.info("IoT Ledger size: " + str(size))
-        # logger.info("|-----------------------------------------|")
         print("Device blocks count: " + str(len(blocks)))
         print("|-----------------------------------------|")
         for b in blocks:
@@ -3926,8 +3930,6 @@ class R2ac(object):
         blocks = ChainFunctionsMulti.getBlocksById(deviceId)
         t2 = time.time()
         print("Time to get blocks: " + '{0:.12f}'.format((t2 - t1) * 1000))
-        # logger.info("IoT Ledger size: " + str(size))
-        # logger.info("|-----------------------------------------|")
         print("Device blocks count: " + str(len(blocks)))
         print("|-----------------------------------------|")
         for b in blocks:

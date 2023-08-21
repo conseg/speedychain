@@ -18,8 +18,17 @@ def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device = "device")
 
     @return BlockHeader
     """
+    previousExpiredBlockHash = "None"
+    previousExpiredBlock = findLastSameBlock(device)
+    if previousExpiredBlock is not False:
+        previousExpiredBlockHash = previousExpiredBlock.hash
+
+    previousBlockSignature = "None"
+    if previousExpiredBlockHash is not "None":
+        previousBlockSignature = CryptoFunctions.encryptRSA2(previousExpiredBlock.publicKey, previousExpiredBlockHash)
+
     newBlock = generateNextBlock("new block", devPubKey, getLatestBlock(), gwPvt, blockContext, 
-                                 consensus, device)
+                                 consensus, previousExpiredBlockHash, previousBlockSignature, device)
     ##@Regio addBlockHeader is done during consensus! please take it off for running pbft
     #addBlockHeader(newBlock)
     return newBlock
@@ -120,10 +129,11 @@ LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
     device = "device"
     hash = CryptoFunctions.calculateHash(index, previousHash, time, nonce, k, blockContext, device)
     inf = Transaction.Transaction(0, hash, "0", "0", '', 0)
-    blk = BlockHeader(index, previousHash, time, inf, hash, nonce, k, blockContext, device)
+    blk = BlockHeader(index, previousHash, time, inf, hash, nonce, k, blockContext, "None", "None", device)
     return blk
 
-def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus, device = "device"):
+def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus, 
+                      previousExpiredBlock, previousBlockSignature, device = "device"):
     """ Receive the information of a new block and create it\n
     @param blockData - information of the new block\n
     @param pubKey - public key of the device how wants to generate the new block\n
@@ -151,9 +161,10 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
     inf = Transaction.Transaction(0, nextHash, nextTimestamp, blockData, sign, 0)
 
     return BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, 
-                       nonce, pubKey, blockContext, device)
+                       nonce, pubKey, blockContext, previousExpiredBlock, previousBlockSignature, device)
 
-def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, index, device):
+def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, index, 
+                       device, previousExpiredBlock, previousBlockSignature):
     """ Receive the information of a new block and create it\n
     @param blockData - information of the new block\n
     @param pubKey - public key of the device how wants to generate the new block\n
@@ -168,8 +179,8 @@ def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, 
                                              nonce, pubKey, blockContext, device)
     inf = Transaction.Transaction(0, nextHash, timestamp, blockData, sign, 0)
 
-    return BlockHeader(nextIndex, previousBlockHash, timestamp, inf, nextHash, 
-                       nonce, pubKey, blockContext, device)
+    return BlockHeader(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey, 
+                       blockContext, previousExpiredBlock, previousBlockSignature, device)
 
 def restartChain():
     """ Clear the entire chain """
@@ -204,3 +215,10 @@ def getTransactionsWithId(componentId):
                 transactions.append(t)
 
     return transactions
+
+def findLastSameBlock(deviceId):
+    for i in range(len(BlockHeaderChain) - 1, 0, -1):
+        if BlockHeaderChain[i].device == deviceId:
+            return BlockHeaderChain[i]
+    
+    return False
