@@ -3523,21 +3523,21 @@ class R2ac(object):
             devAESKey = findAESKey(devPublicKey)
             if (devAESKey != False):
                 #logger.info("Appending transaction to block #" + str(blk.index) + "...")
-                #print("Appending transaction to block #" + str(blk.index) + "...")
+                # print("Appending transaction to block #" + str(blk.index) + "...")
                 # plainObject contains [Signature + Time + Data]
 
                 plainObject = CryptoFunctions.decryptAES(
                     encryptedObj, devAESKey)
-                #print("plainObject = " + str(plainObject))
+                # print("plainObject = " + str(plainObject))
                 split = plainObject.split()
                 signature = split[0]  #plainObject[:88] # get first 88 chars
-                #print("signature = " + str(signature))
+                # print("signature = " + str(signature))
                 # remove the 16 char of timestamp
                 devTime = split[1]  # plainObject[88:104]
-                #print("devTime = " + str(devTime))
+                # print("devTime = " + str(devTime))
                 # retrieve the last chars which are the data
                 deviceData = split[2]  # plainObject[104:]
-                #print("deviceData = " + str(deviceData))
+                # print("deviceData = " + str(deviceData))
                 d = " "+devTime+" "+deviceData
                 isSigned = CryptoFunctions.signVerify(
                     d, signature, devPublicKey)
@@ -3547,7 +3547,7 @@ class R2ac(object):
                         signature, devTime, deviceData)
                     matching = [s for s in componentsId if type in s]
                     lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching[0], deviceInfo)
-                    #print("LifecycleEvent: "+str(lifecycleEvent.strEvent()))
+                    # print("LifecycleEvent: "+str(lifecycleEvent.strEvent()))
 
                     nextInt = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).index + 1
                     signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
@@ -3557,7 +3557,7 @@ class R2ac(object):
                     
                     transaction = Transaction.Transaction(
                         nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, matching[0])
-                    #print("Transaction: "+str(transaction.strBlock()))
+                    # print("Transaction: "+str(transaction.strBlock()))
                     #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
                     # send to consensus
                     # if not consensus(newBlockLedger, gwPub, devPublicKey):
@@ -3583,6 +3583,100 @@ class R2ac(object):
                 else:
                     # logger.debug("--Transaction not appended--Transaction Invalid Signature")
                     return "Invalid Signature"
+            # logger.debug("--Transaction not appended--Key not found")
+            return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
+
+    def addLifecycleEventSingle(self, devPublicKey, encryptedObjs, types):
+        """ Receive a new transaction to be add to the chain, 
+            the data will be created as a LifecycleEvent structure
+            add the transaction to a block and send it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+        blk = ChainFunctions.findBlock(devPublicKey)
+        lifecycleEvents = []
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                #logger.info("Appending transaction to block #" + str(blk.index) + "...")
+                print("Appending transaction to block #" + str(blk.index) + "...")
+                for i in range(4):
+                    # plainObject contains [Signature + Time + Data]
+
+                    plainObject = CryptoFunctions.decryptAES(
+                        encryptedObjs[i], devAESKey)
+                    #print("plainObject = " + str(plainObject))
+                    split = plainObject.split()
+                    signature = split[0]  #plainObject[:88] # get first 88 chars
+                    #print("signature = " + str(signature))
+                    # remove the 16 char of timestamp
+                    devTime = split[1]  # plainObject[88:104]
+                    #print("devTime = " + str(devTime))
+                    #print(devTime)
+                    # retrieve the last chars which are the data
+                    deviceData = split[2]  # plainObject[104:]
+                    #print("deviceData = " + str(deviceData))
+
+                    d = " "+devTime+" "+deviceData
+                    isSigned = CryptoFunctions.signVerify(
+                        d, signature, devPublicKey)
+
+                    if isSigned:
+                        deviceInfo = DeviceInfo.DeviceInfo(
+                            signature, devTime, deviceData)
+                        #print("DeviceInfo: "+str(deviceInfo))
+                        matching = [s for s in componentsId if types[i] in s]
+                        lifecycleEvents.append(LifecycleEvent.LifecycleEvent(types[i], matching[0], deviceInfo))
+                        #print("LifecycleEvent: "+str(lifecycleEvents[i].strEvent()))
+                            
+                    else:
+                        # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                        return "Invalid Signature"
+                
+                if isSigned:
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(lifecycleEvents))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    #print("gwTime: "+str(gwTime))
+                    #print(gwTime)
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, lifecycleEvents, signData, 0, "")
+                    #print("Transaction: "+str(transaction.strBlock()))
+                    #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info("gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+                    #print("all done")
+                    return "ok!"      
             # logger.debug("--Transaction not appended--Key not found")
             return "key not found"
         logger.error("key not found when adding transaction")

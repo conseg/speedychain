@@ -921,6 +921,43 @@ def sendLifecycleEventsMulti():
         except:
             logger.error("some exception with sendLifecycleEventsMulti now...")
 
+def sendLifecycleEventsSingle():
+    """
+    All "Single" methods are related to a single transaction chain
+    """
+    encobj = []
+    for i in range(4):
+        val, valStr = lifecycleMethods[i]()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = " {:.0f}".format(t)
+        data = timeStr + valStr
+        #logger.debug("data = "+data)
+        #print("")
+        #print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
+
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        #print ("###Signature lenght: " + str(len(signedData)))
+        toSend = signedData + data
+        #print ("toSend = "+toSend)
+        #logger.debug("ServeAESKEY = " + serverAESKey)
+        try:
+            encobj.append(CryptoFunctions.encryptAES(toSend, serverAESKey))
+            #print("Succesfully encrypted")
+        except:
+            logger.error("was not possible to encrypt... verify aeskey")
+            newKeyPair()
+            addBlockOnChain() # this will force gateway to recreate the aes key
+            signedData = CryptoFunctions.signInfo(privateKey, data)
+            toSend = signedData + data
+            encobj[i] = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            logger.error("passed through sendData except")
+    try:
+        #print ("encobj = "+encobj)
+        res = server.addLifecycleEventSingle(publicKey, encobj, lifecycleTypes)
+        #print ("result = "+str(res))
+    except:
+        logger.error("some exception with sendLifecycleEventsMulti now...")
+
 def readSpeedCPU():
     """ Generates random data like '1700MHz' """
     cpu = random.randint(1400, 2900)
@@ -1235,6 +1272,7 @@ def InteractiveMain():
         27: listBlocksWithId,
         28: listTransactionsWithId,
         29: automateLifecycleEvents,
+        30: sendLifecycleEventsSingle,
     }
 
     mode = -1
@@ -1274,6 +1312,7 @@ def InteractiveMain():
         print("27 - Get blocks by device ID (e.g.: dev-gwa)")
         print("28 - Get transactions by component ID (e.g.: SN1234_VID_dev-gwa)")
         print("29 - Automatically create 2 blocks for each device with 100 transactions for each component")
+        print("30 - Send all lifecycle events as a structure to block, a single transaction with all components")
 
         print("#############################################################")
 
