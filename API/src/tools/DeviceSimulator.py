@@ -583,7 +583,7 @@ def simulateDevices(blocks,trans,mode):
             for i in range(4):
                 t1 = time.time()
                 for blk in range(0, blocks):
-                    # print("SEQUENTIAL"+str(tr)+"transaction sent")
+                    #print("LifecycleMulti: " + str(tr) + "transaction sent")
                     simDevBlockAndTransMulti(blk,tr,i)
                 t2= time.time()
                 if ((t2 - t1) * 1000 < trInterval):
@@ -1117,7 +1117,7 @@ def simDevBlockAndTransMulti(blk, trans, index):
                 break
         if (startTime==0):
             startTime = (time.time())*1000*1000
-        logger.info("Sending transaction blk #" + str(blk) + "tr #" + str(trans) + "...")
+        logger.info("Sending transaction blk #" + str(blk) + " tr #" + str(trans) + "...")
     # t1 = time.time()
 
     devPubK=keysArray[blk][0]
@@ -1177,7 +1177,8 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
     global logT30
     global logT31
     global keysArray
-    val, valStr = lifecycleMethods[index]()
+    #print("Transaction: " + str(trans) + " Block: " + str(blk) + " Index: " + str(index))
+    val, valStr = lifecycleMethods[int(index)]()
     t = ((time.time() * 1000) * 1000)
     timeStr = " {:.0f}".format(t)
     data = timeStr + valStr
@@ -1235,11 +1236,6 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
 def InteractiveMain():
     """ Creates an interactive screen for the user with all option of a device"""
     global server
-    global lifecycleMethods
-    global lifecycleTypes
-
-    lifecycleMethods = [readSpeedCPU, readSpeedRAM, readSpeedSSD, readSpeedVid]
-    lifecycleTypes = ["CPU", "RAM", "SSD", "VID"]
 
     options = {
         1: setServer,
@@ -1345,6 +1341,11 @@ if __name__ == '__main__':
         # os.system("clear")
         # print("running automatically")
     global trInterval
+    global lifecycleMethods
+    global lifecycleTypes
+
+    lifecycleTypes = ["CPU", "RAM", "SSD", "VID"]
+    lifecycleMethods = [readSpeedCPU, readSpeedRAM, readSpeedSSD, readSpeedVid]
     if len(sys.argv[1:])<4:
         print("Command line syntax:")
         print("  python DeviceSimulator.py <name server IP> <name server port> <gateway name> <device name>")
@@ -1372,7 +1373,7 @@ if __name__ == '__main__':
             consensus = sys.argv[7]
             numContexts = sys.argv[8]
             trInterval = int(sys.argv[9])
-            print("arg size = " + str(len(sys.argv[1:])))
+            #print("arg size = " + str(len(sys.argv[1:])))
             if len(sys.argv[1:])==10:
                 mode = sys.argv[10]
             else:
@@ -1384,13 +1385,16 @@ if __name__ == '__main__':
             # setContexts(int(numContexts))
             time.sleep(10)
             logger.info("Processing " + blocks + " blocks and " + transactions + " transactions...")
-            print("runtype = " + mode)
+            #print("runtype = " + mode)
             automa(int(blocks), int(transactions), mode)
-                        
+
             # FOR OLD VERSION  - WITHOUT CONSENSUS use old_automa
             # old_automa(int(blocks), int(transactions))
             logger.info("Finishing Execution of Device"+deviceName)
 
+            if deviceName == "dev-a":
+                storeChainToFile()
+                listBlockHeaderMulti()
         # else:
         # os.system("clear")
         # loadConnection()

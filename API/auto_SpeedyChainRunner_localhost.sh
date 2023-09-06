@@ -2,9 +2,9 @@
 #export PATH=$PATH:/usr/local/go/bin
 #echo $GOPATH /home
 export PYRO_THREADPOOL_SIZE=1000
-numDev=35
-numTr=200
-contexts=0004
+numDev=10
+numTr=10
+contexts=0001
 sizePool=15
 nsIP=127.0.0.1
 txInterval=10000
@@ -28,15 +28,15 @@ PIDGwe=$!
 sleep 1
 #gnome-terminal -e "bash -c \"python ~/speedychain_varruda/speedychain-master/src/tools/DeviceSimulator.py $nsIP 9090 gwa dev-a     50   10 PoW 1; exec bash\""
 #for automated running devices calls should pass as arguments Pyro-NS_IP PORT GatewayNameToConnect DeviceName numBlocks numTx blockConsensus numContexts
-python src/tools/DeviceSimulator.py $nsIP 9090 gwa dev-a $numDev $numTr PBFT $contexts $txInterval &
+python src/tools/DeviceSimulator.py $nsIP 9090 gwa dev-a $numDev $numTr PBFT $contexts $txInterval lifecycleMulti &
 PIDDeva=$!
-python src/tools/DeviceSimulator.py $nsIP 9090 gwb dev-b $numDev $numTr PBFT $contexts $txInterval &
+python src/tools/DeviceSimulator.py $nsIP 9090 gwb dev-b $numDev $numTr PBFT $contexts $txInterval lifecycleMulti &
 PIDDevb=$!
-python src/tools/DeviceSimulator.py $nsIP 9090 gwc dev-c $numDev $numTr PBFT $contexts $txInterval &
+python src/tools/DeviceSimulator.py $nsIP 9090 gwc dev-c $numDev $numTr PBFT $contexts $txInterval lifecycleMulti &
 PIDDevc=$!
-python src/tools/DeviceSimulator.py $nsIP 9090 gwd dev-d $numDev $numTr PBFT $contexts $txInterval &
+python src/tools/DeviceSimulator.py $nsIP 9090 gwd dev-d $numDev $numTr PBFT $contexts $txInterval lifecycleMulti &
 PIDDevd=$!
-python src/tools/DeviceSimulator.py $nsIP 9090 gwe dev-e $numDev $numTr PBFT $contexts $txInterval &
+python src/tools/DeviceSimulator.py $nsIP 9090 gwe dev-e $numDev $numTr PBFT $contexts $txInterval lifecycleMulti &
 PIDDeve=$!
 
 wait $PIDDeva
@@ -51,7 +51,7 @@ kill -9 $PIDGwc
 kill -9 $PIDGwd
 kill -9 $PIDGwe
 
-$folder="csv/"
+folder="csv/"
 timestamp=$(date +%F_%T)
 t20=$"T20.csv"
 t21=$"T21.csv"

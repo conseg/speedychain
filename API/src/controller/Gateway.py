@@ -4368,6 +4368,13 @@ class R2ac(object):
                     # print(devContext)
                     t2=time.time()
                     logT24.append("T24 VERIFICATION TIME; " + str((t2-t1)*1000))
+                    nextInt = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).hash
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, matching[0])
+                    ChainFunctionsMulti.addBlockTransaction(blk, transaction, index)
                     t3=time.time()
                     while ( self.addNewTransactionToSyncList(devPublicKey, lifecycleEvent, devContext) == False):
                         logger.error("tried to insert and it was not possible, trying again")
