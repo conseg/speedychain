@@ -44,6 +44,7 @@ endTime=0
 lifecycleMethods = []
 lifecycleTypes = []
 lifecycleDeviceName = ""
+lifecycleMultiMode = "lifecycleMulti"
 
 def getMyIP():
      """ Return the IP from the gateway
@@ -327,11 +328,11 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
             return devPubK,devPrivateK,AESKey
         else:
             # logger.error("Used AESKey was: " + str(AESKey))
-            logger.error("something went wrong when sending data in blk: " + str(blk) + "tr: " + str(trans))
+            logger.error("something went wrong when sending data in blk: " + str(blk) + " tr: " + str(trans))
             logger.error("Transaction status problem: " + transactionStatus)
             return devPubK,devPrivateK,AESKey
     except:
-        logger.error("some exception with addTransaction now...in blk: " + str(blk) + "tr: " + str(trans))
+        logger.error("some exception with addTransaction now...in blk: " + str(blk) + " tr: " + str(trans))
         return devPubK,devPrivateK,AESKey
 
 
@@ -516,7 +517,7 @@ def automa(blocks, trans, mode = "sequential"):
         @param trans - int number of transactions
     """
     time.sleep(5)
-    if mode == "lifecycleMulti":
+    if mode == lifecycleMultiMode:
         server.startTransactionsConsThreadsMulti()
     else:
         server.startTransactionsConsThreads()
@@ -578,12 +579,13 @@ def simulateDevices(blocks,trans,mode):
             t2= time.time()
             if ((t2 - t1) * 1000 < trInterval):
                 time.sleep((trInterval - ((t2 - t1) * 1000)) / 1000)
-    if(mode=="lifecycleMulti"):
+    if(mode==lifecycleMultiMode):
         for tr in range(0, trans):
             for i in range(4):
                 t1 = time.time()
                 for blk in range(0, blocks):
-                    #print("LifecycleMulti: " + str(tr) + "transaction sent")
+                    #print("1) LifecycleMulti - Device: " + str(lifecycleDeviceName) + " Tr: " + str(
+                    #    tr) + " i: " + str(i) + " blk: " + str(blk))
                     simDevBlockAndTransMulti(blk,tr,i)
                 t2= time.time()
                 if ((t2 - t1) * 1000 < trInterval):
@@ -748,7 +750,7 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     # ----> Adicionado por Arruda
     ns = Pyro4.locateNS(host=nameServerIP, port=nameServerPort)
     gatewayURI = ns.lookup(gatewayName)
-    print("gatewayURI = " + str(gatewayURI))
+    #print("gatewayURI = " + str(gatewayURI))
     global server
     # fname = socket.gethostname()
     # text_file = open("localhost", "r")
@@ -759,7 +761,7 @@ def loadConnection(nameServerIP, nameServerPort, gatewayName):
     # os.remove(fname)
     # ---->
     lifecycleDeviceName = server.getDeviceName()
-    print("Lifecycle name: " + str(lifecycleDeviceName))
+    #print("Lifecycle name: " + str(lifecycleDeviceName))
 
     defineConsensus(consensus)
     return gatewayURI
@@ -1013,11 +1015,13 @@ def listTransactionsWithId():
     # print("Getting all transactions for component = " + componentId)
     # listTransactionsWithId2(componentId, False)
 
-def listTransactionsWithId2(componentId, showTransactions):
+def listTransactionsWithId2(componentId, showTransactions, f):
     timeNormal = server.showTransactionWithId(componentId, showTransactions)
     print("Time to get transactions (NORMAL): " + timeNormal)
     timeMulti = server.showTransactionWithIdMulti(componentId, showTransactions)
     print("Time to get transactions (MULTI): " + timeMulti)
+    f.write("Time to get transactions with id " + str(componentId) + " (NORMAL): " + timeNormal + "\n")
+    f.write("Time to get transactions with id " + str(componentId) + " (MULTI): " + timeMulti + "\n")
 
 def automateLifecycleEvents():
     gatewayUriA = loadConnection(nameServerIP, nameServerPort, gatewayName)
@@ -1025,9 +1029,9 @@ def automateLifecycleEvents():
     gatewayUriC = loadConnection(nameServerIP, nameServerPort, "gwc")
     gatewayUriD = loadConnection(nameServerIP, nameServerPort, "gwd")
     
-    diferentBlocks = 2
+    diferentBlocks = 10
     blocks = 1
-    transactions = 100
+    transactions = 1000
 
     print("Creating Lifecycle events automatically, with " + str(
         diferentBlocks * blocks) + " blocks for each device and " + str(
@@ -1049,10 +1053,14 @@ def automateLifecycleEvents():
     
     t2 = time.time()
     timeDiff = '{0:.12f}'.format((t2 - t1) * 1000)
-    print("Time create all blocks and transactions: " + timeDiff)
+    print("Time to create all blocks and transactions: " + timeDiff)
 
     # print("Store chains to file")
     storeChainToFile()
+
+    open('recovery_time.txt', 'w').close()
+    f = open('recovery_time.txt', "a")
+    f.write("Time to create all blocks and transactions: " + timeDiff + "\n")
 
     componentId = "SN1234_RAM_dev-gwc"
     print("Getting all transactions for component = " + componentId)
@@ -1061,6 +1069,17 @@ def automateLifecycleEvents():
     componentId = "SN1234_CPU_dev-gwa"
     print("Getting all transactions for component = " + componentId)
     listTransactionsWithId2(componentId, False)
+
+    print("saving Gw logs")
+    try:
+        gwSaveLog()
+    except:
+        print("another is saving the logs")
+    print("Saved Gw logs, now saving Dev logs")
+    saveDeviceLog()
+    
+    listBlockHeader()
+    listBlockHeaderMulti()
 
 def automateLifecycleEventsNormal(blocks, transactions):
     for b in range(blocks):
@@ -1102,7 +1121,7 @@ def simDevBlockAndTransMulti(blk, trans, index):
     global startTime
     global keysArray
 
-    if (trans == 0):
+    if (trans == 0 and index == 0):
         devPubK, devPrivK = generateRSAKeyPair()
         counter = 0
         AESKey = addBlockOnChainMultiV2(devPubK, devPrivK)
@@ -1117,7 +1136,8 @@ def simDevBlockAndTransMulti(blk, trans, index):
                 break
         if (startTime==0):
             startTime = (time.time())*1000*1000
-        logger.info("Sending transaction blk #" + str(blk) + " tr #" + str(trans) + "...")
+        #print("2) Sending transaction Device: " + str(lifecycleDeviceName) + " blk Multi #" + str(
+            #blk) + " tr #" + str(trans) + "...")
     # t1 = time.time()
 
     devPubK=keysArray[blk][0]
@@ -1157,13 +1177,13 @@ def addBlockOnChainMultiV2(devPubKey, devPrivKey):
         return False
     return AESKey
 
-def multSendMulti(devPubK, devPrivateK, AESKey, retry, blk, index):
+def multSendMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
     try:
-        return sendDataArgsMulti(devPubK, devPrivateK, AESKey, retry, blk, index)
+        return sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index)
     except KeyboardInterrupt:
         sys.exit()
     except:
-        logger.error("failed to execute send tr:" + str(retry)+"from Blk: "+ str(blk))
+        logger.error("failed to execute send tr:" + str(trans)+"from Blk: "+ str(blk))
         exc_type, exc_value, exc_traceback = sys.exc_info()
         logger.error("*** print_exception:\n" + str(
             traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2, file=sys.stdout)))
@@ -1177,12 +1197,12 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
     global logT30
     global logT31
     global keysArray
-    #print("Transaction: " + str(trans) + " Block: " + str(blk) + " Index: " + str(index))
-    val, valStr = lifecycleMethods[int(index)]()
+    #print("3) Device: " + str(lifecycleDeviceName) + " Tr: " + str(trans) + " Blk: " + str(blk) + " I: " + str(index))
+    val, valStr = lifecycleMethods[index]()
     t = ((time.time() * 1000) * 1000)
     timeStr = " {:.0f}".format(t)
     data = timeStr + valStr
-    logger.debug("data = "+data)
+    #logger.debug("data = "+data)
     signedData = CryptoFunctions.signInfo(devPrivateK, data)
     toSend = signedData + data
 
@@ -1210,7 +1230,9 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
     try:
         encobj=pickle.dumps(encobj)
         devPubK = pickle.dumps(devPubK)
-        transactionStatus= server.addTransactionToPoolMulti(devPubK, encobj, lifecycleTypes[index], index)
+        lifecycleType=pickle.dumps(lifecycleTypes[index])
+        index = pickle.dumps(index)
+        transactionStatus= server.addTransactionToPoolMulti(devPubK, encobj, lifecycleType, index)
         t3 = ((time.time() * 1000) * 1000)
         logT31.append("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
         # print("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
@@ -1219,11 +1241,11 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
             return devPubK,devPrivateK,AESKey
         else:
             # logger.error("Used AESKey was: " + str(AESKey))
-            logger.error("something went wrong when sending data in blk: " + str(blk) + "tr: " + str(trans))
-            logger.error("Transaction status problem: " + transactionStatus)
+            logger.error("something went wrong when sending data in blk Multi: " + str(blk) + " tr: " + str(trans))
+            logger.error("Transaction status problem Multi: " + transactionStatus)
             return devPubK,devPrivateK,AESKey
     except:
-        logger.error("some exception with addTransaction now...in blk: " + str(blk) + "tr: " + str(trans))
+        logger.error("some exception with addTransactionMulti now...in blk: " + str(blk) + " tr: " + str(trans))
         return devPubK,devPrivateK,AESKey
 
 #############################################################################
@@ -1393,7 +1415,9 @@ if __name__ == '__main__':
             logger.info("Finishing Execution of Device"+deviceName)
 
             if deviceName == "dev-a":
+                print("Store chain to file...")
                 storeChainToFile()
+                #listBlockHeader()
                 listBlockHeaderMulti()
         # else:
         # os.system("clear")

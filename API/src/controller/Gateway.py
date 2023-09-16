@@ -4170,13 +4170,13 @@ class R2ac(object):
                 #     time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
                 # election for new orchestrator
                 self.electNewContextOrchestrator(context)
-                # orchestratorContextObject.performTransactionPoolPBFTConsensus(context)
+                # orchestratorContextObject.performTransactionPoolPBFTConsensusMulti(context)
                 tcc2 = ((time.time()) * 1000) * 1000
                 logT22.append("T22 CONTEXT; "+context+";PBFT CONSENSUS TIME; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize) + ";TPUT;" + str((candidatePoolSize)/(((tcc2-tcc1)/1000)/1000)))
                 # call to execute the consensus for the new leader
                 for index in range(len(orchestratorContextObject)):
                     if (orchestratorContextObject[index][0] == context):
-                        threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensus, args=[context]).start()
+                        threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensusMulti, args=[context]).start()
                 # logger.error("CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
                 return
 
@@ -4210,24 +4210,29 @@ class R2ac(object):
                 # logger.error("-----------------------------inside prepare--notfalse candidate")
                 # print("AAAAAAAAAAAAAAAA passed the if")
                 devPublicKey = candidateTransaction[0]
-                deviceInfo = candidateTransaction[1]
+                lifecycleEvent = candidateTransaction[1]
                 if(ChainFunctionsMulti.findBlock(devPublicKey)!=False):
                     blk = ChainFunctionsMulti.findBlock(devPublicKey)
                 # print("passed the blk")
-                    nextInt = blk.transactions[len(blk.transactions) - 1].index + 1
-                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    lastBlk = (ChainFunctionsMulti.getLatestBlockTransaction(blk, lifecycleEvent.index))
+                    nextInt = lastBlk.index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(lifecycleEvent.data))
+                    print("1) DevInfo: " + str(lifecycleEvent.data))
                     # print("BBBBBBBBBBBBB passed the devinfo")
                     gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
                     # code responsible to create the hash between Info nodes.
-                    prevInfoHash = CryptoFunctions.calculateTransactionHash(ChainFunctionsMulti.getLatestBlockTransaction(blk))
-                    transaction = Transaction.Transaction(nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+                    prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, lifecycleEvent.index)).hash
+                    transaction = Transaction.Transaction(nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, lifecycleEvent.id)
+                    
+                    #verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
+                    
                     candidateTransactionPool.append((devPublicKey, transaction))
                     # logger.error("-----------------------------inside prepare--transaction appended")
                     trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
                     # votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
                     votesPoolTotal.append([(devPublicKey, transaction), ["valid"]])
         if(len(candidateTransactionPool)==0):
-            logger.error("!!!!!!! All tr were invalid or no tr at all")
+            logger.error("!!!!!!! All tr were invalid or no tr at all (Multi)")
             return
 
         dumpedPool = pickle.dumps(candidateTransactionPool)
@@ -4237,8 +4242,8 @@ class R2ac(object):
         dumpedGwPub = pickle.dumps(gwPub)
         for p in alivePeers:
             # default type of thread that accepts return value in the join
-            arrayPeersThreads.append(ThreadWithReturn(target=self.startRemoteVoting, args=(context, dumpedPool, dumpedGwPub, p)))
-            # arrayPeersThreads.append(threading.Thread(target=self.startRemoteVoting, args=(context,dumpedPool,dumpedGwPub,p)))
+            arrayPeersThreads.append(ThreadWithReturn(target=self.startRemoteVotingMulti, args=(context, dumpedPool, dumpedGwPub, p)))
+            # arrayPeersThreads.append(threading.Thread(target=self.startRemoteVotingMulti, args=(context,dumpedPool,dumpedGwPub,p)))
             # start the last inserted thread in array
             arrayPeersThreads[-1].start()
             # counter = counter+1
@@ -4294,6 +4299,109 @@ class R2ac(object):
 
         return False
 
+    def startRemoteVotingMulti(self, context, dumpedPool, dumpedGwPub, p):
+        pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidateMulti(context, dumpedPool, dumpedGwPub)
+        return pickedVotes, pickedVotesSignature, remoteGwPk
+
+
+    def votePoolCandidateMulti(self, context, candidatePool, pickedGwPub):
+        """ Checks whether the new block has the following characteristics: \n
+            * The hash of the previous block are correct in the new block data\n
+            * The new block index is equals to the previous block index plus one\n
+            * The generation time of the last block is smaller than the new one \n
+            If the new block have it all, sign it with the peer private key\n
+            @return False - The block does not have one or more of the previous characteristics\n
+            @return votesPool, signature and GwPub - return a list of votes (valid), signature and gwpub
+        """
+        global logT23
+        t1 = (time.time()*1000)
+        validation = True
+        votesPool =[]
+        receivedPool = pickle.loads(candidatePool)
+        receivedGwPub = pickle.loads(pickedGwPub)
+        while(len(receivedPool) > 0):
+            candidate = receivedPool.pop(0)
+            receivedDevPub = candidate[0]
+            candidateTr = candidate[1]
+            candidateTr.__class__ = Transaction.Transaction
+            candidateLifecycle = candidateTr.data
+            candidateLifecycle.__class__ = LifecycleEvent.LifecycleEvent
+
+            # verify if device is registered and if the index and timestamp are correct
+            if (ChainFunctionsMulti.findBlock(receivedDevPub) != False):
+                blk = ChainFunctionsMulti.findBlock(receivedDevPub)
+                # print("passed the blk")
+                lastBlk = (ChainFunctionsMulti.getLatestBlockTransaction(blk, candidateLifecycle.index))
+                lastTrIndex = lastBlk.index
+                lastTimestamp = lastBlk.timestamp
+                print("4) candidateLifecycle.index: " + str(candidateLifecycle.index))
+                print("3) Dev: " + str(candidateLifecycle.id) + " lastTrIndex: " + str(
+                    lastTrIndex) + " candidateTr.index: " + str(candidateTr.index) + " lastTimestamp: " + str(
+                        lastTimestamp) + " candidateTr.timestamp: " + str(candidateTr.timestamp))
+                if(lastTrIndex >= candidateTr.index or lastTimestamp >= candidateTr.timestamp ):
+                    logger.error("***********************")
+                    logger.error("***Invalid Tr time or index*")
+                    logger.error("***********************")
+                    validation = False
+
+                # verify the gw of the device
+                candidateDevInfo = candidateLifecycle.data
+                candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+                print("2) DevInfo: " + str(candidateDevInfo))
+                verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
+                if (verifyGwSign != True):
+                    logger.error("***********************")
+                    logger.error("***Invalid Gw Signature*")
+                    logger.error("***********************")
+                    validation = False
+
+            #     # verify the signature of the device
+            #     d = " "+candidateDevInfo.timestamp+" "+candidateDevInfo.data
+
+            #     isSigned = CryptoFunctions.signVerify(d, candidateDevInfo.deviceSignature, receivedDevPub)
+            #     if (isSigned != True):
+            #         logger.error("***********************")
+            #         logger.error("***Invalid Device Signature*")
+            #         logger.error("***********************")
+            #         validation = False
+            #     # after verifications...
+
+            #     # first Tr is a dummy generated data
+            #     if(len(blk.transactions)-1 > 0):
+            #         lastTrLifecycle = lastBlk.data
+            #         lastTrLifecycle.__class__ = LifecycleEvent.LifecycleEvent
+            #         lastTrDevInfo = lastTrLifecycle.data
+            #         lastTrDevInfo.__class__ = DeviceInfo.DeviceInfo
+
+            #         if(lastTrDevInfo.timestamp >= candidateDevInfo.timestamp):
+            #             logger.error("***********************")
+            #             logger.error("***Invalid device info time*")
+            #             logger.error("***********************")
+            #             validation = False
+
+            # else:
+            #     logger.error("***********************")
+            #     logger.error("***Invalid PubKey -> it is not in BC*")
+            #     logger.error("***********************")
+            #     validation = False
+
+
+            # if(validation==True):
+            #     # trSign = CryptoFunctions.signInfo(gwPvt, str(candidateTr))
+            #     # votesPool.append([(receivedDevPub, candidateTr), trSign])
+            #     # send only de candidate Tr signature
+            #     votesPool.append([(candidateTr.signature), "valid"])
+            # # if it is not valid, do not vote as valid
+            # else:
+            #     votesPool.append([(candidateTr.signature), ""])
+            # validation = True
+        votesSignature=CryptoFunctions.signInfo(gwPvt, str(votesPool))
+        t2 = (time.time()*1000)
+        logT23.append("T23 VOTING;CONTEXT "+context+";VOTING TIME; " + str(t2-t1))
+        # logger.error("!!!!! My verification sign = " + str(CryptoFunctions.signVerify(str(votesPool),votesSignature,gwPub)))
+        # logger.error("My signature is: " + votesSignature + "my votespool is: " + str(votesPool) + "my pub is" + gwPub)
+        return pickle.dumps(votesPool), pickle.dumps(votesSignature), gwPub
+
     def isBlockInTheChainMulti(self, devPubKey):
         """ Verify if a block is on the chain\n
             @param devPubKey - block pub key\n
@@ -4327,14 +4435,15 @@ class R2ac(object):
         devPublicKey=pickle.loads(devPublicKey)
         # print("DevPubKey= " + str(devPublicKey))
         encryptedObj=pickle.loads(encryptedObj)
-
+        type=pickle.loads(type)
+        index=pickle.loads(index)
+        #print("4) Type: " + str(type) + " I: " + str(index))
         blk = ChainFunctionsMulti.findBlock(devPublicKey)
         # self.addContextinLockList(devPublicKey)
         if (blk != False and blk.index > 0):
             devAESKey = findAESKey(devPublicKey)
             if (devAESKey != False):
-                # logger.info("Appending transaction to block #" +
-                #             str(blk.index) + "...")
+                #print("5) Appending transaction to block #" + str(blk.index) + "...")
                 # plainObject contains [Signature + Time + Data]
 
                 plainObject = CryptoFunctions.decryptAES(
@@ -4361,7 +4470,8 @@ class R2ac(object):
                     deviceInfo = DeviceInfo.DeviceInfo(
                         signature, devTime, deviceData)
                     matching = [s for s in componentsId if type in s]
-                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching[0], deviceInfo)
+                    #print("6) Type: " + str(matching[0]) + " I: " + str(index))        
+                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching[0], deviceInfo, index)
                     # send to consensus here
                     devContext = blk.blockContext
                     # print("SSSSSSSS my Context: ")
@@ -4375,6 +4485,8 @@ class R2ac(object):
                     transaction = Transaction.Transaction(
                         nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, matching[0])
                     ChainFunctionsMulti.addBlockTransaction(blk, transaction, index)
+                    #print("7) Type: " + str(matching[0]) + " blk tr chain size: " + str(
+                    #    len(blk.transactions[index])) + " I: " + str(index))  
                     t3=time.time()
                     while ( self.addNewTransactionToSyncList(devPublicKey, lifecycleEvent, devContext) == False):
                         logger.error("tried to insert and it was not possible, trying again")

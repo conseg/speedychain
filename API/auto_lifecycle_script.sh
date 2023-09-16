@@ -16,6 +16,10 @@ consensus=PBFT
 txInterval=10000
 mypathRunner=runner.py
 mypathDevice=src/tools/DeviceSimulator.py
+mode=lifecycleMulti
+x=10
+i=$numDev
+j=$numTr
 
 for run in {1..10}
   do
@@ -54,25 +58,25 @@ for run in {1..10}
 	sleep 1
 	
 	sleep 10
-	python2 $mypathDevice $nsIP 9090 gwa dev-a $numDev $numTr $consensus $contexts $txInterval &
+	python2 $mypathDevice $nsIP 9090 gwa dev-a $numDev $numTr $consensus $contexts $txInterval $mode &
 	PIDDeva=$!
-	python2 $mypathDevice $nsIP 9090 gwb dev-b $numDev $numTr $consensus $contexts $txInterval &
+	python2 $mypathDevice $nsIP 9090 gwb dev-b $numDev $numTr $consensus $contexts $txInterval $mode &
 	PIDDevb=$!
-	python2 $mypathDevice $nsIP 9090 gwc dev-c $numDev $numTr $consensus $contexts $txInterval &
+	python2 $mypathDevice $nsIP 9090 gwc dev-c $numDev $numTr $consensus $contexts $txInterval $mode &
 	PIDDevc=$!
-	python2 $mypathDevice $nsIP 9090 gwd dev-d $numDev $numTr $consensus $contexts $txInterval &
+	python2 $mypathDevice $nsIP 9090 gwd dev-d $numDev $numTr $consensus $contexts $txInterval $mode &
 	PIDDevd=$!
-	python2 $mypathDevice $nsIP 9090 gwe dev-e $numDev $numTr $consensus $contexts $txInterval &
+	python2 $mypathDevice $nsIP 9090 gwe dev-e $numDev $numTr $consensus $contexts $txInterval $mode &
 	PIDDeve=$!
-	python2 $mypathDevice $nsIP 9090 gwf dev-f $numDev $numTr $consensus $contexts $txInterval &
+	python2 $mypathDevice $nsIP 9090 gwf dev-f $numDev $numTr $consensus $contexts $txInterval $mode &
 	PIDDevf=$!
-	python2 $mypathDevice $nsIP 9090 gwg dev-g $numDev $numTr $consensus $contexts $txInterval &
+	python2 $mypathDevice $nsIP 9090 gwg dev-g $numDev $numTr $consensus $contexts $txInterval $mode &
 	PIDDevg=$!
-	python2 $mypathDevice $nsIP 9090 gwh dev-h $numDev $numTr $consensus $contexts $txInterval &
+	python2 $mypathDevice $nsIP 9090 gwh dev-h $numDev $numTr $consensus $contexts $txInterval $mode &
 	PIDDevh=$!
-	python2 $mypathDevice $nsIP 9090 gwi dev-i $numDev $numTr $consensus $contexts $txInterval &
+	python2 $mypathDevice $nsIP 9090 gwi dev-i $numDev $numTr $consensus $contexts $txInterval $mode &
 	PIDDevi=$!
-	python2 $mypathDevice $nsIP 9090 gwj dev-j $numDev $numTr $consensus $contexts $txInterval &
+	python2 $mypathDevice $nsIP 9090 gwj dev-j $numDev $numTr $consensus $contexts $txInterval $mode &
 	PIDDevj=$!
 
 	wait $PIDDeva
@@ -103,19 +107,18 @@ for run in {1..10}
 	numDev="_devices_"
 	numTx="_Tx_"
 	timestamp=$(date +%F_%T)
-	t3=$"T3.csv"
-	t5=$"T5.csv"
-	t6=$"T6.csv"
-	t20=$"T20.csv"
-	t21=$"T21.csv"
-	t22=$"T22.csv"
-	t23=$"T23.csv"
-	t24=$"T24.csv"
-	t25=$"T25.csv"
-	t26=$"T26.csv"
-	t27=$"T27.csv"
-	t30=$"T30.csv"
-	t31=$"T31.csv"
+	t3=$"_T3.csv"
+	t5=$"_T5.csv"
+	t6=$"_T6.csv"
+	t20=$"_T20.csv"
+	t21=$"_T21.csv"
+	t22=$"_T22.csv"
+	t23=$"_T23.csv"
+	t24=$"_T24.csv"
+	t25=$"_T25.csv"
+	t26=$"_T26.csv"
+	t30=$"_T30.csv"
+	t31=$"_T31.csv"
 	ERROR=$"ERROR.csv"
 	more gw* | grep T3 >  $folder$numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t3
 	more gw* | grep T5 >  $folder$numRun$run$numContexts$contexts$numGw$x$numDev$i$numTx$j$t5
