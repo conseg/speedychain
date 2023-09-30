@@ -4053,7 +4053,7 @@ class R2ac(object):
                 print(t.strBlock())
                 print("|-----------------------------------------|")
         
-        return timeDiff
+        return timeDiff, str(len(transactions))
     
     def showTransactionWithIdMulti(self, componentId, showTransactions):
         """ Log transactions for multi chains with specific ID \n
@@ -4078,7 +4078,7 @@ class R2ac(object):
                 print(t.strBlock())
                 print("|-----------------------------------------|")
         
-        return timeDiff
+        return timeDiff, str(len(transactions))
     
     def startTransactionsConsThreadsMulti(self):
         for x,y in gwContextConsensus:
@@ -4204,25 +4204,19 @@ class R2ac(object):
         while (len(candidatePool) > 0):
             # logger.error("-----------------------------inside prepare--while")
             candidateTransaction = candidatePool.pop(0)
-            # print("popped element from Pool")
-            # print(candidateTransaction)
             if (candidateTransaction != False):
                 # logger.error("-----------------------------inside prepare--notfalse candidate")
-                # print("AAAAAAAAAAAAAAAA passed the if")
                 devPublicKey = candidateTransaction[0]
                 lifecycleEvent = candidateTransaction[1]
                 if(ChainFunctionsMulti.findBlock(devPublicKey)!=False):
                     blk = ChainFunctionsMulti.findBlock(devPublicKey)
-                # print("passed the blk")
                     lastBlk = (ChainFunctionsMulti.getLatestBlockTransaction(blk, lifecycleEvent.index))
                     nextInt = lastBlk.index + 1
                     signData = CryptoFunctions.signInfo(gwPvt, str(lifecycleEvent.data))
-                    print("1) DevInfo: " + str(lifecycleEvent.data))
-                    # print("BBBBBBBBBBBBB passed the devinfo")
                     gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
                     # code responsible to create the hash between Info nodes.
                     prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, lifecycleEvent.index)).hash
-                    transaction = Transaction.Transaction(nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, lifecycleEvent.id)
+                    transaction = Transaction.Transaction(nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, lifecycleEvent.index, lifecycleEvent.id)
                     
                     #verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
                     
@@ -4247,7 +4241,6 @@ class R2ac(object):
             # start the last inserted thread in array
             arrayPeersThreads[-1].start()
             # counter = counter+1
-
 
         # logger.error("after start")
         for i in range(len(arrayPeersThreads)):
@@ -4293,11 +4286,85 @@ class R2ac(object):
 
         # TODO define how to update peers: all peers or only participating in consensus?
         #
-        if(self.commitContextPBFT(validTransactionPool,alivePeers)):
-        # if (self.commitContextPBFT(validTransactionPool, peers)):
+        if(self.commitContextPBFTMulti(validTransactionPool,alivePeers)):
+        # if (self.commitContextPBFTMulti(validTransactionPool, peers)):
             return True
 
         return False
+
+    def commitContextPBFTMulti(self, validTransactionPool, alivePeers):
+        arrayPeersThreads = [] * len(alivePeers)
+
+        if(len(validTransactionPool)>0):
+            dumpedSetTrans = pickle.dumps(validTransactionPool)
+            # addLocally
+            self.updateBlockLedgerSetTransMulti(dumpedSetTrans,True)
+
+            # add remote
+            index = 0
+            for p in alivePeers:
+
+                obj=p.object
+                # obj.updateBlockLedgerSetTransMulti(dumpedSetTrans,False)
+                arrayPeersThreads.append(threading.Thread(target=obj.updateBlockLedgerSetTransMulti, args=(dumpedSetTrans,False)))
+                arrayPeersThreads[index].start()
+                index = index+1
+
+            # this can be a problem for performance... trying
+            # for i in range(len(arrayPeersThreads)):
+            #     arrayPeersThreads[i].join()
+
+            # logger.error("!!!! PASSED !!!")
+            return True
+        logger.error("!!!! Failed to commit transactions !!!")
+        return False
+
+    def updateBlockLedgerSetTransMulti(self, candidatePool, isFirst):
+        global logT20
+        global logT21
+        global logT26
+        # update local bockchain adding a new transaction
+        """ Receive a new transaction and add it to the chain\n
+            @param pubKey - Block public key\n
+            @param transaction - Data to be insert on the block\n
+            @return "done" - method done (the block are not necessarily inserted)
+        """
+        setTrans = pickle.loads(candidatePool)
+        t1 = time.time()
+        # print("inside updateBlockLedgerSeTrans, setTrans: " + str(setTrans))
+        # logger.info("Received transaction #" + (str(trans.index)))
+        originalLen = len(setTrans)
+        while (len(setTrans)>0):
+            candidateTransaction = setTrans.pop(0)
+            # print("popped element from Pool")
+            # print(candidateTransaction)
+            if (candidateTransaction != False):
+                # print("AAAAAAAAAAAAAAAA passed the if")
+                devPublicKey = candidateTransaction[0]
+                deviceTrans = candidateTransaction[1]
+                blk = ChainFunctionsMulti.findBlock(devPublicKey)
+                ChainFunctionsMulti.addBlockTransaction(blk, deviceTrans, deviceTrans.nonce)
+                deviceTrans.__class__ = Transaction.Transaction
+                candidateLifecycleEvent = deviceTrans.data
+                candidateLifecycleEvent.__class__ = LifecycleEvent.LifecycleEvent
+                candidateDevInfo = candidateLifecycleEvent.data
+                candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+                originalTimestamp = float (candidateDevInfo.timestamp)
+                gwTimestamp = float(deviceTrans.timestamp)
+                currentTimestamp = float (((time.time())*1000)*1000)
+                logT20.append("gateway;" + gatewayName +";Context;" +blk.blockContext + ";T20;Transaction Latency;" + str((currentTimestamp - originalTimestamp)/1000))
+                if(isFirst):
+                    logT26.append("gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str((currentTimestamp - originalTimestamp) / 1000))
+                # logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
+                # logger.info(
+                #     "gateway;" + gatewayName + ";" + consensus + ";T21;Time to process Tr is;" + str(
+                #         (currentTimestamp - gwTimestamp) / 1000))
+
+        t2 = time.time()
+        logT21.append("gateway;" + gatewayName + ";T21;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+
+        return "done"
 
     def startRemoteVotingMulti(self, context, dumpedPool, dumpedGwPub, p):
         pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidateMulti(context, dumpedPool, dumpedGwPub)
@@ -4334,10 +4401,6 @@ class R2ac(object):
                 lastBlk = (ChainFunctionsMulti.getLatestBlockTransaction(blk, candidateLifecycle.index))
                 lastTrIndex = lastBlk.index
                 lastTimestamp = lastBlk.timestamp
-                print("4) candidateLifecycle.index: " + str(candidateLifecycle.index))
-                print("3) Dev: " + str(candidateLifecycle.id) + " lastTrIndex: " + str(
-                    lastTrIndex) + " candidateTr.index: " + str(candidateTr.index) + " lastTimestamp: " + str(
-                        lastTimestamp) + " candidateTr.timestamp: " + str(candidateTr.timestamp))
                 if(lastTrIndex >= candidateTr.index or lastTimestamp >= candidateTr.timestamp ):
                     logger.error("***********************")
                     logger.error("***Invalid Tr time or index*")
@@ -4347,7 +4410,6 @@ class R2ac(object):
                 # verify the gw of the device
                 candidateDevInfo = candidateLifecycle.data
                 candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
-                print("2) DevInfo: " + str(candidateDevInfo))
                 verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
                 if (verifyGwSign != True):
                     logger.error("***********************")
@@ -4355,46 +4417,46 @@ class R2ac(object):
                     logger.error("***********************")
                     validation = False
 
-            #     # verify the signature of the device
-            #     d = " "+candidateDevInfo.timestamp+" "+candidateDevInfo.data
+                # verify the signature of the device
+                d = " "+candidateDevInfo.timestamp+" "+candidateDevInfo.data
 
-            #     isSigned = CryptoFunctions.signVerify(d, candidateDevInfo.deviceSignature, receivedDevPub)
-            #     if (isSigned != True):
-            #         logger.error("***********************")
-            #         logger.error("***Invalid Device Signature*")
-            #         logger.error("***********************")
-            #         validation = False
-            #     # after verifications...
+                isSigned = CryptoFunctions.signVerify(d, candidateDevInfo.deviceSignature, receivedDevPub)
+                if (isSigned != True):
+                    logger.error("***********************")
+                    logger.error("***Invalid Device Signature*")
+                    logger.error("***********************")
+                    validation = False
+                # after verifications...
 
-            #     # first Tr is a dummy generated data
-            #     if(len(blk.transactions)-1 > 0):
-            #         lastTrLifecycle = lastBlk.data
-            #         lastTrLifecycle.__class__ = LifecycleEvent.LifecycleEvent
-            #         lastTrDevInfo = lastTrLifecycle.data
-            #         lastTrDevInfo.__class__ = DeviceInfo.DeviceInfo
+                # first Tr is a dummy generated data
+                if(len(blk.transactions[candidateLifecycle.index])-1 > 0):
+                    lastTrLifecycle = lastBlk.data
+                    lastTrLifecycle.__class__ = LifecycleEvent.LifecycleEvent
+                    lastTrDevInfo = lastTrLifecycle.data
+                    lastTrDevInfo.__class__ = DeviceInfo.DeviceInfo
 
-            #         if(lastTrDevInfo.timestamp >= candidateDevInfo.timestamp):
-            #             logger.error("***********************")
-            #             logger.error("***Invalid device info time*")
-            #             logger.error("***********************")
-            #             validation = False
+                    if(lastTrDevInfo.timestamp >= candidateDevInfo.timestamp):
+                        logger.error("***********************")
+                        logger.error("***Invalid device info time*")
+                        logger.error("***********************")
+                        validation = False
 
-            # else:
-            #     logger.error("***********************")
-            #     logger.error("***Invalid PubKey -> it is not in BC*")
-            #     logger.error("***********************")
-            #     validation = False
+            else:
+                logger.error("***********************")
+                logger.error("***Invalid PubKey -> it is not in BC*")
+                logger.error("***********************")
+                validation = False
 
 
-            # if(validation==True):
+            if(validation==True):
             #     # trSign = CryptoFunctions.signInfo(gwPvt, str(candidateTr))
             #     # votesPool.append([(receivedDevPub, candidateTr), trSign])
             #     # send only de candidate Tr signature
-            #     votesPool.append([(candidateTr.signature), "valid"])
+                votesPool.append([(candidateTr.signature), "valid"])
             # # if it is not valid, do not vote as valid
-            # else:
-            #     votesPool.append([(candidateTr.signature), ""])
-            # validation = True
+            else:
+                votesPool.append([(candidateTr.signature), ""])
+            validation = True
         votesSignature=CryptoFunctions.signInfo(gwPvt, str(votesPool))
         t2 = (time.time()*1000)
         logT23.append("T23 VOTING;CONTEXT "+context+";VOTING TIME; " + str(t2-t1))
@@ -4437,13 +4499,11 @@ class R2ac(object):
         encryptedObj=pickle.loads(encryptedObj)
         type=pickle.loads(type)
         index=pickle.loads(index)
-        #print("4) Type: " + str(type) + " I: " + str(index))
         blk = ChainFunctionsMulti.findBlock(devPublicKey)
         # self.addContextinLockList(devPublicKey)
         if (blk != False and blk.index > 0):
             devAESKey = findAESKey(devPublicKey)
             if (devAESKey != False):
-                #print("5) Appending transaction to block #" + str(blk.index) + "...")
                 # plainObject contains [Signature + Time + Data]
 
                 plainObject = CryptoFunctions.decryptAES(
@@ -4469,13 +4529,10 @@ class R2ac(object):
                 if isSigned:
                     deviceInfo = DeviceInfo.DeviceInfo(
                         signature, devTime, deviceData)
-                    matching = [s for s in componentsId if type in s]
-                    #print("6) Type: " + str(matching[0]) + " I: " + str(index))        
+                    matching = [s for s in componentsId if type in s]   
                     lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching[0], deviceInfo, index)
                     # send to consensus here
                     devContext = blk.blockContext
-                    # print("SSSSSSSS my Context: ")
-                    # print(devContext)
                     t2=time.time()
                     logT24.append("T24 VERIFICATION TIME; " + str((t2-t1)*1000))
                     nextInt = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).index + 1
@@ -4483,10 +4540,8 @@ class R2ac(object):
                     gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
                     prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).hash
                     transaction = Transaction.Transaction(
-                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, matching[0])
-                    ChainFunctionsMulti.addBlockTransaction(blk, transaction, index)
-                    #print("7) Type: " + str(matching[0]) + " blk tr chain size: " + str(
-                    #    len(blk.transactions[index])) + " I: " + str(index))  
+                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, index, matching[0])
+                    #ChainFunctionsMulti.addBlockTransaction(blk, transaction, index)
                     t3=time.time()
                     while ( self.addNewTransactionToSyncList(devPublicKey, lifecycleEvent, devContext) == False):
                         logger.error("tried to insert and it was not possible, trying again")

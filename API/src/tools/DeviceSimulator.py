@@ -584,8 +584,6 @@ def simulateDevices(blocks,trans,mode):
             for i in range(4):
                 t1 = time.time()
                 for blk in range(0, blocks):
-                    #print("1) LifecycleMulti - Device: " + str(lifecycleDeviceName) + " Tr: " + str(
-                    #    tr) + " i: " + str(i) + " blk: " + str(blk))
                     simDevBlockAndTransMulti(blk,tr,i)
                 t2= time.time()
                 if ((t2 - t1) * 1000 < trInterval):
@@ -1006,22 +1004,18 @@ def listBlocksWithId():
 
 def listTransactionsWithId():
     componentId = raw_input("Which component ID do you want to search?").strip()
-    listTransactionsWithId2(componentId, False)    
-    # componentId = "SN1234_RAM_dev-gwc"
-    # print("Getting all transactions for component = " + componentId)
-    # listTransactionsWithId2(componentId, False)
-
-    # componentId = "SN1234_CPU_dev-gwa"
-    # print("Getting all transactions for component = " + componentId)
-    # listTransactionsWithId2(componentId, False)
+    listTransactionsWithId2(componentId, False)
 
 def listTransactionsWithId2(componentId, showTransactions, f):
-    timeNormal = server.showTransactionWithId(componentId, showTransactions)
-    print("Time to get transactions (NORMAL): " + timeNormal)
-    timeMulti = server.showTransactionWithIdMulti(componentId, showTransactions)
-    print("Time to get transactions (MULTI): " + timeMulti)
-    f.write("Time to get transactions with id " + str(componentId) + " (NORMAL): " + timeNormal + "\n")
-    f.write("Time to get transactions with id " + str(componentId) + " (MULTI): " + timeMulti + "\n")
+    timeNormal, trCountNormal = server.showTransactionWithId(componentId, showTransactions)
+    print("Time to get all " + str(trCountNormal) + " transactions (NORMAL): " + str(timeNormal))
+    timeMulti, trCountMulti = server.showTransactionWithIdMulti(componentId, showTransactions)
+    print("Time to get all " + str(trCountMulti) + " transactions (MULTI): " + str(timeMulti))
+    if f != False:
+        f.write("Time to get all " + str(trCountNormal) + " transactions with id " + str(
+            componentId) + " (NORMAL): " + str(timeNormal) + "\n")
+        f.write("Time to get all " + str(trCountMulti) + " transactions with id " + str(
+            componentId) + " (MULTI): " + str(timeMulti) + "\n")
 
 def automateLifecycleEvents():
     gatewayUriA = loadConnection(nameServerIP, nameServerPort, gatewayName)
@@ -1031,7 +1025,7 @@ def automateLifecycleEvents():
     
     diferentBlocks = 10
     blocks = 1
-    transactions = 1000
+    transactions = 500
 
     print("Creating Lifecycle events automatically, with " + str(
         diferentBlocks * blocks) + " blocks for each device and " + str(
@@ -1053,22 +1047,23 @@ def automateLifecycleEvents():
     
     t2 = time.time()
     timeDiff = '{0:.12f}'.format((t2 - t1) * 1000)
-    print("Time to create all blocks and transactions: " + timeDiff)
+    print("Time to create all blocks and transactions: " + str(timeDiff))
 
     # print("Store chains to file")
     storeChainToFile()
 
-    open('recovery_time.txt', 'w').close()
     f = open('recovery_time.txt', "a")
-    f.write("Time to create all blocks and transactions: " + timeDiff + "\n")
+    f.write("Time to create all blocks and transactions: " + str(timeDiff) + "\n")
 
     componentId = "SN1234_RAM_dev-gwc"
-    print("Getting all transactions for component = " + componentId)
-    listTransactionsWithId2(componentId, False)
+    print("Getting all transactions for component = " + str(componentId))
+    listTransactionsWithId2(componentId, False, f)
 
     componentId = "SN1234_CPU_dev-gwa"
-    print("Getting all transactions for component = " + componentId)
-    listTransactionsWithId2(componentId, False)
+    print("Getting all transactions for component = " + str(componentId))
+    listTransactionsWithId2(componentId, False, f)
+    f.write("\n")
+    f.close()
 
     print("saving Gw logs")
     try:
@@ -1078,8 +1073,8 @@ def automateLifecycleEvents():
     print("Saved Gw logs, now saving Dev logs")
     saveDeviceLog()
     
-    listBlockHeader()
-    listBlockHeaderMulti()
+    #listBlockHeader()
+    #listBlockHeaderMulti()
 
 def automateLifecycleEventsNormal(blocks, transactions):
     for b in range(blocks):
@@ -1136,8 +1131,6 @@ def simDevBlockAndTransMulti(blk, trans, index):
                 break
         if (startTime==0):
             startTime = (time.time())*1000*1000
-        #print("2) Sending transaction Device: " + str(lifecycleDeviceName) + " blk Multi #" + str(
-            #blk) + " tr #" + str(trans) + "...")
     # t1 = time.time()
 
     devPubK=keysArray[blk][0]
@@ -1197,7 +1190,6 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
     global logT30
     global logT31
     global keysArray
-    #print("3) Device: " + str(lifecycleDeviceName) + " Tr: " + str(trans) + " Blk: " + str(blk) + " I: " + str(index))
     val, valStr = lifecycleMethods[index]()
     t = ((time.time() * 1000) * 1000)
     timeStr = " {:.0f}".format(t)
