@@ -1332,6 +1332,7 @@ class R2ac(object):
         global transactionLockList
         global transactionConsensusCandidateList
         # print("TTTTTTTTTTTT inside addNewTransactionToSyncList")
+        #logger.info("Inside addNewTransactionToSyncList")
         index =0
         candidateTransactionTuple = (devPubKey, devInfo, context)
         # print ("********* adding a transaction from context: "+context)
@@ -1367,6 +1368,7 @@ class R2ac(object):
         # transactionConsensusCandidateList.append(candidateTransactionTuple)
         transactionLockList[-1][1].release()
         # print("VVVVVV Lock released in addnewtransactionsynclist")
+        logger.info("Transaction tuple added to list")
         return True
         # print("Unlocked")
 
@@ -1415,7 +1417,7 @@ class R2ac(object):
     def getNElementsLocalTransactionPool(self, context, nelements):
         global transactionLockList
         global transactionConsensusCandidateList
-        # print("ENTERED in get Pool")
+        print("ENTERED in get Pool")
         transactionPool = []
         if (len(transactionConsensusCandidateList) > 0):
             index = 0
@@ -1452,7 +1454,7 @@ class R2ac(object):
 
                         # if it does not have nelements, return current amount
                         transactionPool = transactionConsensusCandidateList[index][1]
-                        # print("there is a pool candidate, pop it!!! context: " + context)
+                        logger.info("there is a pool candidate, pop it!!! context: " + context)
                         transactionConsensusCandidateList[index][1] = []
                         transactionLockList[index][1].release()
                         pickedTransactionPool = pickle.dumps(transactionPool)
@@ -1468,8 +1470,8 @@ class R2ac(object):
                     # return transactionPool
                 index = index + 1
 
-        # print("end of get transaction")
-        # logger.debug("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
+        #print("end of get transaction")
+        logger.info("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
         return pickle.dumps(False)
 
     def getLocalTransactionPool(self, context):
@@ -4153,7 +4155,7 @@ class R2ac(object):
                     # candidatePool.append(remoteCandidatePool)
             candidatePoolSize = len(candidatePool)
             if (candidatePoolSize!=0):
-                # logger.info("**************Inside PBFT Transaction ***************")
+                logger.info("**************Inside PBFT Transaction ***************")
                 self.prepareContextPBFTMulti(context,candidatePool,tempContextPeers)
 
                 # if you want to set a min interval between consensus
@@ -4177,7 +4179,7 @@ class R2ac(object):
                 for index in range(len(orchestratorContextObject)):
                     if (orchestratorContextObject[index][0] == context):
                         threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensusMulti, args=[context]).start()
-                # logger.error("CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
+                logger.info("CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
                 return
 
             else:
@@ -4196,16 +4198,16 @@ class R2ac(object):
             @param generatorGwPub - Public key from the peer who want to generate the block\n
             @param generatorDevicePub - Public key from the device who want to generate the block\n
         """
-        # logger.error("-----------------------------inside prepare")
+        logger.info("prepareContextPBFTMulti: inside prepare")
         candidateTransactionPool =[]
         votesPoolTotal = []
         validTransactionPool =[]
 
         while (len(candidatePool) > 0):
-            # logger.error("-----------------------------inside prepare--while")
+            logger.info("prepareContextPBFTMulti: inside prepare--while")
             candidateTransaction = candidatePool.pop(0)
             if (candidateTransaction != False):
-                # logger.error("-----------------------------inside prepare--notfalse candidate")
+                logger.info("prepareContextPBFTMulti: inside prepare--notfalse candidate")
                 devPublicKey = candidateTransaction[0]
                 lifecycleEvent = candidateTransaction[1]
                 if(ChainFunctionsMulti.findBlock(devPublicKey)!=False):
@@ -4221,12 +4223,12 @@ class R2ac(object):
                     #verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
                     
                     candidateTransactionPool.append((devPublicKey, transaction))
-                    # logger.error("-----------------------------inside prepare--transaction appended")
+                    logger.info("-----------------------------inside prepare--transaction appended")
                     trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
                     # votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
                     votesPoolTotal.append([(devPublicKey, transaction), ["valid"]])
         if(len(candidateTransactionPool)==0):
-            logger.error("!!!!!!! All tr were invalid or no tr at all (Multi)")
+            logger.info("prepareContextPBFTMulti: All tr were invalid or no tr at all (Multi)")
             return
 
         dumpedPool = pickle.dumps(candidateTransactionPool)
@@ -4242,7 +4244,7 @@ class R2ac(object):
             arrayPeersThreads[-1].start()
             # counter = counter+1
 
-        # logger.error("after start")
+        #logger.info("after start")
         for i in range(len(arrayPeersThreads)):
 
             # default class of thread used to have a return on join
@@ -4259,7 +4261,7 @@ class R2ac(object):
             votesSignature = pickle.loads(pickedVotesSignature)
             # verify if list of votes are valid, i.e., peer signature in votes is correct
             if(CryptoFunctions.signVerify(str(votes),votesSignature, p.object.getGwPubkey())):
-                # logger.error("!!***!!!!*** Votes Signature is valid****")
+                logger.info("prepareContextPBFTMulti: Votes Signature is valid")
                 for index in range(len(votes)):
                     # if there is a vote
                     if(votes[index][1]=="valid"):
@@ -4271,6 +4273,7 @@ class R2ac(object):
                             if(not(votesPoolTotal[index][0] in validTransactionPool)):
                                 # insert in validated pool
                                 validTransactionPool.append(votesPoolTotal[index][0])
+                                logger.info("prepareContextPBFTMulti: Valid vote appended")
                 if (len(validTransactionPool)==len(votesPoolTotal)):
                     # logger.error("YES... breaked... reduced the time ;)")
                     break
@@ -4298,6 +4301,7 @@ class R2ac(object):
         if(len(validTransactionPool)>0):
             dumpedSetTrans = pickle.dumps(validTransactionPool)
             # addLocally
+            logger.info("commitContextPBFTMulti: Adding locally")
             self.updateBlockLedgerSetTransMulti(dumpedSetTrans,True)
 
             # add remote
@@ -4314,7 +4318,7 @@ class R2ac(object):
             # for i in range(len(arrayPeersThreads)):
             #     arrayPeersThreads[i].join()
 
-            # logger.error("!!!! PASSED !!!")
+            logger.info("commitContextPBFTMulti: PASSED")
             return True
         logger.error("!!!! Failed to commit transactions !!!")
         return False
@@ -4332,17 +4336,19 @@ class R2ac(object):
         setTrans = pickle.loads(candidatePool)
         t1 = time.time()
         # print("inside updateBlockLedgerSeTrans, setTrans: " + str(setTrans))
-        # logger.info("Received transaction #" + (str(trans.index)))
+        logger.info("updateBlockLedgerSetTransMulti: Received transaction #" + (str(setTrans.index)))
         originalLen = len(setTrans)
         while (len(setTrans)>0):
             candidateTransaction = setTrans.pop(0)
             # print("popped element from Pool")
             # print(candidateTransaction)
+            logger.info("updateBlockLedgerSetTransMulti: popped element from Pool")
             if (candidateTransaction != False):
                 # print("AAAAAAAAAAAAAAAA passed the if")
                 devPublicKey = candidateTransaction[0]
                 deviceTrans = candidateTransaction[1]
                 blk = ChainFunctionsMulti.findBlock(devPublicKey)
+                logger.info("updateBlockLedgerSetTransMulti: add transaction to chain")
                 ChainFunctionsMulti.addBlockTransaction(blk, deviceTrans, deviceTrans.nonce)
                 deviceTrans.__class__ = Transaction.Transaction
                 candidateLifecycleEvent = deviceTrans.data
@@ -4355,14 +4361,14 @@ class R2ac(object):
                 logT20.append("gateway;" + gatewayName +";Context;" +blk.blockContext + ";T20;Transaction Latency;" + str((currentTimestamp - originalTimestamp)/1000))
                 if(isFirst):
                     logT26.append("gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str((currentTimestamp - originalTimestamp) / 1000))
-                # logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
+                logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
                 # logger.info(
                 #     "gateway;" + gatewayName + ";" + consensus + ";T21;Time to process Tr is;" + str(
                 #         (currentTimestamp - gwTimestamp) / 1000))
 
         t2 = time.time()
         logT21.append("gateway;" + gatewayName + ";T21;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
-        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
 
         return "done"
 
@@ -4520,7 +4526,8 @@ class R2ac(object):
                 deviceData = split[2]  # plainObject[104:]
                 #print("deviceData = " + str(deviceData))
                 t2 = time.time()
-                # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                #logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Transaction data received")
 
                 d = " "+devTime+" "+deviceData
                 isSigned = CryptoFunctions.signVerify(
@@ -4543,6 +4550,7 @@ class R2ac(object):
                         nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, index, matching[0])
                     #ChainFunctionsMulti.addBlockTransaction(blk, transaction, index)
                     t3=time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Transaction created")
                     while ( self.addNewTransactionToSyncList(devPublicKey, lifecycleEvent, devContext) == False):
                         logger.error("tried to insert and it was not possible, trying again")
                         time.sleep(0.001)
