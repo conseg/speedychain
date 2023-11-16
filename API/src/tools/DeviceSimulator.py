@@ -1413,6 +1413,9 @@ if __name__ == '__main__':
                 storeChainToFile()
                 #listBlockHeader()
                 listBlockHeaderMulti()
+                componentId = "SN1234_RAM_dev-gwa"
+                print("Getting all transactions for component = " + str(componentId))
+                timeMulti, trCountMulti = server.showTransactionWithIdMulti(componentId, True)
         # else:
         # os.system("clear")
         # loadConnection()

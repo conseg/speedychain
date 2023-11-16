@@ -4224,7 +4224,7 @@ class R2ac(object):
                     
                     candidateTransactionPool.append((devPublicKey, transaction))
                     logger.info("-----------------------------inside prepare--transaction appended")
-                    trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
+                    #trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
                     # votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
                     votesPoolTotal.append([(devPublicKey, transaction), ["valid"]])
         if(len(candidateTransactionPool)==0):
