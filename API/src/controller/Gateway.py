@@ -1417,7 +1417,7 @@ class R2ac(object):
     def getNElementsLocalTransactionPool(self, context, nelements):
         global transactionLockList
         global transactionConsensusCandidateList
-        print("ENTERED in get Pool")
+        #logger.info("ENTERED in get Pool")
         transactionPool = []
         if (len(transactionConsensusCandidateList) > 0):
             index = 0
@@ -1471,7 +1471,7 @@ class R2ac(object):
                 index = index + 1
 
         #print("end of get transaction")
-        logger.info("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
+        #logger.info("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
         return pickle.dumps(False)
 
     def getLocalTransactionPool(self, context):
