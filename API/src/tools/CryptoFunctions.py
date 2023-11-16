@@ -116,14 +116,21 @@ def signVerify(data, signature, gwPubKey):
         @param signature - singature of the data to be validated\n
         @param gwPubKey - peer's private key
     """
-    k = RSA.importKey(gwPubKey)
-    signer = PKCS1_v1_5.new(k)
-    digest = SHA256.new()
-    digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
-    #digest.update(data)
-    signaturerOr = base64.b64decode(signature)
-    result = signer.verify(digest, signaturerOr)
-    return result
+    try:
+        k = RSA.importKey(gwPubKey)
+        signer = PKCS1_v1_5.new(k)
+        digest = SHA256.new()
+        digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
+        #digest.update(data)
+        signaturerOr = base64.b64decode(signature)
+        result = signer.verify(digest, signaturerOr)
+        return result
+    except:
+        print ("Exception inside CryptoFunctions.signVerify")
+        print ("data size: " + str(len(data)))
+        print ("signature size: " + str(len(signature)))
+        print ("gwPubKey size: " + str(len(gwPubKey)))
+        return False
 
 def generateRSAKeyPair():
     """ Generate a pair of RSA keys using RSA 1024\n
