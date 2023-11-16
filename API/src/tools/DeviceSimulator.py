@@ -1239,7 +1239,6 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
             return devPubK,devPrivateK,AESKey
     except:
         logger.error("some exception with addTransactionToPoolMulti now...in blk: " + str(blk) + " tr: " + str(trans))
-        logger.info("some exception with addTransactionToPoolMulti now...in blk: " + str(blk) + " tr: " + str(trans))
         return devPubK,devPrivateK,AESKey
 
 #############################################################################

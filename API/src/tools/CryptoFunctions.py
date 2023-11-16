@@ -113,7 +113,7 @@ def signInfo(gwPvtKey, data):
 def signVerify(data, signature, gwPubKey):
     """ Verify if a data sign by a private key it's unaltered\n
         @param data - data to be verified\n
-        @param signature - singature of the data to be validated\n
+        @param signature - signature of the data to be validated\n
         @param gwPubKey - peer's private key
     """
     try:
@@ -126,10 +126,6 @@ def signVerify(data, signature, gwPubKey):
         result = signer.verify(digest, signaturerOr)
         return result
     except:
-        print ("Exception inside CryptoFunctions.signVerify")
-        print ("data size: " + str(len(data)))
-        print ("signature size: " + str(len(signature)))
-        print ("gwPubKey size: " + str(len(gwPubKey)))
         return False
 
 def generateRSAKeyPair():
