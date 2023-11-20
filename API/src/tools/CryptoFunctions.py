@@ -97,29 +97,35 @@ def signInfo(gwPvtKey, data):
         @param data - data to sign\n
         @return sinature - signature of the data maked with the private key
     """
-    k = RSA.importKey(gwPvtKey)
-    signer = PKCS1_v1_5.new(k)
-    digest = SHA256.new()
-    digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
-    #digest.update(data)
-    s = signer.sign(digest)
-    sinature = base64.b64encode(s)
-    return sinature
+    try:
+        k = RSA.importKey(gwPvtKey)
+        signer = PKCS1_v1_5.new(k)
+        digest = SHA256.new()
+        digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
+        #digest.update(data)
+        s = signer.sign(digest)
+        signature = base64.b64encode(s)
+        return signature
+    except:
+        return ""
 
 def signVerify(data, signature, gwPubKey):
     """ Verify if a data sign by a private key it's unaltered\n
         @param data - data to be verified\n
-        @param signature - singature of the data to be validated\n
+        @param signature - signature of the data to be validated\n
         @param gwPubKey - peer's private key
     """
-    k = RSA.importKey(gwPubKey)
-    signer = PKCS1_v1_5.new(k)
-    digest = SHA256.new()
-    digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
-    #digest.update(data)
-    signaturerOr = base64.b64decode(signature)
-    result = signer.verify(digest, signaturerOr)
-    return result
+    try:
+        k = RSA.importKey(gwPubKey)
+        signer = PKCS1_v1_5.new(k)
+        digest = SHA256.new()
+        digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
+        #digest.update(data)
+        signaturerOr = base64.b64decode(signature)
+        result = signer.verify(digest, signaturerOr)
+        return result
+    except:
+        return False
 
 def generateRSAKeyPair():
     """ Generate a pair of RSA keys using RSA 1024\n

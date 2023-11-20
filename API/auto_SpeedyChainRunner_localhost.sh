@@ -21,9 +21,9 @@ sleep 1
 python runner.py -n $nsIP -p 9090 -G gwc -C $contexts -S $sizePool &
 PIDGwc=$!
 sleep 1
-# python runner.py -n $nsIP -p 9090 -G gwd -C $contexts -S $sizePool &
-# PIDGwd=$!
-# sleep 1
+python runner.py -n $nsIP -p 9090 -G gwd -C $contexts -S $sizePool &
+PIDGwd=$!
+sleep 1
 # python runner.py -n $nsIP -p 9090 -G gwe -C $contexts -S $sizePool &
 # PIDGwe=$!
 # sleep 1
@@ -35,21 +35,21 @@ python src/tools/DeviceSimulator.py $nsIP 9090 gwb dev-b $numDev $numTr PBFT $co
 PIDDevb=$!
 python src/tools/DeviceSimulator.py $nsIP 9090 gwc dev-c $numDev $numTr PBFT $contexts $txInterval $mode &
 PIDDevc=$!
-# python src/tools/DeviceSimulator.py $nsIP 9090 gwd dev-d $numDev $numTr PBFT $contexts $txInterval $mode &
-# PIDDevd=$!
+python src/tools/DeviceSimulator.py $nsIP 9090 gwd dev-d $numDev $numTr PBFT $contexts $txInterval $mode &
+PIDDevd=$!
 # python src/tools/DeviceSimulator.py $nsIP 9090 gwe dev-e $numDev $numTr PBFT $contexts $txInterval $mode &
 # PIDDeve=$!
 
 wait $PIDDeva
 wait $PIDDevb
 wait $PIDDevc
-# wait $PIDDevd
+wait $PIDDevd
 # wait $PIDDeve
 kill -9 $PIDPyroNS
 kill -9 $PIDGwa
 kill -9 $PIDGwb
 kill -9 $PIDGwc
-# kill -9 $PIDGwd
+kill -9 $PIDGwd
 # kill -9 $PIDGwe
 
 folder="csv/"

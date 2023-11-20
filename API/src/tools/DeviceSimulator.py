@@ -1228,6 +1228,7 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
         t3 = ((time.time() * 1000) * 1000)
         logT31.append("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
         # print("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
+        #logger.info("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
         if(transactionStatus=="ok!"):
             # logger.error("everything good now")
             return devPubK,devPrivateK,AESKey
@@ -1237,7 +1238,7 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
             logger.error("Transaction status problem Multi: " + transactionStatus)
             return devPubK,devPrivateK,AESKey
     except:
-        logger.error("some exception with addTransactionMulti now...in blk: " + str(blk) + " tr: " + str(trans))
+        logger.error("some exception with addTransactionToPoolMulti now...in blk: " + str(blk) + " tr: " + str(trans))
         return devPubK,devPrivateK,AESKey
 
 #############################################################################
@@ -1411,6 +1412,9 @@ if __name__ == '__main__':
                 storeChainToFile()
                 #listBlockHeader()
                 listBlockHeaderMulti()
+                componentId = "SN1234_RAM_dev-gwa"
+                print("Getting all transactions for component = " + str(componentId))
+                timeMulti, trCountMulti = server.showTransactionWithIdMulti(componentId, True)
         # else:
         # os.system("clear")
         # loadConnection()
