@@ -107,7 +107,6 @@ def signInfo(gwPvtKey, data):
         signature = base64.b64encode(s)
         return signature
     except:
-        print ("Exception inside CryptoFunctions.signInfo. Data size: " + str(len(data)))
         return ""
 
 def signVerify(data, signature, gwPubKey):

@@ -1228,7 +1228,7 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
         t3 = ((time.time() * 1000) * 1000)
         logT31.append("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
         # print("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
-        logger.info("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
+        #logger.info("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
         if(transactionStatus=="ok!"):
             # logger.error("everything good now")
             return devPubK,devPrivateK,AESKey

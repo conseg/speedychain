@@ -1368,7 +1368,7 @@ class R2ac(object):
         # transactionConsensusCandidateList.append(candidateTransactionTuple)
         transactionLockList[-1][1].release()
         # print("VVVVVV Lock released in addnewtransactionsynclist")
-        logger.info("Transaction tuple added to list")
+        # logger.info("Transaction tuple added to list")
         return True
         # print("Unlocked")
 
@@ -4228,7 +4228,7 @@ class R2ac(object):
                     # votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
                     votesPoolTotal.append([(devPublicKey, transaction), ["valid"]])
         if(len(candidateTransactionPool)==0):
-            # logger.info("prepareContextPBFTMulti: All tr were invalid or no tr at all (Multi)")
+            logger.error("All tr were invalid or no tr at all (Multi)")
             return
 
         dumpedPool = pickle.dumps(candidateTransactionPool)
@@ -4261,7 +4261,7 @@ class R2ac(object):
             votesSignature = pickle.loads(pickedVotesSignature)
             # verify if list of votes are valid, i.e., peer signature in votes is correct
             if(CryptoFunctions.signVerify(str(votes),votesSignature, p.object.getGwPubkey())):
-                # logger.info("prepareContextPBFTMulti: Votes Signature is valid")
+                # logger.error("Votes Signature is valid")
                 for index in range(len(votes)):
                     # if there is a vote
                     if(votes[index][1]=="valid"):
@@ -4273,7 +4273,7 @@ class R2ac(object):
                             if(not(votesPoolTotal[index][0] in validTransactionPool)):
                                 # insert in validated pool
                                 validTransactionPool.append(votesPoolTotal[index][0])
-                                # logger.info("prepareContextPBFTMulti: Valid vote appended")
+                                # logger.info("Valid vote appended")
                 if (len(validTransactionPool)==len(votesPoolTotal)):
                     # logger.error("YES... breaked... reduced the time ;)")
                     break
@@ -4368,7 +4368,7 @@ class R2ac(object):
 
         t2 = time.time()
         logT21.append("gateway;" + gatewayName + ";T21;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        #logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
 
         return "done"
 
