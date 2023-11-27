@@ -115,7 +115,7 @@ transactionSharedPool = []
 blockContext = "0001"
 # should have all context here
 # 
-gwContextConsensus = [("0001", "PoA"),("0002", "PoA"),("0003", "PoA")]
+gwContextConsensus = [("0001", "PBFT"),("0002", "PBFT"),("0003", "PBFT")]
 sizePool = 100
 # list of votes for new orchestrator votes are: context, voter gwPub, voted gwPub, signature
 votesForNewContextOrchestrator =[]
@@ -4093,13 +4093,14 @@ class R2ac(object):
         # the other sleep times in this method is due to bad parallelism of Python... without any sleep, this thread can leave others in starvation
         if(consensus=="PBFT"):
             # while(True):
-                for index in range(len(orchestratorContextObject)):
-                    if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
-                        self.performTransactionPoolPBFTConsensusMulti(context)
-                        # time.sleep(0.02)
-                    # else:
-                # time.sleep(0.1)
-
+            for index in range(len(orchestratorContextObject)):
+                if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
+                    self.performTransactionPoolPBFTConsensusMulti(context)
+                    # time.sleep(0.02)
+                # else:
+            # time.sleep(0.1)
+        logger.info("threadTransactionConsensusMulti: END THREAD")
+    
     def performTransactionPoolPBFTConsensusMulti(self,context):
         global contextPeers
         global logT22
@@ -4155,6 +4156,7 @@ class R2ac(object):
                     # candidatePool.append(remoteCandidatePool)
             candidatePoolSize = len(candidatePool)
             if (candidatePoolSize!=0):
+                logger.info("performTransactionPoolPBFTConsensusMulti: Inside PBFT Transaction")
                 # logger.info("**************Inside PBFT Transaction ***************")
                 self.prepareContextPBFTMulti(context,candidatePool,tempContextPeers)
 
@@ -4179,7 +4181,7 @@ class R2ac(object):
                 for index in range(len(orchestratorContextObject)):
                     if (orchestratorContextObject[index][0] == context):
                         threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensusMulti, args=[context]).start()
-                # logger.info("CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
+                logger.info("performTransactionPoolPBFTConsensusMulti: CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
                 return
 
             else:
@@ -4198,16 +4200,16 @@ class R2ac(object):
             @param generatorGwPub - Public key from the peer who want to generate the block\n
             @param generatorDevicePub - Public key from the device who want to generate the block\n
         """
-        # logger.info("prepareContextPBFTMulti: inside prepare")
+        logger.info("prepareContextPBFTMulti: inside prepare")
         candidateTransactionPool =[]
         votesPoolTotal = []
         validTransactionPool =[]
 
         while (len(candidatePool) > 0):
-            # logger.info("prepareContextPBFTMulti: inside prepare--while")
+            logger.info("prepareContextPBFTMulti: inside prepare--while")
             candidateTransaction = candidatePool.pop(0)
             if (candidateTransaction != False):
-                # logger.info("prepareContextPBFTMulti: inside prepare--notfalse candidate")
+                logger.info("prepareContextPBFTMulti: inside prepare--notfalse candidate")
                 devPublicKey = candidateTransaction[0]
                 lifecycleEvent = candidateTransaction[1]
                 if(ChainFunctionsMulti.findBlock(devPublicKey)!=False):
@@ -4223,11 +4225,12 @@ class R2ac(object):
                     #verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
                     
                     candidateTransactionPool.append((devPublicKey, transaction))
-                    # logger.info("-----------------------------inside prepare--transaction appended")
+                    logger.info("prepareContextPBFTMulti: prepare--transaction appended")
                     #trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
                     # votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
                     votesPoolTotal.append([(devPublicKey, transaction), ["valid"]])
         if(len(candidateTransactionPool)==0):
+            logger.info("prepareContextPBFTMulti: tran were invalid or no tran at all (Multi)")
             logger.error("All tr were invalid or no tr at all (Multi)")
             return
 
@@ -4237,6 +4240,7 @@ class R2ac(object):
         # counter =0
         dumpedGwPub = pickle.dumps(gwPub)
         for p in alivePeers:
+            logger.info("prepareContextPBFTMulti: peer alive")
             # default type of thread that accepts return value in the join
             arrayPeersThreads.append(ThreadWithReturn(target=self.startRemoteVotingMulti, args=(context, dumpedPool, dumpedGwPub, p)))
             # arrayPeersThreads.append(threading.Thread(target=self.startRemoteVotingMulti, args=(context,dumpedPool,dumpedGwPub,p)))
@@ -4261,6 +4265,7 @@ class R2ac(object):
             votesSignature = pickle.loads(pickedVotesSignature)
             # verify if list of votes are valid, i.e., peer signature in votes is correct
             if(CryptoFunctions.signVerify(str(votes),votesSignature, p.object.getGwPubkey())):
+                logger.info("prepareContextPBFTMulti: Votes Signature is valid")
                 # logger.error("Votes Signature is valid")
                 for index in range(len(votes)):
                     # if there is a vote
@@ -4272,6 +4277,7 @@ class R2ac(object):
                             # verify if it was not already inserted
                             if(not(votesPoolTotal[index][0] in validTransactionPool)):
                                 # insert in validated pool
+                                logger.info("prepareContextPBFTMulti: append to validTransactionPool")
                                 validTransactionPool.append(votesPoolTotal[index][0])
                                 # logger.info("Valid vote appended")
                 if (len(validTransactionPool)==len(votesPoolTotal)):
@@ -4290,6 +4296,7 @@ class R2ac(object):
         # TODO define how to update peers: all peers or only participating in consensus?
         #
         if(self.commitContextPBFTMulti(validTransactionPool,alivePeers)):
+            logger.info("prepareContextPBFTMulti: commitContextPBFTMulti returned true")
         # if (self.commitContextPBFTMulti(validTransactionPool, peers)):
             return True
 
@@ -4301,7 +4308,7 @@ class R2ac(object):
         if(len(validTransactionPool)>0):
             dumpedSetTrans = pickle.dumps(validTransactionPool)
             # addLocally
-            # logger.info("commitContextPBFTMulti: Adding locally")
+            logger.info("commitContextPBFTMulti: Adding locally")
             self.updateBlockLedgerSetTransMulti(dumpedSetTrans,True)
 
             # add remote
@@ -4318,8 +4325,9 @@ class R2ac(object):
             # for i in range(len(arrayPeersThreads)):
             #     arrayPeersThreads[i].join()
 
-            # logger.info("commitContextPBFTMulti: PASSED")
+            logger.info("commitContextPBFTMulti: PASSED")
             return True
+        logger.info("commitContextPBFTMulti: Failed to commit transactions")
         logger.error("!!!! Failed to commit transactions !!!")
         return False
 
@@ -4336,19 +4344,18 @@ class R2ac(object):
         setTrans = pickle.loads(candidatePool)
         t1 = time.time()
         # print("inside updateBlockLedgerSeTrans, setTrans: " + str(setTrans))
-        # logger.info("updateBlockLedgerSetTransMulti: Received transaction #" + (str(setTrans.index)))
+        logger.info("updateBlockLedgerSetTransMulti: Received transaction #" + (str(setTrans.index)))
         originalLen = len(setTrans)
         while (len(setTrans)>0):
             candidateTransaction = setTrans.pop(0)
             # print("popped element from Pool")
             # print(candidateTransaction)
-            # logger.info("updateBlockLedgerSetTransMulti: popped element from Pool")
+            logger.info("updateBlockLedgerSetTransMulti: popped element from Pool")
             if (candidateTransaction != False):
-                # print("AAAAAAAAAAAAAAAA passed the if")
                 devPublicKey = candidateTransaction[0]
                 deviceTrans = candidateTransaction[1]
                 blk = ChainFunctionsMulti.findBlock(devPublicKey)
-                # logger.info("updateBlockLedgerSetTransMulti: add transaction to chain")
+                logger.info("updateBlockLedgerSetTransMulti: add transaction to chain")
                 ChainFunctionsMulti.addBlockTransaction(blk, deviceTrans, deviceTrans.nonce)
                 deviceTrans.__class__ = Transaction.Transaction
                 candidateLifecycleEvent = deviceTrans.data
@@ -4361,7 +4368,7 @@ class R2ac(object):
                 logT20.append("gateway;" + gatewayName +";Context;" +blk.blockContext + ";T20;Transaction Latency;" + str((currentTimestamp - originalTimestamp)/1000))
                 if(isFirst):
                     logT26.append("gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str((currentTimestamp - originalTimestamp) / 1000))
-                # logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
+                logger.info("updateBlockLedgerSetTransMulti: gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
                 # logger.info(
                 #     "gateway;" + gatewayName + ";" + consensus + ";T21;Time to process Tr is;" + str(
                 #         (currentTimestamp - gwTimestamp) / 1000))
@@ -4684,6 +4691,16 @@ def isBlockValidMulti(block):
         logger.error("lastBlk Index = " + str(lastBlk.index))
         logger.error("block.index = " + str(block.index))
         # return False
+        return True
+
+def changeComponentsBetweenDevices(self, deviceId1, deviceId2, comp, type):
+        # Find last block of device1
+        # Find last block of device2
+        # Check the type of chain
+            # Calls specific function related to it
+            # Make changes to current keys? (there's only one key for all components)
+                # Adiciona uma transação de mudança? com o hash do ultimo bloco do dispositivo antigo
+
         return True
 
 #############################################################################

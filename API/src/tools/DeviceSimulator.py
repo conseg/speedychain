@@ -1241,6 +1241,13 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
         logger.error("some exception with addTransactionToPoolMulti now...in blk: " + str(blk) + " tr: " + str(trans))
         return devPubK,devPrivateK,AESKey
 
+def changeComponentsBetweenDevices():
+    deviceId1 = raw_input("Which is the first device ID that you want to schange? (e.g.: dev-gwa)").strip()
+    deviceId2 = raw_input("Which is the second device ID that you want to schange? (e.g.: dev-gwa)").strip()
+    comp = raw_input("What is the component? (SSD, RAM, VID, CPU)").strip()
+    type = raw_input("What is the chain type? (0-default, 1-MultiChains, 2-SingleStructure)").strip()
+    server.changeComponentsBetweenDevices(deviceId1, deviceId2, comp, int(type))
+
 #############################################################################
 #############################################################################
 ######################          Main         ################################
@@ -1284,6 +1291,7 @@ def InteractiveMain():
         28: listTransactionsWithId,
         29: automateLifecycleEvents,
         30: sendLifecycleEventsSingle,
+        31: changeComponentsBetweenDevices,
     }
 
     mode = -1
@@ -1324,7 +1332,7 @@ def InteractiveMain():
         print("28 - Get transactions by component ID (e.g.: SN1234_VID_dev-gwa)")
         print("29 - Automatically create 2 blocks for each device with 100 transactions for each component")
         print("30 - Send all lifecycle events as a structure to block, a single transaction with all components")
-
+        print("31 - Change components between devices")
         print("#############################################################")
 
 
