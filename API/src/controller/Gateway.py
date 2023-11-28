@@ -1332,7 +1332,7 @@ class R2ac(object):
         global transactionLockList
         global transactionConsensusCandidateList
         # print("TTTTTTTTTTTT inside addNewTransactionToSyncList")
-        #logger.info("Inside addNewTransactionToSyncList")
+        logger.info("Inside addNewTransactionToSyncList")
         index =0
         candidateTransactionTuple = (devPubKey, devInfo, context)
         # print ("********* adding a transaction from context: "+context)
@@ -1348,10 +1348,11 @@ class R2ac(object):
                 # if it got the lock, insert a new transaction into the list
                 # candidade tuple is devPubKey, devInfo, context
                 if(transactionConsensusCandidateList[index][0] == context):
+                    logger.info("addNewTransactionToSyncList: appending transaction to consensus list")
                     transactionConsensusCandidateList[index][1].append(candidateTransactionTuple)
                     transactionLockList[index][1].release()
                 else:
-                    logger.error("something went wrong when adding transaction tuple")
+                    logger.info("addNewTransactionToSyncList: ERROR something went wrong when adding transaction tuple")
                     return False
                 # print("VVVVVV Lock released in addnewtransactionsynclist")
                 return True
@@ -1364,6 +1365,7 @@ class R2ac(object):
         # return the attempt to lock the last inserted  [-1] context through its lock [1]
         # print("@@Context List after adding context to lock list for context: "+context)
         transactionLockList[-1][1].acquire(False)
+        logger.info("addNewTransactionToSyncList: appending transaction, after lock")
         transactionConsensusCandidateList.append([context, [candidateTransactionTuple]])
         # transactionConsensusCandidateList.append(candidateTransactionTuple)
         transactionLockList[-1][1].release()
@@ -4534,7 +4536,7 @@ class R2ac(object):
                 #print("deviceData = " + str(deviceData))
                 t2 = time.time()
                 #logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
-                # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Transaction data received")
+                logger.info("addTransactionToPoolMulti: gateway;" + gatewayName + ";" + consensus + ";T1;Transaction data received")
 
                 d = " "+devTime+" "+deviceData
                 isSigned = CryptoFunctions.signVerify(
@@ -4557,7 +4559,7 @@ class R2ac(object):
                         nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, index, matching[0])
                     #ChainFunctionsMulti.addBlockTransaction(blk, transaction, index)
                     t3=time.time()
-                    # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Transaction created")
+                    logger.info("addTransactionToPoolMulti: gateway;" + gatewayName + ";" + consensus + ";T1;Transaction created")
                     while ( self.addNewTransactionToSyncList(devPublicKey, lifecycleEvent, devContext) == False):
                         logger.error("tried to insert and it was not possible, trying again")
                         time.sleep(0.001)
