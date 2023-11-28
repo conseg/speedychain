@@ -1421,56 +1421,59 @@ class R2ac(object):
         global transactionConsensusCandidateList
         #logger.info("ENTERED in get Pool")
         transactionPool = []
-        if (len(transactionConsensusCandidateList) > 0):
-            index = 0
-            for x, y in transactionLockList:
-                if x == context:
-                    # print("X = ", x)
-                    # print("context = ", context)
-                    # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
-                    # print("@@Contextfound")
-                    i = 0
-                    getLockList = transactionLockList[index][1].acquire(False)
-                    while (not (getLockList) and i < 1000):
-                        i = i + 1
-                        # print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
-                        time.sleep(0.001)
+        try:
+            if (len(transactionConsensusCandidateList) > 0):
+                index = 0
+                for x, y in transactionLockList:
+                    if x == context:
+                        # print("X = ", x)
+                        # print("context = ", context)
+                        # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
+                        # print("@@Contextfound")
+                        i = 0
                         getLockList = transactionLockList[index][1].acquire(False)
-                    if (not (getLockList)):
-                        # transactionLockList[index][1].release()
-                        logger.error("tried to GET and it was not possible, returning False")
-                        return pickle.dumps(False)
-                    # if it got the lock, insert a new transaction into the list
+                        while (not (getLockList) and i < 1000):
+                            i = i + 1
+                            # print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
+                            time.sleep(0.001)
+                            getLockList = transactionLockList[index][1].acquire(False)
+                        if (not (getLockList)):
+                            # transactionLockList[index][1].release()
+                            logger.error("tried to GET and it was not possible, returning False")
+                            return pickle.dumps(False)
+                        # if it got the lock, insert a new transaction into the list
 
-                    if (len(transactionConsensusCandidateList[index][1]) > 0):
-                        if (len(transactionConsensusCandidateList[index][1]) > nelements):
-                            # logger.debug("there is a candidade, pop it!!!")
-                            # transactionPool = transactionConsensusCandidateList[index]
-                            # get only N transactions from the correct context and after clean that N transactions
-                            transactionPool = transactionConsensusCandidateList[index][1][:nelements]
-                            # print("there is a pool candidate, pop it!!! context: " + context)
-                            transactionConsensusCandidateList[index][1] = transactionConsensusCandidateList[index][1][nelements:]
+                        if (len(transactionConsensusCandidateList[index][1]) > 0):
+                            if (len(transactionConsensusCandidateList[index][1]) > nelements):
+                                # logger.debug("there is a candidade, pop it!!!")
+                                # transactionPool = transactionConsensusCandidateList[index]
+                                # get only N transactions from the correct context and after clean that N transactions
+                                transactionPool = transactionConsensusCandidateList[index][1][:nelements]
+                                # print("there is a pool candidate, pop it!!! context: " + context)
+                                transactionConsensusCandidateList[index][1] = transactionConsensusCandidateList[index][1][nelements:]
+                                transactionLockList[index][1].release()
+                                pickedTransactionPool = pickle.dumps(transactionPool)
+                                return pickedTransactionPool
+
+                            # if it does not have nelements, return current amount
+                            transactionPool = transactionConsensusCandidateList[index][1]
+                            # logger.info("there is a pool candidate, pop it!!! context: " + context)
+                            transactionConsensusCandidateList[index][1] = []
                             transactionLockList[index][1].release()
                             pickedTransactionPool = pickle.dumps(transactionPool)
                             return pickedTransactionPool
 
-                        # if it does not have nelements, return current amount
-                        transactionPool = transactionConsensusCandidateList[index][1]
-                        # logger.info("there is a pool candidate, pop it!!! context: " + context)
-                        transactionConsensusCandidateList[index][1] = []
                         transactionLockList[index][1].release()
-                        pickedTransactionPool = pickle.dumps(transactionPool)
-                        return pickedTransactionPool
-
-                    transactionLockList[index][1].release()
-                    return pickle.dumps(False)
-                    # print("VVVVVV Transaction Tuple: ")
-                    # print(transactionTuple[0])
-                    # print("second part: ")
-                    # print(transactionTuple[1])
-                    # transaction tuple is formed by devPubKey and devInfo
-                    # return transactionPool
-                index = index + 1
+                        return pickle.dumps(False)
+                        # print("VVVVVV Transaction Tuple: ")
+                        # print(transactionTuple[0])
+                        # print("second part: ")
+                        # print(transactionTuple[1])
+                        # transaction tuple is formed by devPubKey and devInfo
+                        # return transactionPool
+                    index = index + 1
+        except:
+            logger.info("getNElementsLocalTransactionPool: EXCEPTION")
 
         #print("end of get transaction")
         #logger.info("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
@@ -4085,9 +4088,12 @@ class R2ac(object):
         return timeDiff, str(len(transactions))
     
     def startTransactionsConsThreadsMulti(self):
-        for x,y in gwContextConsensus:
-            threading.Thread(target=self.threadTransactionConsensusMulti, args=(x,y)).start()
-            # if (gwContextConsensus[0]) [("0001", "PoA"),("0002", "PBFT")]
+        try:
+            for x,y in gwContextConsensus:
+                threading.Thread(target=self.threadTransactionConsensusMulti, args=(x,y)).start()
+                # if (gwContextConsensus[0]) [("0001", "PoA"),("0002", "PBFT")]
+        except:
+            logger.info("startTransactionsConsThreadsMulti: EXCEPTION")
 
     def threadTransactionConsensusMulti(self, context, consensus):
         # a sleep time to give time to all gateways connect and etc
@@ -4095,12 +4101,15 @@ class R2ac(object):
         # the other sleep times in this method is due to bad parallelism of Python... without any sleep, this thread can leave others in starvation
         if(consensus=="PBFT"):
             # while(True):
-            for index in range(len(orchestratorContextObject)):
-                if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
-                    self.performTransactionPoolPBFTConsensusMulti(context)
-                    # time.sleep(0.02)
-                # else:
-            # time.sleep(0.1)
+            try:
+                for index in range(len(orchestratorContextObject)):
+                    if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
+                        self.performTransactionPoolPBFTConsensusMulti(context)
+                        # time.sleep(0.02)
+                    # else:
+                # time.sleep(0.1)
+            except:
+                logger.info("threadTransactionConsensusMulti: EXCEPTION")
         logger.info("threadTransactionConsensusMulti: END THREAD")
     
     def performTransactionPoolPBFTConsensusMulti(self,context):
@@ -4118,83 +4127,87 @@ class R2ac(object):
         #     # orchestratorContextObject[index][1].exposedURI()
         #     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
         # print("******************I Am the PBFT Leader of context: "+context)
-        while(len(candidatePool)==0):
-            tcc1 = ((time.time()) * 1000) * 1000
-            # just to not printing in every time that enters here, leave it only for interactive
+        logger.info("performTransactionPoolPBFTConsensusMulti: Inside method")
+        try:
+            while(len(candidatePool)==0):
+                tcc1 = ((time.time()) * 1000) * 1000
+                # just to not printing in every time that enters here, leave it only for interactive
 
-            while(self.addContextinLockList(context)==False):
-                # logger.error("I AM NOT WITH LOCK!!!!!")
-                time.sleep(0.001)
-            tempContextPeers = []
-            for x in range(len(contextPeers)):
-                # print(" ***VVVVV **** context? " +contextPeers[x][0])
-                if (contextPeers[x][0] == context):
-                    tempContextPeers = contextPeers[x][1]
-            # use this if you want to get all elements from trpool
-            # pickedCandidatePool = self.getLocalTransactionPool(context)
-            # use this if you want to get first sizePool elements
-            pickedCandidatePool = self.getNElementsLocalTransactionPool(context,sizePool)
-            myPool = pickle.loads(pickedCandidatePool)
-            if (myPool != False):
-                candidatePool = myPool
-                # print("I got my pool in PBFT")
-
-            for p in tempContextPeers:
-                peer = p.object
-                while(peer.addContextinLockList(context)==False):
+                while(self.addContextinLockList(context)==False):
+                    # logger.error("I AM NOT WITH LOCK!!!!!")
                     time.sleep(0.001)
-                # pickedRemotePool = peer.getLocalTransactionPool(context)
-                pickedRemotePool = peer.getNElementsLocalTransactionPool(context,sizePool)
-                remoteCandidatePool = pickle.loads(pickedRemotePool)
+                tempContextPeers = []
+                for x in range(len(contextPeers)):
+                    # print(" ***VVVVV **** context? " +contextPeers[x][0])
+                    if (contextPeers[x][0] == context):
+                        tempContextPeers = contextPeers[x][1]
+                # use this if you want to get all elements from trpool
+                # pickedCandidatePool = self.getLocalTransactionPool(context)
+                # use this if you want to get first sizePool elements
+                pickedCandidatePool = self.getNElementsLocalTransactionPool(context,sizePool)
+                myPool = pickle.loads(pickedCandidatePool)
+                if (myPool != False):
+                    candidatePool = myPool
+                    # print("I got my pool in PBFT")
 
-                if(remoteCandidatePool!=False):
-                    # .extend append each from another list
-                    candidatePool.extend(remoteCandidatePool)
-                    # while(len(remoteCandidatePool)>0):
-                    #     # cant just append the remoteCandidatePool, should add each tuple
-                    #     remoteTR = remoteCandidatePool.pop(0)
-                    #     candidatePool.append((remoteTR[0],remoteTR[1]))
-
-                    # candidatePool.append(remoteCandidatePool)
-            candidatePoolSize = len(candidatePool)
-            if (candidatePoolSize!=0):
-                logger.info("performTransactionPoolPBFTConsensusMulti: Inside PBFT Transaction")
-                # logger.info("**************Inside PBFT Transaction ***************")
-                self.prepareContextPBFTMulti(context,candidatePool,tempContextPeers)
-
-                # if you want to set a min interval between consensus
-                tcc2 = ((time.time()) * 1000) * 1000
-
-                # te2 = ((time.time()) * 1000) * 1000
-                # logger.error("ELECTION; " + str((te2-te1)/1000))
-                self.removeLockfromContext(context)
                 for p in tempContextPeers:
                     peer = p.object
-                    peer.removeLockfromContext(context)
+                    while(peer.addContextinLockList(context)==False):
+                        time.sleep(0.001)
+                    # pickedRemotePool = peer.getLocalTransactionPool(context)
+                    pickedRemotePool = peer.getNElementsLocalTransactionPool(context,sizePool)
+                    remoteCandidatePool = pickle.loads(pickedRemotePool)
 
-                # if ((tcc2 - tcc1) / 1000 < minInterval):
-                #     time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
-                # election for new orchestrator
-                self.electNewContextOrchestrator(context)
-                # orchestratorContextObject.performTransactionPoolPBFTConsensusMulti(context)
-                tcc2 = ((time.time()) * 1000) * 1000
-                logT22.append("T22 CONTEXT; "+context+";PBFT CONSENSUS TIME; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize) + ";TPUT;" + str((candidatePoolSize)/(((tcc2-tcc1)/1000)/1000)))
-                # call to execute the consensus for the new leader
-                for index in range(len(orchestratorContextObject)):
-                    if (orchestratorContextObject[index][0] == context):
-                        threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensusMulti, args=[context]).start()
-                logger.info("performTransactionPoolPBFTConsensusMulti: CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
-                return
+                    if(remoteCandidatePool!=False):
+                        # .extend append each from another list
+                        candidatePool.extend(remoteCandidatePool)
+                        # while(len(remoteCandidatePool)>0):
+                        #     # cant just append the remoteCandidatePool, should add each tuple
+                        #     remoteTR = remoteCandidatePool.pop(0)
+                        #     candidatePool.append((remoteTR[0],remoteTR[1]))
 
-            else:
-                self.removeLockfromContext(context)
-                for p in tempContextPeers:
-                    peer = p.object
-                    peer.removeLockfromContext(context)
-                tcc2 = ((time.time()) * 1000) * 1000
-                if((tcc2 - tcc1) / 1000 < minInterval):
-                    time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
-                    # print("****** sleeping " + str((minInterval - ((tcc2 - tcc1) / 1000)) / 1000) + "ms")
+                        # candidatePool.append(remoteCandidatePool)
+                candidatePoolSize = len(candidatePool)
+                if (candidatePoolSize!=0):
+                    logger.info("performTransactionPoolPBFTConsensusMulti: Inside PBFT Transaction")
+                    # logger.info("**************Inside PBFT Transaction ***************")
+                    self.prepareContextPBFTMulti(context,candidatePool,tempContextPeers)
+
+                    # if you want to set a min interval between consensus
+                    tcc2 = ((time.time()) * 1000) * 1000
+
+                    # te2 = ((time.time()) * 1000) * 1000
+                    # logger.error("ELECTION; " + str((te2-te1)/1000))
+                    self.removeLockfromContext(context)
+                    for p in tempContextPeers:
+                        peer = p.object
+                        peer.removeLockfromContext(context)
+
+                    # if ((tcc2 - tcc1) / 1000 < minInterval):
+                    #     time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
+                    # election for new orchestrator
+                    self.electNewContextOrchestrator(context)
+                    # orchestratorContextObject.performTransactionPoolPBFTConsensusMulti(context)
+                    tcc2 = ((time.time()) * 1000) * 1000
+                    logT22.append("T22 CONTEXT; "+context+";PBFT CONSENSUS TIME; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize) + ";TPUT;" + str((candidatePoolSize)/(((tcc2-tcc1)/1000)/1000)))
+                    # call to execute the consensus for the new leader
+                    for index in range(len(orchestratorContextObject)):
+                        if (orchestratorContextObject[index][0] == context):
+                            threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensusMulti, args=[context]).start()
+                    logger.info("performTransactionPoolPBFTConsensusMulti: CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
+                    return
+
+                else:
+                    self.removeLockfromContext(context)
+                    for p in tempContextPeers:
+                        peer = p.object
+                        peer.removeLockfromContext(context)
+                    tcc2 = ((time.time()) * 1000) * 1000
+                    if((tcc2 - tcc1) / 1000 < minInterval):
+                        time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
+                        # print("****** sleeping " + str((minInterval - ((tcc2 - tcc1) / 1000)) / 1000) + "ms")
+        except:
+            logger.info("performTransactionPoolPBFTConsensusMulti: EXCEPTION")
 
     def prepareContextPBFTMulti(self, context, candidatePool, alivePeers):
         """ Send a new candidatePool for all the available peers on the network\n
@@ -4206,103 +4219,106 @@ class R2ac(object):
         candidateTransactionPool =[]
         votesPoolTotal = []
         validTransactionPool =[]
+        try:
+            while (len(candidatePool) > 0):
+                logger.info("prepareContextPBFTMulti: inside prepare--while")
+                candidateTransaction = candidatePool.pop(0)
+                if (candidateTransaction != False):
+                    logger.info("prepareContextPBFTMulti: inside prepare--notfalse candidate")
+                    devPublicKey = candidateTransaction[0]
+                    lifecycleEvent = candidateTransaction[1]
+                    if(ChainFunctionsMulti.findBlock(devPublicKey)!=False):
+                        blk = ChainFunctionsMulti.findBlock(devPublicKey)
+                        lastBlk = (ChainFunctionsMulti.getLatestBlockTransaction(blk, lifecycleEvent.index))
+                        nextInt = lastBlk.index + 1
+                        signData = CryptoFunctions.signInfo(gwPvt, str(lifecycleEvent.data))
+                        gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                        # code responsible to create the hash between Info nodes.
+                        prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, lifecycleEvent.index)).hash
+                        transaction = Transaction.Transaction(nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, lifecycleEvent.index, lifecycleEvent.id)
+                        
+                        #verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
+                        
+                        candidateTransactionPool.append((devPublicKey, transaction))
+                        logger.info("prepareContextPBFTMulti: prepare--transaction appended")
+                        #trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
+                        # votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
+                        votesPoolTotal.append([(devPublicKey, transaction), ["valid"]])
+            if(len(candidateTransactionPool)==0):
+                logger.info("prepareContextPBFTMulti: tran were invalid or no tran at all (Multi)")
+                logger.error("All tr were invalid or no tr at all (Multi)")
+                return
 
-        while (len(candidatePool) > 0):
-            logger.info("prepareContextPBFTMulti: inside prepare--while")
-            candidateTransaction = candidatePool.pop(0)
-            if (candidateTransaction != False):
-                logger.info("prepareContextPBFTMulti: inside prepare--notfalse candidate")
-                devPublicKey = candidateTransaction[0]
-                lifecycleEvent = candidateTransaction[1]
-                if(ChainFunctionsMulti.findBlock(devPublicKey)!=False):
-                    blk = ChainFunctionsMulti.findBlock(devPublicKey)
-                    lastBlk = (ChainFunctionsMulti.getLatestBlockTransaction(blk, lifecycleEvent.index))
-                    nextInt = lastBlk.index + 1
-                    signData = CryptoFunctions.signInfo(gwPvt, str(lifecycleEvent.data))
-                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
-                    # code responsible to create the hash between Info nodes.
-                    prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, lifecycleEvent.index)).hash
-                    transaction = Transaction.Transaction(nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, lifecycleEvent.index, lifecycleEvent.id)
-                    
-                    #verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
-                    
-                    candidateTransactionPool.append((devPublicKey, transaction))
-                    logger.info("prepareContextPBFTMulti: prepare--transaction appended")
-                    #trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
-                    # votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
-                    votesPoolTotal.append([(devPublicKey, transaction), ["valid"]])
-        if(len(candidateTransactionPool)==0):
-            logger.info("prepareContextPBFTMulti: tran were invalid or no tran at all (Multi)")
-            logger.error("All tr were invalid or no tr at all (Multi)")
-            return
+            dumpedPool = pickle.dumps(candidateTransactionPool)
 
-        dumpedPool = pickle.dumps(candidateTransactionPool)
+            arrayPeersThreads = []
+            # counter =0
+            dumpedGwPub = pickle.dumps(gwPub)
+            for p in alivePeers:
+                logger.info("prepareContextPBFTMulti: peer alive")
+                # default type of thread that accepts return value in the join
+                arrayPeersThreads.append(ThreadWithReturn(target=self.startRemoteVotingMulti, args=(context, dumpedPool, dumpedGwPub, p)))
+                # arrayPeersThreads.append(threading.Thread(target=self.startRemoteVotingMulti, args=(context,dumpedPool,dumpedGwPub,p)))
+                # start the last inserted thread in array
+                arrayPeersThreads[-1].start()
+                # counter = counter+1
 
-        arrayPeersThreads = []
-        # counter =0
-        dumpedGwPub = pickle.dumps(gwPub)
-        for p in alivePeers:
-            logger.info("prepareContextPBFTMulti: peer alive")
-            # default type of thread that accepts return value in the join
-            arrayPeersThreads.append(ThreadWithReturn(target=self.startRemoteVotingMulti, args=(context, dumpedPool, dumpedGwPub, p)))
-            # arrayPeersThreads.append(threading.Thread(target=self.startRemoteVotingMulti, args=(context,dumpedPool,dumpedGwPub,p)))
-            # start the last inserted thread in array
-            arrayPeersThreads[-1].start()
-            # counter = counter+1
+            #logger.info("after start")
+            for i in range(len(arrayPeersThreads)):
 
-        #logger.info("after start")
-        for i in range(len(arrayPeersThreads)):
+                # default class of thread used to have a return on join
+                pickedVotes, pickedVotesSignature, remoteGwPk = arrayPeersThreads[i].join()
+                # arrayPeersThreads[i].join()
+                # logger.error("after join")
 
-            # default class of thread used to have a return on join
-            pickedVotes, pickedVotesSignature, remoteGwPk = arrayPeersThreads[i].join()
-            # arrayPeersThreads[i].join()
-            # logger.error("after join")
+                # will get from a queue of returns (from votes)
+                # pickedVotes, pickedVotesSignature, remoteGwPk = my_queue.get()
 
-            # will get from a queue of returns (from votes)
-            # pickedVotes, pickedVotesSignature, remoteGwPk = my_queue.get()
-
-            # logger.error("got stuff")
-            # pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
-            votes = pickle.loads(pickedVotes)
-            votesSignature = pickle.loads(pickedVotesSignature)
-            # verify if list of votes are valid, i.e., peer signature in votes is correct
-            if(CryptoFunctions.signVerify(str(votes),votesSignature, p.object.getGwPubkey())):
-                logger.info("prepareContextPBFTMulti: Votes Signature is valid")
-                # logger.error("Votes Signature is valid")
-                for index in range(len(votes)):
-                    # if there is a vote
-                    if(votes[index][1]=="valid"):
-                        # append a new vote
-                        votesPoolTotal[index][1].append(votes[index][1])
-                        # verify if it get the minimun number of votes
-                        if (len(votesPoolTotal[index][1]) > ((2 / 3) * len(alivePeers))):
-                            # verify if it was not already inserted
-                            if(not(votesPoolTotal[index][0] in validTransactionPool)):
-                                # insert in validated pool
-                                logger.info("prepareContextPBFTMulti: append to validTransactionPool")
-                                validTransactionPool.append(votesPoolTotal[index][0])
-                                # logger.info("Valid vote appended")
-                if (len(validTransactionPool)==len(votesPoolTotal)):
-                    # logger.error("YES... breaked... reduced the time ;)")
-                    break
-            # get every return from the method votePoolCandidate called by each thread and count votes after joins
+                # logger.error("got stuff")
+                # pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
+                votes = pickle.loads(pickedVotes)
+                votesSignature = pickle.loads(pickedVotesSignature)
+                # verify if list of votes are valid, i.e., peer signature in votes is correct
+                if(CryptoFunctions.signVerify(str(votes),votesSignature, p.object.getGwPubkey())):
+                    logger.info("prepareContextPBFTMulti: Votes Signature is valid")
+                    # logger.error("Votes Signature is valid")
+                    for index in range(len(votes)):
+                        # if there is a vote
+                        if(votes[index][1]=="valid"):
+                            # append a new vote
+                            votesPoolTotal[index][1].append(votes[index][1])
+                            # verify if it get the minimun number of votes
+                            if (len(votesPoolTotal[index][1]) > ((2 / 3) * len(alivePeers))):
+                                # verify if it was not already inserted
+                                if(not(votesPoolTotal[index][0] in validTransactionPool)):
+                                    # insert in validated pool
+                                    logger.info("prepareContextPBFTMulti: append to validTransactionPool")
+                                    validTransactionPool.append(votesPoolTotal[index][0])
+                                    # logger.info("Valid vote appended")
+                    if (len(validTransactionPool)==len(votesPoolTotal)):
+                        # logger.error("YES... breaked... reduced the time ;)")
+                        break
+                # get every return from the method votePoolCandidate called by each thread and count votes after joins
 
 
-        # for v in range(len(votesPoolTotal)):
-        #     if (len(votesPoolTotal[v][1]) > ((2 / 3) * len(alivePeers))):
-        #         # logger.error("APPENDED in final pool")
-        #         validTransactionPool.append(votesPoolTotal[v][0])
+            # for v in range(len(votesPoolTotal)):
+            #     if (len(votesPoolTotal[v][1]) > ((2 / 3) * len(alivePeers))):
+            #         # logger.error("APPENDED in final pool")
+            #         validTransactionPool.append(votesPoolTotal[v][0])
 
-        # commit
+            # commit
 
-        # TODO define how to update peers: all peers or only participating in consensus?
-        #
-        if(self.commitContextPBFTMulti(validTransactionPool,alivePeers)):
-            logger.info("prepareContextPBFTMulti: commitContextPBFTMulti returned true")
-        # if (self.commitContextPBFTMulti(validTransactionPool, peers)):
-            return True
+            # TODO define how to update peers: all peers or only participating in consensus?
+            #
+            if(self.commitContextPBFTMulti(validTransactionPool,alivePeers)):
+                logger.info("prepareContextPBFTMulti: commitContextPBFTMulti returned true")
+            # if (self.commitContextPBFTMulti(validTransactionPool, peers)):
+                return True
 
-        return False
+            return False
+        except:
+            logger.info("prepareContextPBFTMulti: EXCEPTION")
+            return False
 
     def commitContextPBFTMulti(self, validTransactionPool, alivePeers):
         arrayPeersThreads = [] * len(alivePeers)
