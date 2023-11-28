@@ -4097,7 +4097,7 @@ class R2ac(object):
 
     def threadTransactionConsensusMulti(self, context, consensus):
         # a sleep time to give time to all gateways connect and etc
-        time.sleep(5)
+        time.sleep(15)
         # the other sleep times in this method is due to bad parallelism of Python... without any sleep, this thread can leave others in starvation
         if(consensus=="PBFT"):
             # while(True):
