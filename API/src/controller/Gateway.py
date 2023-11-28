@@ -4097,7 +4097,7 @@ class R2ac(object):
 
     def threadTransactionConsensusMulti(self, context, consensus):
         # a sleep time to give time to all gateways connect and etc
-        # time.sleep(5)
+        time.sleep(5)
         # the other sleep times in this method is due to bad parallelism of Python... without any sleep, this thread can leave others in starvation
         if(consensus=="PBFT"):
             # while(True):
@@ -4193,6 +4193,7 @@ class R2ac(object):
                     # call to execute the consensus for the new leader
                     for index in range(len(orchestratorContextObject)):
                         if (orchestratorContextObject[index][0] == context):
+                            logger.info("performTransactionPoolPBFTConsensusMulti: running thread")
                             threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensusMulti, args=[context]).start()
                     logger.info("performTransactionPoolPBFTConsensusMulti: CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
                     return
