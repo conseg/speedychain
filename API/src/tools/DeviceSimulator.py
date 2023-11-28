@@ -878,7 +878,7 @@ def sendLifecycleEventsAsStructure():
             signedData = CryptoFunctions.signInfo(privateKey, data)
             toSend = signedData + data
             encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
-            logger.error("passed through sendData except")
+            logger.error("passed through sendLifecycleEventsAsStructure except")
         try:
             #print ("encobj = "+encobj)
             res = server.addLifecycleEventStructure(publicKey, encobj, lifecycleTypes[i])
@@ -913,7 +913,7 @@ def sendLifecycleEventsMulti():
             signedData = CryptoFunctions.signInfo(privateKey, data)
             toSend = signedData + data
             encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
-            logger.error("passed through sendData except")
+            logger.error("passed through sendLifecycleEventsMulti except")
         try:
             #print ("encobj = "+encobj)
             res = server.addLifecycleEventMulti(publicKey, encobj, lifecycleTypes[i], i)
@@ -950,7 +950,7 @@ def sendLifecycleEventsSingle():
             signedData = CryptoFunctions.signInfo(privateKey, data)
             toSend = signedData + data
             encobj[i] = CryptoFunctions.encryptAES(toSend, serverAESKey)
-            logger.error("passed through sendData except")
+            logger.error("passed through sendLifecycleEventsSingle except")
     try:
         #print ("encobj = "+encobj)
         res = server.addLifecycleEventSingle(publicKey, encobj, lifecycleTypes)
@@ -1206,6 +1206,7 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
 
     except:
         logger.error("was not possible to encrypt... verify aeskey: "+ str(AESKey) +" in blk: " + str(blk) + "tr: " + str(trans))
+        logger.info("was not possible to encrypt... verify aeskey: "+ str(AESKey) +" in blk: " + str(blk) + "tr: " + str(trans))
         devPubK, devPrivateK = generateRSAKeyPair()
         AESKey = addBlockOnChainMultiV2(devPubK, devPrivateK) # this will force gateway to recreate the aes key
         # logger.error("New aeskey is: "+ str(AESKey))
@@ -1218,7 +1219,8 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
         t2 = ((time.time() * 1000) * 1000)
         logT30.append("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000))
         # print(("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000)))
-        logger.error("passed through sendData except")
+        logger.error("passed through sendDataArgsMulti except")
+        logger.info("passed through sendDataArgsMulti except")
     try:
         encobj=pickle.dumps(encobj)
         devPubK = pickle.dumps(devPubK)
@@ -1239,6 +1241,7 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
             return devPubK,devPrivateK,AESKey
     except:
         logger.error("some exception with addTransactionToPoolMulti now...in blk: " + str(blk) + " tr: " + str(trans))
+        logger.info("some exception with addTransactionToPoolMulti now...in blk: " + str(blk) + " tr: " + str(trans))
         return devPubK,devPrivateK,AESKey
 
 def changeComponentsBetweenDevices():

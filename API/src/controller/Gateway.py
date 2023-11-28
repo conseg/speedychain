@@ -4694,14 +4694,14 @@ def isBlockValidMulti(block):
         return True
 
 def changeComponentsBetweenDevices(self, deviceId1, deviceId2, comp, type):
-        # Find last block of device1
-        # Find last block of device2
-        # Check the type of chain
-            # Calls specific function related to it
-            # Make changes to current keys? (there's only one key for all components)
-                # Adiciona uma transação de mudança? com o hash do ultimo bloco do dispositivo antigo
+    # Find last block of device1
+    # Find last block of device2
+    # Check the type of chain
+    # Calls specific function related to it
+        # Make changes to current keys? (there's only one key for all components)
+        # Adiciona uma transacao de mudanca? com o hash do ultimo bloco do dispositivo antigo
 
-        return True
+    return True
 
 #############################################################################
 #############################################################################
