@@ -54,3 +54,13 @@ class BlockHeaderMulti:
             self.previousExpiredBlockHash) + "  " + str(self.previousBlockSignature) 
 
         return txt
+    
+    def getTransactionChainByType(self, type):
+        try:
+            for tChain in self.transactions:
+                t = tChain[1]   # first real transaction
+                if (type in t.identification):
+                    return tChain            
+        except:
+            return False
+

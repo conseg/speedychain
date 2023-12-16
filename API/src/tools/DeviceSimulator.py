@@ -1245,9 +1245,9 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
         return devPubK,devPrivateK,AESKey
 
 def changeComponentsBetweenDevices():
-    deviceId1 = raw_input("Which is the first device ID that you want to schange? (e.g.: dev-gwa)").strip()
-    deviceId2 = raw_input("Which is the second device ID that you want to schange? (e.g.: dev-gwa)").strip()
-    comp = raw_input("What is the component? (SSD, RAM, VID, CPU)").strip()
+    deviceId1 = raw_input("Which is the first device ID that you want to change from? (e.g.: dev-gwa)").strip()
+    deviceId2 = raw_input("Which is the second device ID that you want to change to? (e.g.: dev-gwa)").strip()
+    comp = raw_input("Which component? (SSD, RAM, VID, CPU)").strip()
     type = raw_input("What is the chain type? (0-default, 1-MultiChains, 2-SingleStructure)").strip()
     server.changeComponentsBetweenDevices(deviceId1, deviceId2, comp, int(type))
 

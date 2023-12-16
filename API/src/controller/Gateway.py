@@ -3507,7 +3507,7 @@ class R2ac(object):
         # self.removeLockfromContext(devPublicKey)
         return "block false"
     
-    def addLifecycleEventMulti(self, devPublicKey, encryptedObj, type, index):
+    def addLifecycleEventMulti(self, devPublicKey, encryptedObj, type, index, isLifecycle = True):
         """ Receive a new transaction to be add to the chain, 
             the data will be created as a LifecycleEvent structure
             add the transaction to a block and send it to all peers\n
@@ -3515,6 +3515,7 @@ class R2ac(object):
             @param encryptedObj - Info of the transaction encrypted with AES 256\n
             @param type - Type of the transaction\n
             @param index - Transaction chain index\n
+            @param isLifecycle - True if the data is for a component lifecycle data\n
             @return "ok!" - all done\n
             @return "Invalid Signature" - an invalid key are found\n
             @return "Key not found" - the device's key are not found
@@ -3550,11 +3551,15 @@ class R2ac(object):
                     d, signature, devPublicKey)
                 
                 if isSigned:
-                    deviceInfo = DeviceInfo.DeviceInfo(
-                        signature, devTime, deviceData)
-                    matching = [s for s in componentsId if type in s]
-                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching[0], deviceInfo)
-                    # print("LifecycleEvent: "+str(lifecycleEvent.strEvent()))
+                    if isLifecycle:
+                        deviceInfo = DeviceInfo.DeviceInfo(
+                            signature, devTime, deviceData)
+                        matching = [s for s in componentsId if type in s]
+                        lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching[0], deviceInfo)
+                        # print("LifecycleEvent: "+str(lifecycleEvent.strEvent()))
+                    else:
+                        lifecycleEvent = deviceData
+                        # print("Transaction data: "+str(lifecycleEvent))
 
                     nextInt = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).index + 1
                     signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
@@ -4712,15 +4717,39 @@ def isBlockValidMulti(block):
         # return False
         return True
 
-def changeComponentsBetweenDevices(self, deviceId1, deviceId2, comp, type):
-    # Find last block of device1
-    # Find last block of device2
+# TODO: no DeviceSimulator deve ter um dicionario (matriz?) com todos os par de chaves e o device correspondente
+# cada linha eh um device e cada coluna um novo par de chaves
+# TODO: preciso mandar obj assinados com as chaves privadas de cada bloco (de cada device), 
+# esses objetos são para criar novas transaçoes dizendo que houve mudança de componente
+def changeComponentsBetweenDevices(deviceId1, deviceId2, comp, type):
     # Check the type of chain
-    # Calls specific function related to it
-        # Make changes to current keys? (there's only one key for all components)
-        # Adiciona uma transacao de mudanca? com o hash do ultimo bloco do dispositivo antigo
+    if (type == 1): # Multi Chains
+        # TODO: adicionar a nova transacao de remocao de comp no block1/transaction chain correspondente
+        # Find last block of device1
+        b1 = ChainFunctionsMulti.findLastSameBlock(deviceId1)
+        if (b1 == False):
+            print("Block for Device1 with ID=" + str(deviceId1) + " not found")
+            return False
+        # TODO: adicionar a nova transacao de remocao de comp no block2/transaction chain correspondente
+        # TODO: adicionar uma nova transacao de adicao de novo comp no block2/transaction chain correspondente
+        # com o dado como o hash do ultimo bloco da cadeia anterior
+        # Find last block of device2
+        b2 = ChainFunctionsMulti.findLastSameBlock(deviceId2)
+        if (b2 == False):
+            print("Block for Device2 with ID=" + str(deviceId2) + " not found")
+            return False
+                
+        chainIndex1 = b1.getTransactionChainByType(comp)
+        tChain2 = b2.getTransactionChainByType(comp)
+        ChainFunctionsMulti.addBlockTransaction(block, transaction, index)
+        
+        # Calls specific function related to it
+            # Make changes to current keys? (there's only one key for all components)
+            # Adiciona uma transacao de mudanca? com o hash do ultimo bloco do dispositivo antigo
 
-    return True
+        return True
+    
+    return False
 
 #############################################################################
 #############################################################################
