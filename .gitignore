@@ -116,4 +116,4 @@ venv.bak/
 *.sum
 
 # Chain persistent files
-*.txt
+# *.txt

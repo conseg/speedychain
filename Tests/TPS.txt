@@ -1,0 +1,89 @@
+1)
+FILE: trans_multi.txt
+Number of values: 80000
+Average of float values: 3.25219624937
+FILE: trans_normal.txt
+Number of values: 80000
+Average of float values: 3.39812694788
+
+2)
+FILE: trans_multi.txt
+Number of values: 80000
+Average of float values: 3.31964496374
+FILE: trans_normal.txt
+Number of values: 80000
+Average of float values: 3.45156051219
+
+3)
+FILE: trans_multi.txt
+Number of values: 80000
+Average of float values: 3.40096586645
+FILE: trans_normal.txt
+Number of values: 80000
+Average of float values: 3.39058395624
+
+4)
+FILE: trans_multi.txt
+Number of values: 80000
+Average of float values: 3.44886247516
+FILE: trans_normal.txt
+Number of values: 80000
+Average of float values: 3.37827641964
+
+
+5)
+FILE: trans_multi.txt
+Number of values: 80000
+Average of float values: 3.27645082176
+FILE: trans_normal.txt
+Number of values: 80000
+Average of float values: 3.41782112122
+
+6)
+FILE: trans_multi.txt
+Number of values: 80000
+Average of float values: 3.24584566355
+FILE: trans_normal.txt
+Number of values: 80000
+Average of float values: 3.60996436179
+
+7)
+FILE: trans_multi.txt
+Number of values: 80000
+Average of float values: 3.43188734353
+FILE: trans_normal.txt
+Number of values: 80000
+Average of float values: 3.38118236065
+
+8)
+FILE: trans_multi.txt
+Number of values: 80000
+Average of float values: 3.24626452029
+FILE: trans_normal.txt
+Number of values: 80000
+Average of float values: 3.32622893155
+
+9)
+FILE: trans_multi.txt
+Number of values: 80000
+Average of float values: 3.282243523
+FILE: trans_normal.txt
+Number of values: 80000
+Average of float values: 3.50502966642
+
+
+Multi
+Average of float values: 3.25219624937
+Average of float values: 3.31964496374
+Average of float values: 3.40096586645
+Average of float values: 3.27645082176
+Average of float values: 3.282243523
+AVG:  3.306900684864
+
+Normal
+Average of float values: 3.39812694788
+Average of float values: 3.45156051219
+Average of float values: 3.39058395624
+Average of float values: 3.41782112122
+Average of float values: 3.38118236065
+AVG: 3.40765457924

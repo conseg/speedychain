@@ -1,0 +1,65 @@
+10 blocks each with 1000 transactions for each component
+
+1)
+Time to create all blocks and transactions: 4360999.566078186035
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 10000 transactions (NORMAL): 9.591817855835
+Time to get all 10010 transactions (MULTI): 0.627040863037
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 10000 transactions (NORMAL): 10.356903076172
+Time to get all 10010 transactions (MULTI): 0.683069229126
+
+2)
+Time to create all blocks and transactions: 4517141.819953918457
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 10000 transactions (NORMAL): 9.454011917114
+Time to get all 10010 transactions (MULTI): 0.638008117676
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 10000 transactions (NORMAL): 9.717941284180
+Time to get all 10010 transactions (MULTI): 0.458955764771
+
+3)
+Time to create all blocks and transactions: 4645822.249889373779
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 10000 transactions (NORMAL): 9.735107421875
+Time to get all 10010 transactions (MULTI): 0.633955001831
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 10000 transactions (NORMAL): 10.084867477417
+Time to get all 10010 transactions (MULTI): 0.442981719971
+
+4)
+Time to create all blocks and transactions: 4651932.809114456177
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 10000 transactions (NORMAL): 9.469985961914
+Time to get all 10010 transactions (MULTI): 0.590085983276
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 10000 transactions (NORMAL): 9.915113449097
+Time to get all 10010 transactions (MULTI): 0.427007675171
+
+5)
+Time to create all blocks and transactions: 4627621.896028518677
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 10000 transactions (NORMAL): 9.855031967163
+Time to get all 10010 transactions (MULTI): 0.545978546143
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 10000 transactions (NORMAL): 10.426044464111
+Time to get all 10010 transactions (MULTI): 0.499963760376
+
+6)
+Time to create all blocks and transactions: 4707472.111940383911
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 10000 transactions (NORMAL): 9.246110916138
+Time to get all 10010 transactions (MULTI): 0.489950180054
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 10000 transactions (NORMAL): 10.509014129639
+Time to get all 10010 transactions (MULTI): 0.431776046753
+
+7)
+Time to create all blocks and transactions: 4641093.409061431885
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 10000 transactions (NORMAL): 9.842157363892
+Time to get all 10010 transactions (MULTI): 0.653028488159
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 10000 transactions (NORMAL): 10.056972503662
+Time to get all 10010 transactions (MULTI): 0.425100326538
+
