@@ -916,10 +916,43 @@ def sendLifecycleEventsMulti():
             logger.error("passed through sendLifecycleEventsMulti except")
         try:
             #print ("encobj = "+encobj)
-            res = server.addLifecycleEventMulti(publicKey, encobj, lifecycleTypes[i], i)
+            res = server.addLifecycleEventMulti(publicKey, encobj, i, lifecycleTypes[i])
             #print ("result = "+str(res))
         except:
             logger.error("some exception with sendLifecycleEventsMulti now...")
+
+def sendEventMulti(event, chainIndex):
+    """
+    All "Multi" methods are related to multiple transaction chains
+    """
+    t = ((time.time() * 1000) * 1000)
+    timeStr = " {:.0f}".format(t)
+    data = timeStr + event
+    #logger.debug("data = "+data)
+    #print("")
+    #print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
+
+    signedData = CryptoFunctions.signInfo(privateKey, data)
+    #print ("###Signature lenght: " + str(len(signedData)))
+    toSend = signedData + data
+    #print ("toSend = "+toSend)
+    #logger.debug("ServeAESKEY = " + serverAESKey)
+    try:
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+    except:
+        logger.error("was not possible to encrypt... verify aeskey")
+        newKeyPair()
+        addBlockOnChainMulti() # this will force gateway to recreate the aes key
+        signedData = CryptoFunctions.signInfo(privateKey, data)
+        toSend = signedData + data
+        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        logger.error("passed through sendLifecycleEventsMulti except")
+    try:
+        #print ("encobj = "+encobj)
+        res = server.addLifecycleEventMulti(publicKey, encobj, chainIndex, "", False)
+        #print ("result = "+str(res))
+    except:
+        logger.error("some exception with sendLifecycleEventsMulti now...")
 
 def sendLifecycleEventsSingle():
     """
@@ -1031,20 +1064,48 @@ def automateLifecycleEvents():
         diferentBlocks * blocks) + " blocks for each device and " + str(
         transactions) + " for each block\n")
     t1 = time.time()
+    tNormal = 0
+    tMulti = 0
     for i in range(diferentBlocks):
         setServerWithUri(gatewayUriA)
+
+        t3 = time.time()
         automateLifecycleEventsNormal(blocks, transactions)
+        tNormal = tNormal + time.time() - t3
+        t3 = time.time()
         automateLifecycleEventsMulti(blocks, transactions)
+        tMulti = tMulti + time.time() - t3
         setServerWithUri(gatewayUriB)
+        t3 = time.time()
         automateLifecycleEventsNormal(blocks, transactions)
+        tNormal = tNormal + time.time() - t3
+        t3 = time.time()
         automateLifecycleEventsMulti(blocks, transactions)
+        tMulti = tMulti + time.time() - t3
         setServerWithUri(gatewayUriC)
+        t3 = time.time()
         automateLifecycleEventsNormal(blocks, transactions)
+        tNormal = tNormal + time.time() - t3
+        t3 = time.time()
         automateLifecycleEventsMulti(blocks, transactions)
+        tMulti = tMulti + time.time() - t3
         setServerWithUri(gatewayUriD)
+        t3 = time.time()
         automateLifecycleEventsNormal(blocks, transactions)
+        tNormal = tNormal + time.time() - t3
+        t3 = time.time()
         automateLifecycleEventsMulti(blocks, transactions)
+        tMulti = tMulti + time.time() - t3
     
+    # f = open('trans_normal.txt', "a")
+    # timeDiff = '{0:.12f}'.format(tNormal * 1000)
+    # f.write("Time to create all transactions: " + str(timeDiff) + "\n\n")
+    # f.close()
+    # f = open('trans_multi.txt', "a")
+    # timeDiff = '{0:.12f}'.format(tMulti * 1000)
+    # f.write("Time to create all transactions: " + str(timeDiff) + "\n\n")
+    # f.close()
+
     t2 = time.time()
     timeDiff = '{0:.12f}'.format((t2 - t1) * 1000)
     print("Time to create all blocks and transactions: " + str(timeDiff))
@@ -1244,12 +1305,31 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
         logger.info("ERROR: some exception with addTransactionToPoolMulti now...in blk: " + str(blk) + " tr: " + str(trans))
         return devPubK,devPrivateK,AESKey
 
-def changeComponentsBetweenDevices():
-    deviceId1 = raw_input("Which is the first device ID that you want to change from? (e.g.: dev-gwa)").strip()
-    deviceId2 = raw_input("Which is the second device ID that you want to change to? (e.g.: dev-gwa)").strip()
-    comp = raw_input("Which component? (SSD, RAM, VID, CPU)").strip()
+def changeComponents():
+    # Change the target component from this Device to a new one and put the old component to an other Device
+    gwUri = raw_input("Which is the device URI that will receive the component? (gateway URI)").strip()
+    comp = raw_input("Which component? (SSD, RAM, VID or CPU)").strip()
     type = raw_input("What is the chain type? (0-default, 1-MultiChains, 2-SingleStructure)").strip()
-    server.changeComponentsBetweenDevices(deviceId1, deviceId2, comp, int(type))
+    
+    if type == 1:
+        chainIndex = 0
+        for lt in range(lifecycleTypes):
+            if lifecycleTypes[lt] == str(comp):
+                chainIndex = lt
+
+        compId = server.getComponentNameByType(comp)
+        sendEventMulti("Removing old component: " + str(compId), chainIndex)
+        newCompId = compId + "_NEW"
+        sendEventMulti("Adding new component: " + str(newCompId), chainIndex)
+        server.updateComponentNameByType(comp, newCompId)
+
+        setServerWithUri(gwUri)
+        compId2 = server.getComponentNameByType(comp)
+        sendEventMulti("Removing old component: " + str(compId2), chainIndex)
+        sendEventMulti("Adding new component: " + str(compId), chainIndex)
+        server.updateComponentNameByType(comp, compId)
+        
+        setServerWithUri(gatewayURI)
 
 #############################################################################
 #############################################################################
@@ -1294,7 +1374,7 @@ def InteractiveMain():
         28: listTransactionsWithId,
         29: automateLifecycleEvents,
         30: sendLifecycleEventsSingle,
-        31: changeComponentsBetweenDevices,
+        31: changeComponents,
     }
 
     mode = -1
@@ -1306,6 +1386,7 @@ def InteractiveMain():
         print("2 - Add Peer")
         print(
             "3 - Authentication Request [a)Gw Generate AES Key;b)Enc key with RSA;c)Dec AES Key]")
+        print("     AKA: Add block on chain")
         print(
             "4 - Produce Data [a)sign data;b)encrypt with AES key;c)Send to Gateway;d)GW update ledger and peers")
         print("5 - List Block Headers from connected Gateway")
@@ -1333,7 +1414,8 @@ def InteractiveMain():
         print("26 - Send all lifecycle events as a structure to block, one transaction on each transaction chain")
         print("27 - Get blocks by device ID (e.g.: dev-gwa)")
         print("28 - Get transactions by component ID (e.g.: SN1234_VID_dev-gwa)")
-        print("29 - Automatically create 2 blocks for each device with 100 transactions for each component")
+        print(
+            "29 - Automatically create X blocks for each device with Y transactions for each component (X and Y should be changed on code)")
         print("30 - Send all lifecycle events as a structure to block, a single transaction with all components")
         print("31 - Change components between devices")
         print("#############################################################")

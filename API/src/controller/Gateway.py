@@ -2211,8 +2211,12 @@ class R2ac(object):
             # print("Before encryption of rsa2")
 
             t3 = time.time()
+            timeDiff = '{0:.12f}'.format((t3 - t1) * 1000)
+            # f = open('trans_normal.txt', "a")
+            # f.write(timeDiff + "\n")
+            # f.close
             # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
-            logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
+            logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + timeDiff)
             # logger.debug("|---------------------------------------------------------------------|")
             # print("block added")
         return encKey
@@ -3458,8 +3462,8 @@ class R2ac(object):
                         signature, devTime, deviceData)
                     #print("DeviceInfo: "+str(deviceInfo))
                     #print(deviceInfo)
-                    matching = [s for s in componentsId if type in s]
-                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching[0], deviceInfo)
+                    matching = getComponentNameByType(type)
+                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching, deviceInfo)
                     #print("LifecycleEvent: "+str(lifecycleEvent.strEvent()))
                     #print(lifecycleEvent)
 
@@ -3473,7 +3477,7 @@ class R2ac(object):
                     prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
                     
                     transaction = Transaction.Transaction(
-                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, matching[0])
+                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, matching)
                     #print("Transaction: "+str(transaction.strBlock()))
                     #print(transaction)
                     #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
@@ -3488,7 +3492,12 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #             str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    timeDiff = str('{0:.12f}'.format((t2 - t1) * 1000))
+
+                    # f = open('trans_normal.txt', "a")
+                    # f.write(timeDiff + "\n")
+                    # f.close
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + timeDiff)
                     currentTimestamp = float(((time.time()) * 1000) * 1000)
                     logger.info("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
                             (currentTimestamp - float(devTime)) / 1000))
@@ -3507,14 +3516,14 @@ class R2ac(object):
         # self.removeLockfromContext(devPublicKey)
         return "block false"
     
-    def addLifecycleEventMulti(self, devPublicKey, encryptedObj, type, index, isLifecycle = True):
+    def addLifecycleEventMulti(self, devPublicKey, encryptedObj, index, type = "", isLifecycle = True):
         """ Receive a new transaction to be add to the chain, 
             the data will be created as a LifecycleEvent structure
             add the transaction to a block and send it to all peers\n
             @param devPublicKey - Public key from the sender device\n
             @param encryptedObj - Info of the transaction encrypted with AES 256\n
-            @param type - Type of the transaction\n
             @param index - Transaction chain index\n
+            @param type - Type of the transaction\n
             @param isLifecycle - True if the data is for a component lifecycle data\n
             @return "ok!" - all done\n
             @return "Invalid Signature" - an invalid key are found\n
@@ -3582,7 +3591,11 @@ class R2ac(object):
                     # logger.debug("Sending block #" +
                     #             str(blk.index) + " to peers...")
                     t2 = time.time()
-                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    timeDiff = str('{0:.12f}'.format((t2 - t1) * 1000))
+                    # f = open('trans_multi.txt', "a")
+                    # f.write(timeDiff + "\n")
+                    # f.close
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + timeDiff)
                     currentTimestamp = float(((time.time()) * 1000) * 1000)
                     logger.info("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
                             (currentTimestamp - float(devTime)) / 1000))
@@ -3838,8 +3851,12 @@ class R2ac(object):
         # print("Before encription of rsa2")
 
         t3 = time.time()
+        timeDiff = '{0:.12f}'.format((t3 - t1) * 1000)
+        # f = open('trans_multi.txt', "a")
+        # f.write(timeDiff + "\n")
+        # f.close
         # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
-        logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
+        logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + timeDiff)
         # logger.debug("|---------------------------------------------------------------------|")
         # print("block added")
         return encKey
@@ -4567,8 +4584,8 @@ class R2ac(object):
                 if isSigned:
                     deviceInfo = DeviceInfo.DeviceInfo(
                         signature, devTime, deviceData)
-                    matching = [s for s in componentsId if type in s]   
-                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching[0], deviceInfo, index)
+                    matching = getComponentNameByType(type)
+                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching, deviceInfo, index)
                     # send to consensus here
                     devContext = blk.blockContext
                     t2=time.time()
@@ -4578,7 +4595,7 @@ class R2ac(object):
                     gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
                     prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).hash
                     transaction = Transaction.Transaction(
-                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, index, matching[0])
+                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, index, matching)
                     #ChainFunctionsMulti.addBlockTransaction(blk, transaction, index)
                     t3=time.time()
                     logger.info("addTransactionToPoolMulti: gateway;" + gatewayName + ";" + consensus + ";T1;Transaction created")
@@ -4717,39 +4734,14 @@ def isBlockValidMulti(block):
         # return False
         return True
 
-# TODO: no DeviceSimulator deve ter um dicionario (matriz?) com todos os par de chaves e o device correspondente
-# cada linha eh um device e cada coluna um novo par de chaves
-# TODO: preciso mandar obj assinados com as chaves privadas de cada bloco (de cada device), 
-# esses objetos são para criar novas transaçoes dizendo que houve mudança de componente
-def changeComponentsBetweenDevices(deviceId1, deviceId2, comp, type):
-    # Check the type of chain
-    if (type == 1): # Multi Chains
-        # TODO: adicionar a nova transacao de remocao de comp no block1/transaction chain correspondente
-        # Find last block of device1
-        b1 = ChainFunctionsMulti.findLastSameBlock(deviceId1)
-        if (b1 == False):
-            print("Block for Device1 with ID=" + str(deviceId1) + " not found")
-            return False
-        # TODO: adicionar a nova transacao de remocao de comp no block2/transaction chain correspondente
-        # TODO: adicionar uma nova transacao de adicao de novo comp no block2/transaction chain correspondente
-        # com o dado como o hash do ultimo bloco da cadeia anterior
-        # Find last block of device2
-        b2 = ChainFunctionsMulti.findLastSameBlock(deviceId2)
-        if (b2 == False):
-            print("Block for Device2 with ID=" + str(deviceId2) + " not found")
-            return False
-                
-        chainIndex1 = b1.getTransactionChainByType(comp)
-        tChain2 = b2.getTransactionChainByType(comp)
-        ChainFunctionsMulti.addBlockTransaction(block, transaction, index)
-        
-        # Calls specific function related to it
-            # Make changes to current keys? (there's only one key for all components)
-            # Adiciona uma transacao de mudanca? com o hash do ultimo bloco do dispositivo antigo
+def getComponentNameByType(type):
+    matching = [s for s in componentsId if type in s]
+    return matching[0]
 
-        return True
-    
-    return False
+def updateComponentNameByType(comp, newCompId):
+    for c in range(componentsId):
+        if (comp in componentsId[c]):
+            componentsId[c] = newCompId
 
 #############################################################################
 #############################################################################
