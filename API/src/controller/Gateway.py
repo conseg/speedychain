@@ -156,8 +156,9 @@ def bootstrapChain2():
     """ generate the RSA key pair for the gateway and create the chain"""
     global gwPub
     global gwPvt
+    print("bootstrapping chain")
     ChainFunctions.startBlockChain()
-    ChainFunctionsMulti.startBlockChain()
+    # ChainFunctionsMulti.startBlockChain()
     gwPub, gwPvt = CryptoFunctions.generateRSAKeyPair()
 
 #############################################################################
@@ -2072,154 +2073,169 @@ class R2ac(object):
             @param devPubKey - request's device public key\n
             @return encKey - RSA encrypted key for the device be able to communicate with the peers
         """
-        global gwPub
-        global consensusLock
-        global orchestratorObject
-        # print("addingblock... DevPubKey:" + devPubKey)
-        # logger.debug("|---------------------------------------------------------------------|")
-        # logger.info("Block received from device")
-        aesKey = ''
-        encKey = ''
-        t1 = time.time()
-        # print("Adding block, PubKey= " + str(devPubKey))
-        blk = ChainFunctions.findBlock(devPubKey)
-
-        if (blk != False and blk.index > 0):
-            # print("inside first if")
-            logger.error("It may be already be registered, generating another aeskey")
-            aesKey = findAESKey(devPubKey)
-            logger.error("passed by findAESKEY")
-            if ((aesKey == False) or (len(aesKey) != 32)):
-                logger.error("aeskey had a problem...")
+        try:
+                
+            print("addingblock... DevPubKey:" + devPubKey)
+            global gwPub
+            global consensusLock
+            global orchestratorObject
+            # print("addingblock... DevPubKey:" + devPubKey)
+            # logger.debug("|---------------------------------------------------------------------|")
+            # logger.info("Block received from device")
+            aesKey = ''
+            encKey = ''
+            t1 = time.time()
+            # print("Adding block, PubKey= " + str(devPubKey))
+            blk = ChainFunctions.findBlock(devPubKey)
+            
+            print("blk: " + str(blk))
+            if (blk != False and blk.index > 0):
+                # print("inside first if")
+                logger.error("It may be already be registered, generating another aeskey")
+                aesKey = findAESKey(devPubKey)
+                logger.error("passed by findAESKEY")
+                if ((aesKey == False) or (len(aesKey) != 32)):
+                    logger.error("aeskey had a problem...")
+                    removeAESKey(aesKey)
+                    aesKey = generateAESKey(blk.publicKey)
+                    encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
+                    return encKey
+                    # t2 = time.time()
+                logger.error("actually it didn't had problem with the key")
+                logger.error("publick key received was: " + str(devPubKey) + "blk key was: " + str(blk.publicKey) + " ...")
                 removeAESKey(aesKey)
                 aesKey = generateAESKey(blk.publicKey)
                 encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
                 return encKey
                 # t2 = time.time()
-            logger.error("actually it didn't had problem with the key")
-            logger.error("publick key received was: " + str(devPubKey) + "blk key was: " + str(blk.publicKey) + " ...")
-            removeAESKey(aesKey)
-            aesKey = generateAESKey(blk.publicKey)
-            encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
-            return encKey
-            # t2 = time.time()
-        else:
-            # print("inside else")
-            # logger.debug("***** New Block: Chain size:" +
-            #              str(ChainFunctions.getBlockchainSize()))
-            pickedKey = pickle.dumps(devPubKey)
-            aesKey = generateAESKey(devPubKey)
-            while(len(aesKey) != 32):
-                logger.error("Badly generated aesKey")
+            else:
+                # logger.debug("***** New Block: Chain size:" +
+                #              str(ChainFunctions.getBlockchainSize()))
+                pickedKey = pickle.dumps(devPubKey)
                 aesKey = generateAESKey(devPubKey)
-            # print("pickedKey: ")
-            # print(pickedKey)
+                while(len(aesKey) != 32):
+                    logger.error("Badly generated aesKey")
+                    aesKey = generateAESKey(devPubKey)
+                print("pickedKey: ")
+                print(pickedKey)
 
-            encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
-            # t2 = time.time()
-            # Old No Consensus
-            # bl = ChainFunctions.createNewBlock(devPubKey, gwPvt)
-            # sendBlockToPeers(bl)
-            # logger.debug("starting block consensus")
-            #############LockCONSENSUS STARTS HERE###############
-            if(consensus == "PBFT"):
-                # PBFT elect new orchestator every time that a new block should be inserted
-                # allPeersAreLocked = False
-                self.lockForConsensus()
-                # print("ConsensusLocks acquired!")
-                self.electNewOrchestrator()
-                # print("New Orchestrator URI: " + str(orchestratorObject.exposedURI()))
-                orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                counter_fails = 0
-                while(orchestratorObject.runPBFT(lifecycleDeviceName)==False):
-                    # logger.info("##### second attmept for a block")
-                    orchestratorObject.removeBlockConsensusCandidate(pickedKey)
-                    # print("$$$$$$$second trial")
+                encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
+                # t2 = time.time()
+                # Old No Consensus
+                # bl = ChainFunctions.createNewBlock(devPubKey, gwPvt)
+                # sendBlockToPeers(bl)
+                # logger.debug("starting block consensus")
+                #############LockCONSENSUS STARTS HERE###############
+                print("Before lockForConsensus")
+                print(consensus)
+                if(consensus == "PBFT"):
+                    # PBFT elect new orchestator every time that a new block should be inserted
+                    # allPeersAreLocked = False
+                    print("PBFT 1")
+                    self.lockForConsensus()
+                    print("PBFT 2")
+                    # print("ConsensusLocks acquired!")
                     self.electNewOrchestrator()
+                    print("PBFT 3")
+                    # print("New Orchestrator URI: " + str(orchestratorObject.exposedURI()))
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                    counter_fails = counter_fails + 1
-                    if (counter_fails > 200):
-                        return -1
+                    counter_fails = 0
+                    print("PBFT 4")
+                    print("device name "+ str(lifecycleDeviceName))
+                    print(orchestratorObject.runPBFT(lifecycleDeviceName))
+                    while(orchestratorObject.runPBFT(lifecycleDeviceName)==False):
+                        # logger.info("##### second attmept for a block")
+                        orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                        self.electNewOrchestrator()
+                        orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                        counter_fails = counter_fails + 1
+                        if (counter_fails > 200):
+                            return -1
+                    print("finished PBFT")
 
-            if(consensus == "dBFT" or consensus == "Witness3"):
-                # print("indo pro dbft")
-                # consensusLock.acquire(1) # only 1 consensus can be running at same time
-                # for p in peers:
-                #     obj=p.object
-                #     obj.acquireLockRemote()
-                self.lockForConsensus()
+                if(consensus == "dBFT" or consensus == "Witness3"):
+                    # print("indo pro dbft")
+                    # consensusLock.acquire(1) # only 1 consensus can be running at same time
+                    # for p in peers:
+                    #     obj=p.object
+                    #     obj.acquireLockRemote()
+                    self.lockForConsensus()
 
-                orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                # print("blockadded!")
-                counter_fails = 0
-                while (orchestratorObject.rundBFT() == False):
-                    # logger.info("##### second attempt for a block")
-                    orchestratorObject.removeBlockConsensusCandidate(pickedKey)
-                    logger.error("Consensus not achieved, trying another one")
-                    self.electNewOrchestrator()
                     orchestratorObject.addBlockConsensusCandidate(pickedKey)
-                    counter_fails = counter_fails +1
-                    if (counter_fails > 200):
-                        return -1
-                # print("after rundbft")
-            if(consensus == "PoW"):
-                # consensusLock.acquire(1) # only 1 consensus can be running at same time
-                # for p in peers:
-                #     obj=p.object
-                #     obj.acquireLockRemote()
-                self.lockForConsensus()
-                # print("ConsensusLocks acquired!")
-                self.addBlockConsensusCandidate(pickedKey)
-                self.runPoW()
-            if(consensus == "None"):
-                self.addBlockConsensusCandidate(pickedKey)
-                self.runNoConsesus(lifecycleDeviceName)
-            if(consensus == "PoA"):
-                self.lockForConsensus()
-                self.addBlockConsensusCandidate(pickedKey)
-                self.runPoA()
+                    # print("blockadded!")
+                    counter_fails = 0
+                    while (orchestratorObject.rundBFT() == False):
+                        # logger.info("##### second attempt for a block")
+                        orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                        logger.error("Consensus not achieved, trying another one")
+                        self.electNewOrchestrator()
+                        orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                        counter_fails = counter_fails +1
+                        if (counter_fails > 200):
+                            return -1
+                    # print("after rundbft")
+                if(consensus == "PoW"):
+                    # consensusLock.acquire(1) # only 1 consensus can be running at same time
+                    # for p in peers:
+                    #     obj=p.object
+                    #     obj.acquireLockRemote()
+                    self.lockForConsensus()
+                    # print("ConsensusLocks acquired!")
+                    self.addBlockConsensusCandidate(pickedKey)
+                    self.runPoW()
+                if(consensus == "None"):
+                    self.addBlockConsensusCandidate(pickedKey)
+                    self.runNoConsesus(lifecycleDeviceName)
+                if(consensus == "PoA"):
+                    self.lockForConsensus()
+                    self.addBlockConsensusCandidate(pickedKey)
+                    self.runPoA()
 
-            # print("after orchestratorObject.addBlockConsensusCandidate")
-            # try:
-            # PBFTConsensus(bl, gwPub, devPubKey)
-            # except KeyboardInterrupt:
-            #     sys.exit()
-            # except:
-            #     print("failed to execute:")
-            #     logger.error("failed to execute:")
-            #     exc_type, exc_value, exc_traceback = sys.exc_info()
-            #     print "*** print_exception:"    l
-            #     traceback.print_exception(exc_type, exc_value, exc_traceback,
-            #                           limit=6, file=sys.stdout)
-            #
-            # logger.debug("end block consensus")
-            # try:
-            #     #thread.start_new_thread(sendBlockToPeers,(bl))
-            #     t1 = sendBlks(1, bl)
-            #     t1.start()
-            # except:
-            #     print "thread not working..."
+                # print("after orchestratorObject.addBlockConsensusCandidate")
+                # try:
+                # PBFTConsensus(bl, gwPub, devPubKey)
+                # except KeyboardInterrupt:
+                #     sys.exit()
+                # except:
+                #     print("failed to execute:")
+                #     logger.error("failed to execute:")
+                #     exc_type, exc_value, exc_traceback = sys.exc_info()
+                #     print "*** print_exception:"    l
+                #     traceback.print_exception(exc_type, exc_value, exc_traceback,
+                #                           limit=6, file=sys.stdout)
+                #
+                # logger.debug("end block consensus")
+                # try:
+                #     #thread.start_new_thread(sendBlockToPeers,(bl))
+                #     t1 = sendBlks(1, bl)
+                #     t1.start()
+                # except:
+                #     print "thread not working..."
+                print("Before releaseLockForConsensus")
+                if(consensus == "PBFT" or consensus == "dBFT" or consensus == "Witness3" or consensus == "PoW" or consensus == "PoA"):
+                    self.releaseLockForConsensus()
+                    for p in peers:
+                        obj = p.object
+                        obj.releaseLockRemote()
+                    # print("ConsensusLocks released!")
+                ######end of lock consensus################
 
-            if(consensus == "PBFT" or consensus == "dBFT" or consensus == "Witness3" or consensus == "PoW" or consensus == "PoA"):
-                self.releaseLockForConsensus()
-                for p in peers:
-                    obj = p.object
-                    obj.releaseLockRemote()
-                # print("ConsensusLocks released!")
-            ######end of lock consensus################
+                # print("Before encryption of rsa2")
 
-            # print("Before encryption of rsa2")
-
-            t3 = time.time()
-            timeDiff = '{0:.12f}'.format((t3 - t1) * 1000)
-            # f = open('trans_normal.txt', "a")
-            # f.write(timeDiff + "\n")
-            # f.close
-            # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
-            logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + timeDiff)
-            # logger.debug("|---------------------------------------------------------------------|")
-            # print("block added")
-        return encKey
+                t3 = time.time()
+                timeDiff = '{0:.12f}'.format((t3 - t1) * 1000)
+                # f = open('trans_normal.txt', "a")
+                # f.write(timeDiff + "\n")
+                # f.close
+                # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + timeDiff)
+                # logger.debug("|---------------------------------------------------------------------|")
+            print("block added")
+            return encKey
+        except Exception as e:
+            print("Error in addBlock")
+            print(e)
+            return -1
 
 
     def getRemoteContext(self):
@@ -2293,6 +2309,7 @@ class R2ac(object):
         """
         # logger.info("Showing Block Header data for peer: " + myURI)
         print("Showing Block Header data for peer: " + myURI)
+        # size = ChainFunctions.getBlockchainSize()
         size = ChainFunctions.getBlockchainSize()
         # logger.info("IoT Ledger size: " + str(size))
         # logger.info("|-----------------------------------------|")
@@ -2701,14 +2718,17 @@ class R2ac(object):
 
     def runPBFT(self, lifecycleDeviceName):
         """ Run the PBFT consensus to add a new block on the chain """
-        # print("I am in runPBFT")
+        print("I am in runPBFT")
         t1 = float(((time.time()) * 1000) * 1000)
         global gwPvt
         global blockContext
         global gwContextConsensus
         global blkCounter
         global logT5
+        print("I am in runPBFT v1")
         devPubKey = getBlockFromSyncList()
+        print("I am in runPBFT v2")
+        # print("runPBFT" + str(devPubKey))
         #verififyKeyContext()
         #vblockContext = "0001"
         # set each block with a different context, e.g., based on the rest of division of bc size by number of contexts
@@ -2718,7 +2738,10 @@ class R2ac(object):
         #     logger.error("no contexts" + " My gw name is: " + gatewayName)
         #     blockContext = "9999"
         # else:
+        
+        print("I am in runPBFT v3")
         blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        print("blockContext: " + str(blockContext))
         blkCounter = blkCounter+1
         # if(random.randrange(1,3) == 1):
         #     blockContext = "0001"
@@ -2726,10 +2749,10 @@ class R2ac(object):
         #     blockContext = "0002"
             # logger.error("******************Changed to 2****************")
         # blockContext = "0002"
-
+        print("createNewBlock")
         blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus, lifecycleDeviceName)
         # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
-
+        print("blk " + str(blk))
         if ((PBFTConsensus(blk, gwPub, devPubKey, lifecycleDeviceName)) == False):
             logger.error("Consensus not finished")
             return False
@@ -4777,9 +4800,10 @@ def getBlockFromSyncList():
         @return devPubKey - Public key from the block
     """
     # logger.debug("running critical stuffff to get sync list......")
+    print("Inside getBlockFromSyncList")
     global lock
     # lock.acquire(1)
-    i=0
+    i=0 
     while (not(lock.acquire(False)) and i < 30):
         i = i + 1
         # logger.info("$$$$$$$$$ not possible to acquire a lock in getblockfromsynclist")
@@ -4788,11 +4812,13 @@ def getBlockFromSyncList():
         return False
     # logger.debug("lock aquired by get method......")
     global blockConsensusCandidateList
+    devPubKey = ""
     if(len(blockConsensusCandidateList) > 0):
         # logger.debug("there is a candidade, pop it!!!")
         devPubKey = blockConsensusCandidateList.pop(0)
     lock.release()
     # logger.debug("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
+    print("Unlocked")
     return devPubKey
 
 # @Roben returning the peer that has a specified PK
