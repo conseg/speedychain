@@ -4,16 +4,21 @@ from .BlockHeader import BlockHeader
 from ..Transaction import Transaction
 from ...tools import CryptoFunctions
 
-import block_pb2_grpc
-import block_pb2
+# from .block_pb2_grpc import *
+# from .block_pb2 import *
+# from .transaction_pb2_grpc import *
+# from .transaction_pb2 import *
 import transaction_pb2_grpc
 import transaction_pb2
+import block_pb2_grpc
+import block_pb2
+
 import time
 import grpc
 
 BlockHeaderChain = []
 
-channel = grpc.insecure_channel('localhost:50051')
+channel = grpc.insecure_channel('localhost:50052')
 stub_block = block_pb2_grpc.BlockServiceStub(channel)
 stub_transaction = transaction_pb2_grpc.TransactionServiceStub(channel)
 
@@ -21,8 +26,8 @@ stub_transaction = transaction_pb2_grpc.TransactionServiceStub(channel)
 def startBlockChain():
     """ Add the genesis block to the chain """
     genesis = getGenesisBlock()
-    try: 
-        request = block_pb2.FindBlockRequest(public_key= genesis.publicKey)
+    try:
+        request = block_pb2.findBlockRequest(public_key= genesis.publicKey)
         response = stub_block.FindBlock(request)
         if response:
             print("Genesis Block already exists")
@@ -30,7 +35,7 @@ def startBlockChain():
     except Exception as e:
         print("Error on startBlockChain")
         # print(e)
-    
+
     addBlockHeader(genesis)
     # BlockHeaderChain.append(getGenesisBlock())
 
@@ -52,7 +57,7 @@ def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device = "device")
     if previousExpiredBlockHash is not "None":
         previousBlockSignature = CryptoFunctions.encryptRSA2(previousExpiredBlock.publicKey, previousExpiredBlockHash)
     print("Create New Block 4")
-    newBlock = generateNextBlock("new block", devPubKey, getLatestBlock(), gwPvt, blockContext, 
+    newBlock = generateNextBlock("new block", devPubKey, getLatestBlock(), gwPvt, blockContext,
                                  consensus, previousExpiredBlockHash, previousBlockSignature, device)
     ##@Regio addBlockHeader is done during consensus! please take it off for running pbft
     #addBlockHeader(newBlock)
@@ -68,7 +73,7 @@ def addBlockHeader(newBlockHeader):
         block = block_pb2.Block(index = int(newBlockHeader.index), previous_hash = str(newBlockHeader.previousHash),
                                 timestamp = int(newBlockHeader.timestamp), hash = str(newBlockHeader.hash),
                                 nonce = int(newBlockHeader.nonce), public_key = str(newBlockHeader.publicKey),
-                                block_context = str(newBlockHeader.blockContext), device = str(newBlockHeader.device),                           
+                                block_context = str(newBlockHeader.blockContext), device = str(newBlockHeader.device),
                                 previous_expired_block_hash = str(newBlockHeader.previousExpiredBlockHash),
                                 previous_block_signature = str(newBlockHeader.previousBlockSignature))
         response = stub_block.AddBlock(block)
@@ -76,7 +81,7 @@ def addBlockHeader(newBlockHeader):
     except Exception as e:
         print("Error on addBlockHeader")
         print(e)
-        
+
     # global BlockHeaderChain
     # BlockHeaderChain.append(newBlockHeader)
 
@@ -87,14 +92,18 @@ def addBlockTransaction(block, transaction):
     """
     # block.transactions.append(transaction)
     try:
+        print("Add Block Transaction")
+        print(block.publicKey)
+        print(transaction)
         transaction = transaction_pb2.Transaction(
-            index = int(transaction.index), previous_hash = str(transaction.previousHash), timestamp = str(transaction.timestamp),
+            index = int(transaction.index), previousHash = str(transaction.previousHash), timestamp = int(transaction.timestamp),
             data= str(transaction.data), signature = str(transaction.signature), nonce = int(transaction.nonce),
             identification = str(transaction.identification),
-            hash = str(transaction.hash),
+            hash = str(transaction.hash)
         )
-        
-        request = block_pb2.AddTransactionRequest(block_hash = block.publicKey, transaction = transaction)
+        print(transaction)
+
+        request = transaction_pb2.AddTransactionRequest(block_public_key = block.publicKey, transaction = transaction)
         stub_transaction.AddTransaction(request)
     except Exception as e:
         print("Error on addBlockTransaction")
@@ -118,7 +127,43 @@ def getLatestBlockTransaction(blk):
     """ Return the latest transaction on a block \n
     @return Transaction
     """
-    return blk.transactions[len(blk.transactions) - 1]
+    # return blk.transactions[len(blk.transactions) - 1]
+    try:
+        request = transaction_pb2.FindLastTransactionRequest(block_public_key=blk.publicKey)
+        response = stub_transaction.FindLastTransaction(request)
+        print("Get Latest Block Transaction")
+        print(response.previousHash)
+        print(response.nonce)
+        print(response)
+        # def __init__(self, index, previousHash, timestamp, data, signature, nonce, id = "id"): self.index = index
+        print("Get Latest Block Transaction 2")
+        transaction = Transaction.Transaction(index = response.index, previousHash = response.previousHash, timestamp = response.timestamp,
+                                data = response.data, signature = response.signature, nonce = response.nonce,
+                                id = response.identification, hash = response.hash)
+        print("Get Latest Block Transaction 3")
+        print(transaction)
+        return transaction
+    except Exception as e:
+        print("Error on getLatestBlockTransaction")
+        print(e)
+
+    return None
+
+def getTransactions(block):
+    request = transaction_pb2.FindAllTransactionsRequest(block_public_key=block.publicKey)
+    print("Get Transactions")
+    print(block.publicKey)
+    response = stub_transaction.FindAllTransactions(request)
+    print(response)
+    transactions = []
+
+    for tr in response:
+        transaction = Transaction.Transaction(index = tr.index, previousHash = tr.previous_hash, timestamp = tr.timestamp,
+                                  data = tr.data, signature = tr.signature, nonce = tr.nonce,
+                                  id = tr.identification, hash = tr.hash)
+        transactions.append(transaction)
+    return transactions
+
 
 def blockContainsTransaction(block, transaction):
     """ Verify if a block contains a transaction \n
@@ -127,9 +172,17 @@ def blockContainsTransaction(block, transaction):
     @return True - the transaction is on the block\n
     @return False - the transcation is not on the block
     """
-    for tr in block.transactions:
-        if tr == transaction:
-            return True
+    try:
+        request = transaction_pb2.ExistsTransactionOnBlockRequet(block_public_key = block.publicKey, transaction_hash = transaction.hash)
+        response = stub_transaction.ExistsTransactionOnBlock(request)
+
+        return response.exists
+    except Exception as e:
+        print("Error on blockContainsTransaction")
+        print(e)
+    # for tr in block.transactions:
+        # if tr == transaction:
+            # return True
 
     return False
 
@@ -149,18 +202,23 @@ def findBlock(key):
     try:
         request = block_pb2.FindBlockRequest(public_key = key)
         response = stub_block.FindBlock(request)
+        print("findBlock response")
+        print(response)
         if response:
+            print("findBlock response true")
             block = BlockHeader(index = response.index, previousHash = response.previous_hash, timestamp = response.timestamp,
-                                transaction = response.transactions, hash = response.hash, nonce = response.nonce,
+                                transaction = [], hash = response.hash, nonce = response.nonce,
                                 publicKey = response.public_key, blockContext = response.block_context, device = response.device,
                                 previousExpiredBlock = response.previous_expired_block_hash, previousBlockSignature = response.previous_block_signature)
-            return block 
+            return block
         else:
+            print("findBlock response false")
             return False
     except Exception as e:
+        print("Error on findBlock")
+        print(e)
         return False
-        # print("Error on findBlock")
-        # print(e)
+
 
 def getBlockchainSize():
     """ Return the amount of blocks on the chain \n
@@ -181,7 +239,7 @@ def getFullChain():
     @return BlockHeader[] - list of all blocks on the chain
     """
     # return BlockHeaderChain
-    try: 
+    try:
         empty = block_pb2.Empty()
         response = stub_block.GetFullChain(empty)
         blocks = []
@@ -200,7 +258,7 @@ def getFullChain():
 def getBlockByIndex(index):
     """ Return the block on a specific position of the chain\n
     @param index - desired block position\n
-    @return BlockHeader 
+    @return BlockHeader
     """
     # global BlockHeaderChain
     # for b in BlockHeaderChain:
@@ -231,7 +289,7 @@ LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
     blk = BlockHeader(index, previousHash, time, inf, hash, nonce, k, blockContext, "None", "None", device)
     return blk
 
-def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus, 
+def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus,
                       previousExpiredBlock, previousBlockSignature, device = "device"):
     """ Receive the information of a new block and create it\n
     @param blockData - information of the new block\n
@@ -241,12 +299,12 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
     @param consensus - it is specified current consensus adopted
     @return BlockHeader - the new block
     """
-    try: 
+    try:
         nextIndex = previousBlock.index + 1
         nextTimestamp = "{:.0f}".format(((time.time() * 1000) * 1000))
         previousBlockHash = CryptoFunctions.calculateHashForBlock(previousBlock)
         nonce = 0
-        nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp, 
+        nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp,
                                                 nonce, pubKey, blockContext, device)
         if(consensus == 'PoW'):
             # PoW nonce difficulty
@@ -254,19 +312,19 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
             target = 2 ** (256 - difficulty_bits) #resulting value is lower when it has more 0 in the left of hash
             while ((long(nextHash,16) > target ) and (nonce < (2 ** 32))): #convert hash to long to verify when it achieve difficulty
                 nonce=nonce+1
-                nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp, 
+                nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp,
                                                     nonce, pubKey, blockContext, device)
         # print("####nonce = " + str(nonce))
         sign = CryptoFunctions.signInfo(gwPvtKey, nextHash)
         inf = Transaction.Transaction(0, nextHash, nextTimestamp, blockData, sign, 0)
         print("####nonce = " + str(nonce))
-        return BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, 
+        return BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash,
                         nonce, pubKey, blockContext, previousExpiredBlock, previousBlockSignature, device)
     except Exception as e:
         print("Error on generateNextBlock")
         print(e)
 
-def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, index, 
+def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, index,
                        device, previousExpiredBlock, previousBlockSignature):
     """ Receive the information of a new block and create it\n
     @param blockData - information of the new block\n
@@ -278,11 +336,11 @@ def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, 
     previousBlock = getLatestBlock()
     nextIndex = index
     previousBlockHash = CryptoFunctions.calculateHashForBlock(previousBlock)
-    nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, timestamp, 
+    nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, timestamp,
                                              nonce, pubKey, blockContext, device)
     inf = Transaction.Transaction(0, nextHash, timestamp, blockData, sign, 0)
 
-    return BlockHeader(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey, 
+    return BlockHeader(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey,
                        blockContext, previousExpiredBlock, previousBlockSignature, device)
 
 def restartChain():
@@ -294,7 +352,7 @@ def restartChain():
 def getBlocksById(id):
     """ Return the blocks with a specific device ID\n
     @param id - Block ID name based on device ID\n
-    @return Blocks 
+    @return Blocks
     """
     blocks = []
     global BlockHeaderChain
@@ -308,7 +366,7 @@ def getBlocksById(id):
 def getTransactionsWithId(componentId):
     """ Return the transactions with a specific component ID\n
     @param componentId - Transaction ID name based on component ID\n
-    @return Transactions 
+    @return Transactions
     """
     blocks = getBlocksById(componentId)
     transactions = []
@@ -323,5 +381,5 @@ def findLastSameBlock(deviceId):
     for i in range(len(BlockHeaderChain) - 1, 0, -1):
         if BlockHeaderChain[i].device == deviceId:
             return BlockHeaderChain[i]
-    
+
     return False

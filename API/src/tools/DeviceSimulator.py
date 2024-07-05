@@ -48,7 +48,7 @@ lifecycleMultiMode = "lifecycleMulti"
 
 def getMyIP():
      """ Return the IP from the gateway
-     @return str 
+     @return str
      """
      # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
      # s.connect(("8.8.8.8", 80))
@@ -89,9 +89,9 @@ def setServer():
     setServerWithUri(uri)
 
 def setServerWithUri(uri):
-    global server    
+    global server
     global lifecycleDeviceName
-    server = Pyro4.Proxy(uri) 
+    server = Pyro4.Proxy(uri)
     lifecycleDeviceName = server.getDeviceName()
     # print("Lifecycle name: " + str(lifecycleDeviceName))
 
@@ -157,7 +157,6 @@ def sendData():
     logger.debug("data = "+data)
     signedData = CryptoFunctions.signInfo(privateKey, data)
     toSend = signedData + timeStr + temperature
-
     try:
 
         encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
@@ -170,11 +169,12 @@ def sendData():
         encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
         logger.error("passed through sendData except")
     try:
-        if(server.addTransaction(publicKey, encobj)=="ok!"):
-            # logger.error("everything good now")
-            return True
-        else:
-            logger.error("something went wrong when sending data")
+        for i in range(100000):
+            if(server.addTransaction(publicKey, encobj)=="ok!"):
+                # logger.error("everything good now")
+                return True
+            else:
+                logger.error("something went wrong when sending data")
     except:
         logger.error("some exception with addTransaction now...")
 
@@ -807,7 +807,7 @@ def listTransactionsMulti():
     status = server.showBlockLedgerMulti(int(index))
     #print (status)
 
-def sendLifecycleEventsAsText():      
+def sendLifecycleEventsAsText():
     """ send each lifecycle event to be added as transaction
         the data is a plaintext\n
     """
@@ -851,7 +851,7 @@ def sendLifecycleEventsAsText():
         except:
             logger.error("some exception with sendLifecycleEventsAsText now...")
 
-def sendLifecycleEventsAsStructure():    
+def sendLifecycleEventsAsStructure():
     """ send each lifecycle event to be added as transaction
         the data will be stored as a LifecycleEvent structure\n
     """
@@ -1055,7 +1055,7 @@ def automateLifecycleEvents():
     gatewayUriB = loadConnection(nameServerIP, nameServerPort, "gwb")
     gatewayUriC = loadConnection(nameServerIP, nameServerPort, "gwc")
     gatewayUriD = loadConnection(nameServerIP, nameServerPort, "gwd")
-    
+
     diferentBlocks = 10
     blocks = 1
     transactions = 500
@@ -1096,7 +1096,7 @@ def automateLifecycleEvents():
         t3 = time.time()
         automateLifecycleEventsMulti(blocks, transactions)
         tMulti = tMulti + time.time() - t3
-    
+
     # f = open('trans_normal.txt', "a")
     # timeDiff = '{0:.12f}'.format(tNormal * 1000)
     # f.write("Time to create all transactions: " + str(timeDiff) + "\n\n")
@@ -1133,7 +1133,7 @@ def automateLifecycleEvents():
         print("another is saving the logs")
     print("Saved Gw logs, now saving Dev logs")
     saveDeviceLog()
-    
+
     #listBlockHeader()
     #listBlockHeaderMulti()
 
@@ -1150,7 +1150,7 @@ def automateLifecycleEventsNormal(blocks, transactions):
                 #print("Create transaction NORMAL " + str(t) + " for block " + str(b))
                 sendLifecycleEventsAsStructure()
                 #time.sleep(1)
-    
+
 def automateLifecycleEventsMulti(blocks, transactions):
     for b in range(blocks):
         #print("Create key pair MULTI " + str(b))
@@ -1310,7 +1310,7 @@ def changeComponents():
     gwUri = raw_input("Which is the device URI that will receive the component? (gateway URI)").strip()
     comp = raw_input("Which component? (SSD, RAM, VID or CPU)").strip()
     type = raw_input("What is the chain type? (0-default, 1-MultiChains, 2-SingleStructure)").strip()
-    
+
     if type == 1:
         chainIndex = 0
         for lt in range(lifecycleTypes):
@@ -1328,7 +1328,7 @@ def changeComponents():
         sendEventMulti("Removing old component: " + str(compId2), chainIndex)
         sendEventMulti("Adding new component: " + str(compId), chainIndex)
         server.updateComponentNameByType(comp, compId)
-        
+
         setServerWithUri(gatewayURI)
 
 #############################################################################
@@ -1433,7 +1433,7 @@ def InteractiveMain():
             break
         try:
             options[mode]()
-            print ("")      # Just print a new line 
+            print ("")      # Just print a new line
         except:
             print("Not a valid input, try again")
             mode = -1

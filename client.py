@@ -6,7 +6,7 @@ import time
 import grpc
 
 def run():
-  channel = grpc.insecure_channel('localhost:50051')
+  channel = grpc.insecure_channel('localhost:50052')
   stub_block = block_pb2_grpc.BlockServiceStub(channel)
   stub_transaction = transaction_pb2_grpc.TransactionServiceStub(channel)
   
