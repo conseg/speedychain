@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11transaction.proto\x12\x12stordy.transaction\"\x9b\x01\n\x0bTransaction\x12\r\n\x05index\x18\x01 \x01(\r\x12\x14\n\x0cpreviousHash\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\x04\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\t\x12\x11\n\tsignature\x18\x05 \x01(\t\x12\r\n\x05nonce\x18\x06 \x01(\r\x12\x16\n\x0eidentification\x18\x07 \x01(\t\x12\x0c\n\x04hash\x18\x08 \x01(\t\"a\n\x15\x41\x64\x64TransactionRequest\x12\x12\n\nblock_hash\x18\x01 \x01(\t\x12\x34\n\x0btransaction\x18\x02 \x01(\x0b\x32\x1f.stordy.transaction.Transaction\"\x07\n\x05\x45mpty\",\n\x1c\x46indTransactionByHashRequest\x12\x0c\n\x04hash\x18\x01 \x01(\t\"N\n\x1e\x45xistsTransactionOnBlockRequet\x12\x12\n\nblock_hash\x18\x01 \x01(\t\x12\x18\n\x10transaction_hash\x18\x02 \x01(\t\"/\n\x1d\x45xistsTransactionOnBlockReply\x12\x0e\n\x06\x65xists\x18\x01 \x01(\x08\x32\xe2\x02\n\x12TransactionService\x12X\n\x0e\x41\x64\x64Transaction\x12).stordy.transaction.AddTransactionRequest\x1a\x19.stordy.transaction.Empty\"\x00\x12l\n\x15\x46indTransactionByHash\x12\x30.stordy.transaction.FindTransactionByHashRequest\x1a\x1f.stordy.transaction.Transaction\"\x00\x12\x83\x01\n\x18\x45xistsTransactionOnBlock\x12\x32.stordy.transaction.ExistsTransactionOnBlockRequet\x1a\x31.stordy.transaction.ExistsTransactionOnBlockReply\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x11transaction.proto\x12\x12stordy.transaction\"\x9b\x01\n\x0bTransaction\x12\r\n\x05index\x18\x01 \x01(\r\x12\x14\n\x0cpreviousHash\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\x04\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\t\x12\x11\n\tsignature\x18\x05 \x01(\t\x12\r\n\x05nonce\x18\x06 \x01(\r\x12\x16\n\x0eidentification\x18\x07 \x01(\t\x12\x0c\n\x04hash\x18\x08 \x01(\t\"6\n\x1a\x46indAllTransactionsRequest\x12\x18\n\x10\x62lock_public_key\x18\x01 \x01(\t\"Q\n\x18\x46indAllTransactionsReply\x12\x35\n\x0ctransactions\x18\x01 \x03(\x0b\x32\x1f.stordy.transaction.Transaction\"\x81\x01\n\x15\x41\x64\x64TransactionRequest\x12\x18\n\x10\x62lock_public_key\x18\x01 \x01(\t\x12\x34\n\x0btransaction\x18\x02 \x01(\x0b\x32\x1f.stordy.transaction.Transaction\x12\x10\n\x03qtd\x18\x03 \x01(\x05H\x00\x88\x01\x01\x42\x06\n\x04_qtd\"\x07\n\x05\x45mpty\",\n\x1c\x46indTransactionByHashRequest\x12\x0c\n\x04hash\x18\x01 \x01(\t\"T\n\x1e\x45xistsTransactionOnBlockRequet\x12\x18\n\x10\x62lock_public_key\x18\x01 \x01(\t\x12\x18\n\x10transaction_hash\x18\x02 \x01(\t\"/\n\x1d\x45xistsTransactionOnBlockReply\x12\x0e\n\x06\x65xists\x18\x01 \x01(\x08\"6\n\x1a\x46indLastTransactionRequest\x12\x18\n\x10\x62lock_public_key\x18\x01 \x01(\t2\xc3\x04\n\x12TransactionService\x12X\n\x0e\x41\x64\x64Transaction\x12).stordy.transaction.AddTransactionRequest\x1a\x19.stordy.transaction.Empty\"\x00\x12l\n\x15\x46indTransactionByHash\x12\x30.stordy.transaction.FindTransactionByHashRequest\x1a\x1f.stordy.transaction.Transaction\"\x00\x12\x83\x01\n\x18\x45xistsTransactionOnBlock\x12\x32.stordy.transaction.ExistsTransactionOnBlockRequet\x1a\x31.stordy.transaction.ExistsTransactionOnBlockReply\"\x00\x12h\n\x13\x46indLastTransaction\x12..stordy.transaction.FindLastTransactionRequest\x1a\x1f.stordy.transaction.Transaction\"\x00\x12u\n\x13\x46indAllTransactions\x12..stordy.transaction.FindAllTransactionsRequest\x1a,.stordy.transaction.FindAllTransactionsReply\"\x00\x62\x06proto3'
 )
 
 
@@ -106,25 +106,18 @@ _TRANSACTION = _descriptor.Descriptor(
 )
 
 
-_ADDTRANSACTIONREQUEST = _descriptor.Descriptor(
-  name='AddTransactionRequest',
-  full_name='stordy.transaction.AddTransactionRequest',
+_FINDALLTRANSACTIONSREQUEST = _descriptor.Descriptor(
+  name='FindAllTransactionsRequest',
+  full_name='stordy.transaction.FindAllTransactionsRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='block_hash', full_name='stordy.transaction.AddTransactionRequest.block_hash', index=0,
+      name='block_public_key', full_name='stordy.transaction.FindAllTransactionsRequest.block_public_key', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='transaction', full_name='stordy.transaction.AddTransactionRequest.transaction', index=1,
-      number=2, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -141,7 +134,90 @@ _ADDTRANSACTIONREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=199,
-  serialized_end=296,
+  serialized_end=253,
+)
+
+
+_FINDALLTRANSACTIONSREPLY = _descriptor.Descriptor(
+  name='FindAllTransactionsReply',
+  full_name='stordy.transaction.FindAllTransactionsReply',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='transactions', full_name='stordy.transaction.FindAllTransactionsReply.transactions', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=255,
+  serialized_end=336,
+)
+
+
+_ADDTRANSACTIONREQUEST = _descriptor.Descriptor(
+  name='AddTransactionRequest',
+  full_name='stordy.transaction.AddTransactionRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='block_public_key', full_name='stordy.transaction.AddTransactionRequest.block_public_key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='transaction', full_name='stordy.transaction.AddTransactionRequest.transaction', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='qtd', full_name='stordy.transaction.AddTransactionRequest.qtd', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='_qtd', full_name='stordy.transaction.AddTransactionRequest._qtd',
+      index=0, containing_type=None,
+      create_key=_descriptor._internal_create_key,
+    fields=[]),
+  ],
+  serialized_start=339,
+  serialized_end=468,
 )
 
 
@@ -165,8 +241,8 @@ _EMPTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=298,
-  serialized_end=305,
+  serialized_start=470,
+  serialized_end=477,
 )
 
 
@@ -197,8 +273,8 @@ _FINDTRANSACTIONBYHASHREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=307,
-  serialized_end=351,
+  serialized_start=479,
+  serialized_end=523,
 )
 
 
@@ -211,7 +287,7 @@ _EXISTSTRANSACTIONONBLOCKREQUET = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='block_hash', full_name='stordy.transaction.ExistsTransactionOnBlockRequet.block_hash', index=0,
+      name='block_public_key', full_name='stordy.transaction.ExistsTransactionOnBlockRequet.block_public_key', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -236,8 +312,8 @@ _EXISTSTRANSACTIONONBLOCKREQUET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=353,
-  serialized_end=431,
+  serialized_start=525,
+  serialized_end=609,
 )
 
 
@@ -268,17 +344,56 @@ _EXISTSTRANSACTIONONBLOCKREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=433,
-  serialized_end=480,
+  serialized_start=611,
+  serialized_end=658,
 )
 
+
+_FINDLASTTRANSACTIONREQUEST = _descriptor.Descriptor(
+  name='FindLastTransactionRequest',
+  full_name='stordy.transaction.FindLastTransactionRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='block_public_key', full_name='stordy.transaction.FindLastTransactionRequest.block_public_key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=660,
+  serialized_end=714,
+)
+
+_FINDALLTRANSACTIONSREPLY.fields_by_name['transactions'].message_type = _TRANSACTION
 _ADDTRANSACTIONREQUEST.fields_by_name['transaction'].message_type = _TRANSACTION
+_ADDTRANSACTIONREQUEST.oneofs_by_name['_qtd'].fields.append(
+  _ADDTRANSACTIONREQUEST.fields_by_name['qtd'])
+_ADDTRANSACTIONREQUEST.fields_by_name['qtd'].containing_oneof = _ADDTRANSACTIONREQUEST.oneofs_by_name['_qtd']
 DESCRIPTOR.message_types_by_name['Transaction'] = _TRANSACTION
+DESCRIPTOR.message_types_by_name['FindAllTransactionsRequest'] = _FINDALLTRANSACTIONSREQUEST
+DESCRIPTOR.message_types_by_name['FindAllTransactionsReply'] = _FINDALLTRANSACTIONSREPLY
 DESCRIPTOR.message_types_by_name['AddTransactionRequest'] = _ADDTRANSACTIONREQUEST
 DESCRIPTOR.message_types_by_name['Empty'] = _EMPTY
 DESCRIPTOR.message_types_by_name['FindTransactionByHashRequest'] = _FINDTRANSACTIONBYHASHREQUEST
 DESCRIPTOR.message_types_by_name['ExistsTransactionOnBlockRequet'] = _EXISTSTRANSACTIONONBLOCKREQUET
 DESCRIPTOR.message_types_by_name['ExistsTransactionOnBlockReply'] = _EXISTSTRANSACTIONONBLOCKREPLY
+DESCRIPTOR.message_types_by_name['FindLastTransactionRequest'] = _FINDLASTTRANSACTIONREQUEST
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Transaction = _reflection.GeneratedProtocolMessageType('Transaction', (_message.Message,), {
@@ -287,6 +402,20 @@ Transaction = _reflection.GeneratedProtocolMessageType('Transaction', (_message.
   # @@protoc_insertion_point(class_scope:stordy.transaction.Transaction)
   })
 _sym_db.RegisterMessage(Transaction)
+
+FindAllTransactionsRequest = _reflection.GeneratedProtocolMessageType('FindAllTransactionsRequest', (_message.Message,), {
+  'DESCRIPTOR' : _FINDALLTRANSACTIONSREQUEST,
+  '__module__' : 'transaction_pb2'
+  # @@protoc_insertion_point(class_scope:stordy.transaction.FindAllTransactionsRequest)
+  })
+_sym_db.RegisterMessage(FindAllTransactionsRequest)
+
+FindAllTransactionsReply = _reflection.GeneratedProtocolMessageType('FindAllTransactionsReply', (_message.Message,), {
+  'DESCRIPTOR' : _FINDALLTRANSACTIONSREPLY,
+  '__module__' : 'transaction_pb2'
+  # @@protoc_insertion_point(class_scope:stordy.transaction.FindAllTransactionsReply)
+  })
+_sym_db.RegisterMessage(FindAllTransactionsReply)
 
 AddTransactionRequest = _reflection.GeneratedProtocolMessageType('AddTransactionRequest', (_message.Message,), {
   'DESCRIPTOR' : _ADDTRANSACTIONREQUEST,
@@ -323,6 +452,13 @@ ExistsTransactionOnBlockReply = _reflection.GeneratedProtocolMessageType('Exists
   })
 _sym_db.RegisterMessage(ExistsTransactionOnBlockReply)
 
+FindLastTransactionRequest = _reflection.GeneratedProtocolMessageType('FindLastTransactionRequest', (_message.Message,), {
+  'DESCRIPTOR' : _FINDLASTTRANSACTIONREQUEST,
+  '__module__' : 'transaction_pb2'
+  # @@protoc_insertion_point(class_scope:stordy.transaction.FindLastTransactionRequest)
+  })
+_sym_db.RegisterMessage(FindLastTransactionRequest)
+
 
 
 _TRANSACTIONSERVICE = _descriptor.ServiceDescriptor(
@@ -332,8 +468,8 @@ _TRANSACTIONSERVICE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=483,
-  serialized_end=837,
+  serialized_start=717,
+  serialized_end=1296,
   methods=[
   _descriptor.MethodDescriptor(
     name='AddTransaction',
@@ -362,6 +498,26 @@ _TRANSACTIONSERVICE = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_EXISTSTRANSACTIONONBLOCKREQUET,
     output_type=_EXISTSTRANSACTIONONBLOCKREPLY,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='FindLastTransaction',
+    full_name='stordy.transaction.TransactionService.FindLastTransaction',
+    index=3,
+    containing_service=None,
+    input_type=_FINDLASTTRANSACTIONREQUEST,
+    output_type=_TRANSACTION,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='FindAllTransactions',
+    full_name='stordy.transaction.TransactionService.FindAllTransactions',
+    index=4,
+    containing_service=None,
+    input_type=_FINDALLTRANSACTIONSREQUEST,
+    output_type=_FINDALLTRANSACTIONSREPLY,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),

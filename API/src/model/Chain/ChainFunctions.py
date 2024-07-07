@@ -93,7 +93,7 @@ def addBlockTransaction(block, transaction):
     # block.transactions.append(transaction)
     try:
         print("Add Block Transaction")
-        print(block.publicKey)
+        print(str(block.publicKey))
         print(transaction)
         transaction = transaction_pb2.Transaction(
             index = int(transaction.index), previousHash = str(transaction.previousHash), timestamp = int(transaction.timestamp),
@@ -103,8 +103,9 @@ def addBlockTransaction(block, transaction):
         )
         print(transaction)
 
-        request = transaction_pb2.AddTransactionRequest(block_public_key = block.publicKey, transaction = transaction)
-        stub_transaction.AddTransaction(request)
+        request = transaction_pb2.AddTransactionRequest(block_public_key = str(block.publicKey), transaction = transaction)
+        response = stub_transaction.AddTransaction(request)
+        print(response)
     except Exception as e:
         print("Error on addBlockTransaction")
         print(e)
