@@ -152,17 +152,25 @@ def getLatestBlockTransaction(blk):
 
 def getTransactions(block):
     request = transaction_pb2.FindAllTransactionsRequest(block_public_key=block.publicKey)
-    print("Get Transactions")
     print(block.publicKey)
     response = stub_transaction.FindAllTransactions(request)
-    print(response)
+    response = response.transactions
+    
+    # if isinstance(response, list) == False:
+        
+        # response = [response]
+        
+    # print(response)
+    
     transactions = []
 
     for tr in response:
-        transaction = Transaction.Transaction(index = tr.index, previousHash = tr.previous_hash, timestamp = tr.timestamp,
+        previous_hash = getattr(tr, 'previous_hash', "")
+        transaction = Transaction.Transaction(index = tr.index, previousHash = previous_hash,  timestamp = tr.timestamp,
                                   data = tr.data, signature = tr.signature, nonce = tr.nonce,
                                   id = tr.identification, hash = tr.hash)
         transactions.append(transaction)
+        
     return transactions
 
 
@@ -186,6 +194,34 @@ def blockContainsTransaction(block, transaction):
             # return True
 
     return False
+
+def findBlockByIndex(index):
+    print("Find Block by index")
+    print(index)
+    try:
+        blocks = getFullChain()
+        # request = block_pb2.FindBlockRequest(public_key = key)
+        # response = stub_block.FindBlock(request)
+        # print("findBlock response")
+        # print(response)
+        # if response:
+        #     print("findBlock response true")
+        #     block = BlockHeader(index = response.index, previousHash = response.previous_hash, timestamp = response.timestamp,
+        #                         transaction = [], hash = response.hash, nonce = response.nonce,
+        #                         publicKey = response.public_key, blockContext = response.block_context, device = response.device,
+        #                         previousExpiredBlock = response.previous_expired_block_hash, previousBlockSignature = response.previous_block_signature)
+        #     return block
+        # else:
+            # print("findBlock response false")
+            # return False
+        for b in blocks:
+            if b.index == index:
+                return b
+        return False
+    except Exception as e:
+        print("Error on findBlock")
+        print(e)
+        return False
 
 def findBlock(key):
     """ Search for a specific block in the chain\n

@@ -2340,21 +2340,21 @@ class R2ac(object):
         """ Log all chain \n
             @return "ok" - done
         """
-        # logger.info("Showing Block Header data for peer: " + myURI)
-        print("Showing Block Header data for peer: " + myURI)
-        # size = ChainFunctions.getBlockchainSize()
-        size = ChainFunctions.getBlockchainSize()
-        # logger.info("IoT Ledger size: " + str(size))
-        # logger.info("|-----------------------------------------|")
-        print("IoT Ledger size: " + str(size))
-        print("|-----------------------------------------|")
-        theChain = ChainFunctions.getFullChain()
-        for b in theChain:
-        # logger.info(b.strBlock())
-        # logger.info("|-----------------------------------------|")
-            print(b.strBlock())
-            print("|-----------------------------------------|")
-        return "ok"
+        try: 
+            res = ""
+            res += ("Showing Block Header data for peer: " + myURI)
+            size = ChainFunctions.getBlockchainSize()
+            res += ("IoT Ledger size: " + str(size))
+            res += ("|-----------------------------------------|")
+            theChain = ChainFunctions.getFullChain()
+            for b in theChain:
+                res += b.strBlock()
+                res += ("|-----------------------------------------|")
+            print(res)
+            return res
+        except Exception as e:
+            print("Error on showIoTLedger")
+            print(e)
 
     def showLastTransactionData(self, blockIndex):
         #print("Showing Data from Last Transaction from block #: " + str(blockIndex))
@@ -2440,19 +2440,26 @@ class R2ac(object):
 
 
 
-    def showBlockLedger(self, public_key):
+    def showBlockLedger(self, index):
         """ Log all transactions of a block\n
             @param index - index of the block\n
             @return "ok" - done
         """
         print("Showing Transactions data for peer: " + myURI)
         # logger.info("Showing Trasactions data for peer: " + myURI)
-        blk = ChainFunctions.findBlock(public_key)
+        # blk = ChainFunctions.findBlock(public_key)
+        blk = ChainFunctions.findBlockByIndex(index)
+
+        if blk == False:
+            return "Block does not exist"
+        
+        print("Block for index " + str(index))
+        print(blk)
+        
         transactions = ChainFunctions.getTransactions(blk)
         # blk = ChainFunctions.getBlockByIndex(index)
         # print("Block for index"+str(index))
-        if blk == False:
-            return "Block does not exist"
+        
         size = len(transactions)
         # logger.info("Block Ledger size: " + str(size))
         # logger.info("-------")

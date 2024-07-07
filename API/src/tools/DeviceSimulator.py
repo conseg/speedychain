@@ -213,12 +213,26 @@ def addPeer():
 
 def listBlockHeader():
     """ Log all blocks """
-    server.showIoTLedger()
+    try:    
+        print("listBlockHeader")
+        res = server.showIoTLedger()
+        print("listBlockHeader")
+        print(res)
+    except Exception as e:
+        print("Error on listBlockHeader")
+        print(e)
+    # except:
+        # logger.error("Error on listBlockHeader")
+        # return False
 
 def listTransactions():
     """ Ask for the user to input an index and show all transaction of the block with that index """
     index = input("Which IoT Block do you want to print?")
-    server.showBlockLedger(int(index))
+    try: 
+        server.showBlockLedger(int(index))
+    except Exception as e:
+        print("Error on listTransactions")
+        print(e)
 
 
 def listPeers():
