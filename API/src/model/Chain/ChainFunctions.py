@@ -281,10 +281,16 @@ def getFullChain():
         response = stub_block.GetFullChain(empty)
         blocks = []
         for b in response.blocks:
+            
+            
             block = BlockHeader(index = b.index, previousHash = b.previous_hash, timestamp = b.timestamp,
                                 transaction = [], hash = b.hash, nonce = b.nonce,
                                 publicKey = b.public_key, blockContext = b.block_context, device = b.device,
                                 previousExpiredBlock = b.previous_expired_block_hash, previousBlockSignature = b.previous_block_signature)
+            
+            transactions = getTransactions(block)
+            block.setTransactions(transactions)
+            
             blocks.append(block)
         return blocks
     except Exception as e:

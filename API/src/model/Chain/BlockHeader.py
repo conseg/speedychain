@@ -14,6 +14,9 @@ class BlockHeader:
         self.device = device
         self.previousExpiredBlockHash = previousExpiredBlock
         self.previousBlockSignature = previousBlockSignature
+        
+    def setTransactions(self, transactions):
+        self.transactions = transactions
 
     def __str__(self):
         return "%s,%s,%s,%s,%s,%s,%s,%s,%s" % (

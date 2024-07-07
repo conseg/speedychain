@@ -150,33 +150,35 @@ def sendDataTest():
 
 def sendData():
     """ Read the sensor data, encrypt it and send it as a transaction to be validated by the peers """
-    temperature = readSensorTemperature()
-    t = ((time.time() * 1000) * 1000)
-    timeStr = "{:.0f}".format(t)
-    data = timeStr + temperature
-    logger.debug("data = "+data)
-    signedData = CryptoFunctions.signInfo(privateKey, data)
-    toSend = signedData + timeStr + temperature
-    try:
-
-        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
-    except:
-        logger.error("was not possible to encrypt... verify aeskey")
-        newKeyPair()
-        addBlockOnChain() # this will force gateway to recreate the aes key
+    
+    no_transactions = input("How many transactions do you want to create?")
+    
+    for i in range(int(no_transactions)):
+        temperature = readSensorTemperature()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = "{:.0f}".format(t)
+        data = timeStr + temperature
+        logger.debug("data = "+data)
         signedData = CryptoFunctions.signInfo(privateKey, data)
         toSend = signedData + timeStr + temperature
-        encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
-        logger.error("passed through sendData except")
-    try:
-        for i in range(100000):
-            if(server.addTransaction(publicKey, encobj)=="ok!"):
-                # logger.error("everything good now")
-                return True
-            else:
+        try:
+
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        except:
+            logger.error("was not possible to encrypt... verify aeskey")
+            newKeyPair()
+            addBlockOnChain() # this will force gateway to recreate the aes key
+            signedData = CryptoFunctions.signInfo(privateKey, data)
+            toSend = signedData + timeStr + temperature
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            logger.error("passed through sendData except")
+        try:
+            if(server.addTransaction(publicKey, encobj)!="ok!"):
                 logger.error("something went wrong when sending data")
-    except:
-        logger.error("some exception with addTransaction now...")
+                break;
+            # time.sleep(0.)
+        except:
+            logger.error("some exception with addTransaction now...")
 
 
 def sendDataSC(stringSC):
