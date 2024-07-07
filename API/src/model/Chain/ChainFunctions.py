@@ -222,6 +222,24 @@ def findBlockByIndex(index):
         print("Error on findBlock")
         print(e)
         return False
+    
+def lengthOfBlock(block):
+    """ Return the amount of transactions on a block\n
+    @param block - BlockHeader object\n
+    @return int - length of the block
+    """
+    try:
+        print("Length of Block")
+        request = block_pb2.LengthRequest(public_key = block.publicKey)
+        response = stub_block.LengthBlock(request)
+        print(response)
+        return response.length
+    
+    except Exception as e:
+        print("Error on lengthOfBlock")
+        print(e)
+        return 0
+    # return len(block.transactions)
 
 def findBlock(key):
     """ Search for a specific block in the chain\n
@@ -288,8 +306,11 @@ def getFullChain():
                                 publicKey = b.public_key, blockContext = b.block_context, device = b.device,
                                 previousExpiredBlock = b.previous_expired_block_hash, previousBlockSignature = b.previous_block_signature)
             
-            transactions = getTransactions(block)
-            block.setTransactions(transactions)
+            length = lengthOfBlock(block)
+            block.setNumberOfTransactions(length)
+            
+            # transactions = getTransactions(block)
+            # block.setTransactions(transactions)
             
             blocks.append(block)
         return blocks
