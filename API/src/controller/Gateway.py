@@ -1995,7 +1995,7 @@ class R2ac(object):
                     isTransactionValid(trans, pubKey)
                 ChainFunctions.addBlockTransaction(blk, trans)
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return "done"
 
     def updateBlockLedgerSetTrans(self, candidatePool, isFirst):
@@ -4016,7 +4016,7 @@ class R2ac(object):
                     isTransactionValid(trans, pubKey)
                 ChainFunctionsMulti.addBlockTransaction(blk, trans, idx)
         t2 = time.time()
-        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
         return "done"
 
     def updateIOTBlockLedgerMulti(self, iotBlock, gwName):

@@ -17,7 +17,7 @@ import time
 import grpc
 
 BlockHeaderChain = []
-max_message_length = 128 * 1024 * 1024
+max_message_length = 1024 * 1024 * 1024
 options = [('grpc.max_receive_message_length', max_message_length)]
 channel = grpc.insecure_channel('localhost:50052', options = options)
 stub_block = block_pb2_grpc.BlockServiceStub(channel)
@@ -47,17 +47,17 @@ def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device = "device")
 
     @return BlockHeader
     """
-    print("Create New Block 1")
+    # print("Create New Block 1")
     previousExpiredBlockHash = "None"
     previousExpiredBlock = findLastSameBlock(device)
-    print("Create New Block 2")
+    # print("Create New Block 2")
     if previousExpiredBlock is not False:
         previousExpiredBlockHash = previousExpiredBlock.hash
-    print("Create New Block 3")
+    # print("Create New Block 3")
     previousBlockSignature = "None"
     if previousExpiredBlockHash is not "None":
         previousBlockSignature = CryptoFunctions.encryptRSA2(previousExpiredBlock.publicKey, previousExpiredBlockHash)
-    print("Create New Block 4")
+    # print("Create New Block 4")
     newBlock = generateNextBlock("new block", devPubKey, getLatestBlock(), gwPvt, blockContext,
                                  consensus, previousExpiredBlockHash, previousBlockSignature, device)
     ##@Regio addBlockHeader is done during consensus! please take it off for running pbft
@@ -80,7 +80,7 @@ def addBlockHeader(newBlockHeader):
         start = time.time()
         response = stub_block.AddBlock(block)
         end = time.time()
-        print("Time to add block: " + str(end - start) + " seconds")
+        print("Time to add block: " + str((end - start ) * 1000) + " seconds")
         # print(response)
     except Exception as e:
         print("Error on addBlockHeader")
@@ -108,7 +108,7 @@ def addBlockTransaction(block, transaction):
         start = time.time()
         response = stub_transaction.AddTransaction(request)
         end = time.time()
-        print("Time to add transaction on block: " + str(end - start) + " seconds")
+        print("Time to add transaction on block: " + str((end - start ) * 1000) + "ms")
         # print(response)
     except Exception as e:
         print("Error on addBlockTransaction")
