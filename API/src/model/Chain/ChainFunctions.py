@@ -229,11 +229,14 @@ def lengthOfBlock(block):
     @return int - length of the block
     """
     try:
-        print("Length of Block")
-        request = block_pb2.LengthRequest(public_key = block.publicKey)
-        response = stub_block.LengthBlock(request)
-        print(response)
-        return response.length
+        # print("Length of Block")
+        # request = block_pb2.LengthRequest(public_key = block.publicKey)
+        # response = stub_block.LengthBlock(request)
+        # print(response)
+        # return response.length
+        request = transaction_pb2.FindLastTransactionRequest(block_public_key=block.publicKey)
+        response = stub_transaction.FindLastTransaction(request)
+        return response.index
     
     except Exception as e:
         print("Error on lengthOfBlock")
