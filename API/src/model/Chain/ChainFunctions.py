@@ -68,7 +68,7 @@ def addBlockHeader(newBlockHeader):
     """ Receive a new block and append it to the chain \n
     @param newBlockHeader - BlockHeader
     """
-    print("Add Block Header " + str(newBlockHeader.hash))
+    # print("Add Block Header " + str(newBlockHeader.hash))
     try :
         block = block_pb2.Block(index = int(newBlockHeader.index), previous_hash = str(newBlockHeader.previousHash),
                                 timestamp = int(newBlockHeader.timestamp), hash = str(newBlockHeader.hash),
@@ -76,8 +76,11 @@ def addBlockHeader(newBlockHeader):
                                 block_context = str(newBlockHeader.blockContext), device = str(newBlockHeader.device),
                                 previous_expired_block_hash = str(newBlockHeader.previousExpiredBlockHash),
                                 previous_block_signature = str(newBlockHeader.previousBlockSignature))
+        start = time.time()
         response = stub_block.AddBlock(block)
-        print(response)
+        end = time.time()
+        print("Time to add block: " + str(end - start) + " seconds")
+        # print(response)
     except Exception as e:
         print("Error on addBlockHeader")
         print(e)
@@ -93,19 +96,19 @@ def addBlockTransaction(block, transaction):
     # block.transactions.append(transaction)
     try:
         print("Add Block Transaction")
-        print(str(block.publicKey))
-        print(transaction)
         transaction = transaction_pb2.Transaction(
             index = int(transaction.index), previousHash = str(transaction.previousHash), timestamp = int(transaction.timestamp),
             data= str(transaction.data), signature = str(transaction.signature), nonce = int(transaction.nonce),
             identification = str(transaction.identification),
             hash = str(transaction.hash)
         )
-        print(transaction)
 
         request = transaction_pb2.AddTransactionRequest(block_public_key = str(block.publicKey), transaction = transaction)
+        start = time.time()
         response = stub_transaction.AddTransaction(request)
-        print(response)
+        end = time.time()
+        print("Time to add transaction on block: " + str(end - start) + " seconds")
+        # print(response)
     except Exception as e:
         print("Error on addBlockTransaction")
         print(e)
