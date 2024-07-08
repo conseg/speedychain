@@ -620,13 +620,17 @@ class R2ac(object):
             # print("BBBBBBBBBBBBB passed the devinfo")
             gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
             # code responsible to create the hash between Info nodes.
+            
             prevInfoHash = CryptoFunctions.calculateTransactionHash(
                 ChainFunctions.getLatestBlockTransaction(blk))
 
+            start = time.time()
             transaction = Transaction.Transaction(
                 nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
 
             ChainFunctions.addBlockTransaction(blk, transaction)
+            # end = time.time()
+            # logT21.append("T21;Transaction Insertion Time; " + str((end-start)*1000))
             # logger.debug("Block #" + str(blk.index) + " added locally")
             # logger.debug("Sending block #" +
             #             str(blk.index) + " to peers...")
@@ -2302,6 +2306,7 @@ class R2ac(object):
         for b in theChain:
         # logger.info(b.strBlock())
         # logger.info("|-----------------------------------------|")
+            # print(hex(id(b)))
             print(b.strBlock())
             print("|-----------------------------------------|")
         return "ok"
@@ -3136,7 +3141,7 @@ class R2ac(object):
         """
         t1 = time.time()
         self.restoreNormalChainFromFile()
-        self.restoreMultiChainFromFile()
+        # self.restoreMultiChainFromFile()
         t2 = time.time()
         timeDiff = '{0:.12f}'.format((t2 - t1) * 1000)
         return timeDiff
@@ -3146,83 +3151,84 @@ class R2ac(object):
             The gateway keys from all peers
             The blocks and the transactions\n
         """
-        keys = []
-        f = open(chainFile, "r")
+        try: 
+            keys = []
+            f = open(chainFile, "r")
 
-        # Gets public and private key from each gateway
-        for line in f:
-            stripped_line = line.rstrip('\n')
-            #print("line = " + str(stripped_line))
-            if (str(stripped_line) == ""):
-                #print("BREAK!")
-                break
-            split = stripped_line.split('  ')
-            publicKey = split[0].replace('\\n', '\n')
-            privateKey = split[1].replace('\\n', '\n')
-            key = [publicKey, privateKey]
-            #print("Public Key = " + str(publicKey))
-            #print("Private Key = " + str(privateKey))
-            keys.append(key)
-        
-        #print (keys)
-        # Get how many peers from file
-        # Get gw private/public keys, send them to each peer
-            # Each peer updates its keys and restart the chain (ChainFunctions.restartChain())
-        restartChains(keys)
-        
-        # Gets the blocks/transations
-        devPubKey = ""
-        for line in f:
-            #print ("")
-            stripped_line = line.rstrip('\n')
-            split_aux = stripped_line.split('= ', 1)
-            split = split_aux[1].split('  ')
-            #print(str(stripped_line))
-            if (stripped_line.startswith('block')):
-                devPubKey = split[0].replace('\\n', '\n')
-                #print("Dev Public Key = " + str(devPubKey))
-                blockContext = split[1]
-                timestamp = split[2]
-                nonce = split[3]
-                signature = split[4]
-                blockData = split[5]
-                index = int(split[6])
-                device = split[7]
-                previousExpiredBlockHash = split[8]
-                previousBlockSignature = split[9]
-                newBlock = ChainFunctions.generateNextBlock2(blockData, devPubKey, signature, blockContext, 
-                                                             timestamp, nonce, index, device, 
-                                                             previousExpiredBlockHash, previousBlockSignature)
-                ChainFunctions.addBlockHeader(newBlock)
-                #print(newBlock.strBlock())
-                sendBlockToPeers(newBlock)
-            if (stripped_line.startswith('transaction')):
-                blk = ChainFunctions.findBlock(devPubKey)        
-                if (blk != False and blk.index > 0):
-                    #print("Block found!")
-                    nextInt = blk.transactions[len(blk.transactions) - 1].index + 1
-                    prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
-                    #print("Timestamp = " + str(split[0]))
-                    #print("Device info = " + str(split[1]))
-                    #print("Sign data = " + str(split[2]))
-                    #print("Nonce = " + str(split[3]))
+            # Gets public and private key from each gateway
+            for line in f:
+                stripped_line = line.rstrip('\n')
+                # print("line = " + str(stripped_line))
+                if (str(stripped_line) == ""):
+                    # print("BREAK!")
+                    break
+                split = stripped_line.split('  ')
+                publicKey = split[0].replace('\\n', '\n')
+                privateKey = split[1].replace('\\n', '\n')
+                key = [publicKey, privateKey]
+                #print("Public Key = " + str(publicKey))
+                #print("Private Key = " + str(privateKey))
+                keys.append(key)
+            
+            # print("aqui")
+            # print (keys)
+            # Get how many peers from file
+            # Get gw private/public keys, send them to each peer
+                # Each peer updates its keys and restart the chain (ChainFunctions.restartChain())
+            restartChains(keys)
+            print("Restarted chains")
+            # Gets the blocks/transations
+            devPubKey = ""
+            count  = 0;
 
-                    deviceInfoSplit = split[1].split(", ")
-                    deviceInfo = ""
-                    if (deviceInfoSplit.count == 1):
-                        deviceInfo = split[1]
-                    else:
-                        deviceInfo = LifecycleEvent.LifecycleEvent(
-                            deviceInfoSplit[1], deviceInfoSplit[2],  deviceInfoSplit[3], deviceInfoSplit[0])
-                    transaction = Transaction.Transaction(
-                        nextInt, prevInfoHash, split[0], deviceInfo, split[2], split[3], split[4])
+            for line in f:
+                # print("line = " + str(line))
+                
+                stripped_line = line.rstrip('\n')
+                split_aux = stripped_line.split('= ', 1)
+                split = split_aux[1].split('  ')
+                #print(str(stripped_line))
+                if (stripped_line.startswith('block')):
+                    devPubKey = split[0].replace('\\n', '\n')
+                    #print("Dev Public Key = " + str(devPubKey))
+                    blockContext = split[1]
+                    timestamp = split[2]
+                    nonce = split[3]
+                    signature = split[4]
+                    blockData = split[5]
+                    index = int(split[6])
+                    device = split[7]
+                    previousExpiredBlockHash = split[8]
+                    previousBlockSignature = split[9]
+                    newBlock = ChainFunctions.generateNextBlock2(blockData, devPubKey, signature, blockContext, 
+                                                                timestamp, nonce, index, device, 
+                                                                previousExpiredBlockHash, previousBlockSignature)
+                    ChainFunctions.addBlockHeader(newBlock)
+                    # print("new block " + hex(id(newBlock)))
+                    sendBlockToPeers(newBlock)
+                if (stripped_line.startswith('transaction')):
+                    blk = ChainFunctions.findBlock(devPubKey)       
+                    count = count + 1
+                    # print("Count = " + str(count))
+                    if (blk != False and blk.index > 0):
+                        nextInt = blk.transactions[len(blk.transactions) - 1].index + 1
+                        prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
+                        deviceInfoSplit = split[1].split(", ")
+                        deviceInfo = ""
+                        if (len(deviceInfoSplit) == 1):
+                            deviceInfo = split[1]
+                        else:
+                            deviceInfo = LifecycleEvent.LifecycleEvent(deviceInfoSplit[1], deviceInfoSplit[2],  deviceInfoSplit[3], deviceInfoSplit[0])
+                            
+                        transaction = Transaction.Transaction(nextInt, prevInfoHash, split[0], deviceInfo, split[2], split[3], split[4])
+                        ChainFunctions.addBlockTransaction(blk, transaction)
+                        # sendTransactionToPeers(devPubKey, transaction)
 
-                    ChainFunctions.addBlockTransaction(blk, transaction)
-                    #print(transaction.strBlock())
-                    sendTransactionToPeers(devPubKey, transaction)
-
-        f.close()
-        return True
+            f.close()
+            return True
+        except Exception as e:
+            print("Error: " + str(e))
+            return False
     
     def restoreMultiChainFromFile(self):
         """ Restore the entire chain from a text file
@@ -4662,6 +4668,8 @@ def restartChains(keys):
     """ Store the gateway keys to the text file\n
         @param keys - all the gateways keys read from file to start the chain\n
     """
+    
+    # print("Restarting chains" + str(keys))
     global peers
     global gwPub
     global gwPvt
@@ -4670,23 +4678,27 @@ def restartChains(keys):
     key = keys[0]
     gwPub = key[0]
     gwPvt = key[1]
-    #print ("public = " + str(gwPub) + ", private = " + str(gwPvt))
+    # print ("public = " + str(gwPub) + ", private = " + str(gwPvt))
 
     ChainFunctions.restartChain()
-    ChainFunctionsMulti.restartChain()
+    # ChainFunctionsMulti.restartChain()
     #blk = ChainFunctionsMulti.getLatestBlock()
     #print("BlockGenesis = "+ str(blk.strBlock()))
     # print("sending block to peers")
     # logger.debug("Running through peers")
-    i = 1
+    i = 0
+    # print("peers " + str(peers))
     for peer in peers:
         # Send each key pair to each peer
+        # print(1)
         key = keys[i]
+        # print(2)
         #print ("public = " + str(key[0]) + ", private = " + str(key[1]))
         obj = peer.object
         #print("sending KEY to: " + str(peer.peerURI))
         # logger.debug("Sending block to peer " + str(peer.peerURI))
         pubKey = pickle.dumps(key[0])
+        # print(3)
         privKey = pickle.dumps(key[1])
         obj.updateGatewayKeys(pubKey, privKey, myName)
         i = i + 1

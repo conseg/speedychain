@@ -1025,8 +1025,11 @@ def storeChainToFile():
 def restoreChainFromFile():
     """ restore the entire chain from a text file\n
     """
-    timeToRestore = server.restoreChainFromFile()
-    print("Time to restore all blocks and transactions from file: " + timeToRestore)
+    try: 
+        timeToRestore = server.restoreChainFromFile()
+        print("Time to restore all blocks and transactions from file: " + timeToRestore)
+    except Exception as e:
+        print("Error: " + str(e))
 
     return True
 

@@ -38,14 +38,24 @@ def addBlockHeader(newBlockHeader):
     @param newBlockHeader - BlockHeader
     """
     global BlockHeaderChain
+    # print("Adding block to chain")
+    start = time.time()
     BlockHeaderChain.append(newBlockHeader)
+    end = time.time()
+    print("Time to add block: " + str((end - start ) * 1000) + "ms")
 
 def addBlockTransaction(block, transaction):
     """ Receive a block and add to it a list of transactions \n
     @param block - BlockHeader \n
     @param transaction - list of transaction
     """
+    # print("Adding transaction to block")
+    # print("block: " + str(block.hash))
+    # print("transaction: " + str(len(block.transactions)))
+    start = time.time()
     block.transactions.append(transaction)
+    end = time.time()
+    print("Time to add transaction: " + str((end - start ) * 1000) + "ms")
 
 def getLatestBlock():
     """ Return the latest block on the chain \n
