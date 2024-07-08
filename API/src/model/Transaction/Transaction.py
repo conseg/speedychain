@@ -2,23 +2,22 @@ from ...tools import CryptoFunctions
 
 class Transaction:
     def __init__(self, index, previousHash, timestamp, data, signature, nonce, id = "id", hash = None):
-        print("index")
+        # print("index")
         self.index = index
-        print("previousHash")
+        # print("previousHash")
         self.previousHash = previousHash
-        print("timestamp")
+        # print("timestamp")
         self.timestamp = timestamp
-        print("data")
+        # print("data")
         self.data = data
-        print("signature")
+        # print("signature")
         self.signature = signature
-        print("nonce")
+        # print("nonce")
         self.nonce = nonce
-        print("id")
+        # print("id")
         self.identification = id
-        print("hash")
+        # print("hash")
         self.hash = hash if hash != None else CryptoFunctions.calculateTransactionHash(self)
-        print("finish")
 
 
     def __str__(self):

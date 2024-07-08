@@ -17,8 +17,9 @@ import time
 import grpc
 
 BlockHeaderChain = []
-
-channel = grpc.insecure_channel('localhost:50052')
+max_message_length = 128 * 1024 * 1024
+options = [('grpc.max_receive_message_length', max_message_length)]
+channel = grpc.insecure_channel('localhost:50052', options = options)
 stub_block = block_pb2_grpc.BlockServiceStub(channel)
 stub_transaction = transaction_pb2_grpc.TransactionServiceStub(channel)
 
@@ -155,7 +156,7 @@ def getLatestBlockTransaction(blk):
 
 def getTransactions(block):
     request = transaction_pb2.FindAllTransactionsRequest(block_public_key=block.publicKey)
-    print(block.publicKey)
+    # print(block.publicKey)
     response = stub_transaction.FindAllTransactions(request)
     response = response.transactions
     
@@ -312,11 +313,11 @@ def getFullChain():
                                 publicKey = b.public_key, blockContext = b.block_context, device = b.device,
                                 previousExpiredBlock = b.previous_expired_block_hash, previousBlockSignature = b.previous_block_signature)
             
-            length = lengthOfBlock(block)
-            block.setNumberOfTransactions(length)
+            # length = lengthOfBlock(block)
+            # block.setNumberOfTransactions(length)
             
-            # transactions = getTransactions(block)
-            # block.setTransactions(transactions)
+            transactions = getTransactions(block)
+            block.setTransactions(transactions)
             
             blocks.append(block)
         return blocks
