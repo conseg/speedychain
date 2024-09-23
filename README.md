@@ -135,7 +135,15 @@ Navigate to the **STORDY** directory:
 cd stordy
 ```
 
-### **7.2 Run STORDY**
+### **7.2 Install Cargo**
+
+Install Cargo on your system:
+
+```bash
+sudo apt install cargo
+```
+
+### **7.3 Run STORDY**
 
 Run the STORDY storage module using Cargo (make sure you have Rust installed):
 
