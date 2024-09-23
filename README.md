@@ -143,7 +143,15 @@ Install Cargo on your system:
 sudo apt install cargo
 ```
 
-### **7.3 Run STORDY**
+### **7.3 Install protobuf-compiler**
+
+Install protobuf-compiler:
+
+```bash
+sudo apt-get install protobuf-compiler
+```
+
+### **7.4 Run STORDY**
 
 Run the STORDY storage module using Cargo (make sure you have Rust installed):
 
