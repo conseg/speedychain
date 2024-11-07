@@ -6,7 +6,7 @@ import hashlib
 # from Crypto.Signature import PKCS1_v1_5
 # from Crypto.Cipher import PKCS1_OAEP
 
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.asymmetric import rsa, padding, ec
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives import padding as symmetricPadding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -344,3 +344,138 @@ def generateRSAKeyPair():
         # prv = private.export_key()
         # pub = pubKey.export_key()
         # return pub, prv
+
+# ECC
+
+## ECDSA
+
+def signInfoECDSA(gwPvtKey, data, password=None):
+    """ Sign some data with the peer's private key\n 
+        @param gwPvtKey - peer's private key\n
+        @param data - data to sign\n
+        @return sinature - signature of the data maked with the private key
+    """
+    # print("\tinside signInfoECDSA!!")
+    # print("gwPvtKey: {} \ndata: {} \npassword: {}".format(gwPvtKey,data,password))
+    try:
+        #load key
+        key = gwPvtKey.encode('utf-8')
+        privatekey = serialization.load_pem_private_key(
+            key,
+            password
+        )
+        # print("successful loaded key!!")
+        # sign the data
+        # TODO prehashed
+        sign = privatekey.sign(
+            data,
+            ec.ECDSA(hashes.SHA256())
+        )
+        # print("successful signed!!")
+        # encode the signature in b64
+        signatureb64 = base64.b64encode(sign)
+        # print("signatureb64: {}".format(signatureb64))
+        # print("\texited signInfoECDSA with success!!")
+        return signatureb64
+    except Exception as e:
+        print("\texited signInfoECDSA without success!!")
+        print("error: {}".format(e))
+        return ""
+
+def signVerifyECDSA(data, signature, gwPubKey):
+    """ Verify if a data sign by a private key it's unaltered\n
+        @param data - data to be verified\n
+        @param signature - signature of the data to be validated\n
+        @param gwPubKey - peer's private key
+    """
+    # print("\tinside signVerifyECDSA!!")
+    # print("data: {} \nsignature: {} \ngwPubKey: {}".format(data,signature,gwPubKey))
+    try:
+        # load key
+        key = gwPubKey.encode('utf-8')
+        publickey = serialization.load_pem_public_key(
+            key
+        )
+        # print("successful loaded key!!")
+        # verify the signature
+        # TODO prehashed
+        publickey.verify(
+            # decode the b64 signature
+            base64.b64decode(signature),
+            data,
+            ec.ECDSA(hashes.SHA256())
+        )
+        # print("valid signature!!")
+        # print("\texited signVerifyECDSA with success!!")
+        return True
+    except Exception as e:
+        print("\texited signVerifyECDSA without success!!")
+        print("error: {}".format(e))
+        return False
+
+def generateECDSAKeyPair():
+    """ Generate a pair of ECDSA keys using SECP256R1\n
+        @return pub, prv - public and private key
+    """
+    # print("\tinside generateECDSAKeyPair!!")
+    try:
+        privatekey = ec.generate_private_key(
+            ec.SECP256R1
+        )
+        # print("private key generated")
+        publickey = privatekey.public_key()
+        # print("public key generated")
+        
+        prv = privatekey.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        # print("private key serialized: {}".format(prv))
+        pub = publickey.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        # print("public key serialized: {}".format(pub))
+        
+        # print("\texited generateECDSAKeyPair with success!!")
+        return pub, prv
+    except Exception as e:
+        print("\texited generateECDSAKeyPair without success!!")
+        print("error: {}".format(e))
+        return "",""
+
+## ECDH
+
+def generateSharedKey(myPrivatekey, otherPublicKey, password=None):
+    """ Stabilish a new shared key between two parties\n
+        @Param myPrivateKey - the private key of the part using this function\n
+        @Param otherPublicKey - the public key of the part to share the key\n
+        @Return sharedKey - the key shared between the parties
+    """
+    # print("\tinside generateSharedKey!!")
+    # print("types:")
+    # print("myprivatekey: {}".format(type(myPrivatekey)))
+    # print("otherpublickey: {}".format(type(otherPublicKey)))
+    try:
+        # load keys
+        myPrivatekey = myPrivatekey.encode('utf-8')
+        DHPrivKey = serialization.load_pem_private_key(
+            myPrivatekey,
+            password
+        )
+        otherPublicKey = otherPublicKey.encode('utf-8')
+        DHPubKey = serialization.load_pem_public_key(
+            otherPublicKey
+        )
+        # print("\tsuccesful loaded keys!!")
+        # print("DHPrivKey: {} \nDHPubKey: {}".format(type(DHPrivKey),type(DHPubKey)))
+        # print("")
+        # print("myPrivatekey: \n{} \notherPublicKey: \n{}".format(myPrivatekey,otherPublicKey))
+        sharedKey = DHPrivKey.exchange(ec.ECDH(),DHPubKey)
+        # print("sharedKey: {}".format(type(sharedKey)))
+        # print("\texited generateSharedKey with success!!")
+        return sharedKey
+    except Exception as e:
+        print("\texited generateSharedKey without success!!")
+        print("error: {}".format(e))
