@@ -479,6 +479,7 @@ def peerIsActive(i):
 
 
 def sendBlockToConsensus(newBlock, gatewayPublicKey, devicePublicKey):
+    print("send block to consensus")
     obj = peer.object
     data = pickle.dumps(newBlock)
     obj.isValidBlock(data, gatewayPublicKey, devicePublicKey)
@@ -490,6 +491,7 @@ def receiveBlockConsensus(self, data, gatewayPublicKey, devicePublicKey, consens
 
 
 def isValidBlock(self, data, gatewayPublicKey, devicePublicKey, peer):
+    
     newBlock = pickle.loads(data)
     blockIoT = ChainFunctions.findBlock(devicePublicKey)
     consensus = True
@@ -1340,6 +1342,7 @@ class R2ac(object):
         global transactionConsensusCandidateList
         # print("TTTTTTTTTTTT inside addNewTransactionToSyncList")
         logger.info("Inside addNewTransactionToSyncList")
+        print("add new transaction to sync list")
         index =0
         candidateTransactionTuple = (devPubKey, devInfo, context)
         # print ("********* adding a transaction from context: "+context)
@@ -1598,6 +1601,7 @@ class R2ac(object):
         global logT24
         global logT25
         t1 = time.time()
+        print("entrou no add transaction to pool")
 
         # loading key and encryptedObj from from pickle serialization
         devPublicKey=pickle.loads(devPublicKey)
@@ -1607,31 +1611,44 @@ class R2ac(object):
         blk = ChainFunctions.findBlock(devPublicKey)
         # self.addContextinLockList(devPublicKey)
         if (blk != False and blk.index > 0):
+            # print("achou block >0")
             devAESKey = findAESKey(devPublicKey)
             if (devAESKey != False):
+                # print("AES key valida")
                 # logger.info("Appending transaction to block #" +
                 #             str(blk.index) + "...")
                 # plainObject contains [Signature + Time + Data]
 
+                # print("pre decript AES")
                 plainObject = CryptoFunctions.decryptAES(
                     encryptedObj, devAESKey)
 
+                # TODO modificar o tamanho de assinatura e timestamp
                 # retrieve the last chars, excluding timestamp - 16 bytes and signature - 172 bytes
-                deviceData = plainObject[(172+16):]
+                signatureSize = 512
+                timestampSize = 16
+                deviceData = plainObject[(signatureSize+timestampSize):]
                 # remove the last 20 chars
-                signature = plainObject[:-(16+len(deviceData))]
+                signature = plainObject[:-(timestampSize+len(deviceData))]
                 # print("###Signature after receiving: "+signature)
                 # print("###Device Data: "+deviceData)
                 # remove the 16 char of timestamp
-                devTime = plainObject[-(16+len(deviceData)):-len(deviceData)]
+                devTime = plainObject[-(timestampSize+len(deviceData)):-len(deviceData)]
                 # print("###devTime: "+devTime)
                 t2 = time.time()
                 # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
 
+                # print("objeto recebido cifrado: {}".format(encryptedObj))
+                # print("objeto recebido decifrado: {}".format(plainObject))
+                # print("assinatura recebida: {}".format(signature))
+                # print("tamanho assinatura: {}".format(len(signature)))
+
+                # print("pre verificar assinatura")
                 d = devTime+deviceData
                 isSigned = CryptoFunctions.signVerify(
                     d, signature, devPublicKey)
 
+                # print("pos verificar assinatura: {}".format(isSigned))
                 if isSigned:
                     deviceInfo = DeviceInfo.DeviceInfo(
                         signature, devTime, deviceData)
@@ -1643,6 +1660,7 @@ class R2ac(object):
                     t2=time.time()
                     logT24.append("T24 VERIFICATION TIME; " + str((t2-t1)*1000))
                     t3=time.time()
+                    print("antes while sync list")
                     while ( self.addNewTransactionToSyncList(devPublicKey, deviceInfo, devContext) == False):
                         logger.error("tried to insert and it was not possible, trying again")
                         time.sleep(0.001)
@@ -1652,6 +1670,7 @@ class R2ac(object):
 
                     # print("all done")
                     # self.removeLockfromContext(devPublicKey)
+                    print("retornou ok")
                     return "ok!"
                 else:
                     # logger.debug("--Transaction not appended--Transaction Invalid Signature")
@@ -2119,7 +2138,12 @@ class R2ac(object):
             encKey = ''
             t1 = time.time()
             # print("Adding block, PubKey= " + str(devPubKey))
-            blk = ChainFunctions.findBlock(devPubKey)
+            blk = False
+            
+            try:
+                blk = ChainFunctions.findBlock(devPubKey)
+            except: 
+                print('blk not found')
 
             print("blk: " + str(blk))
             if (blk != False and blk.index > 0):
@@ -2175,7 +2199,7 @@ class R2ac(object):
                     counter_fails = 0
                     print("PBFT 4")
                     print("device name "+ str(lifecycleDeviceName))
-                    print(orchestratorObject.runPBFT(lifecycleDeviceName))
+                    # print(orchestratorObject.runPBFT(lifecycleDeviceName))
                     while(orchestratorObject.runPBFT(lifecycleDeviceName)==False):
                         # logger.info("##### second attmept for a block")
                         orchestratorObject.removeBlockConsensusCandidate(pickedKey)
@@ -2268,6 +2292,7 @@ class R2ac(object):
         except Exception as e:
             print("Error in addBlock")
             print(e)
+            print("------------------")
             return -1
 
 
