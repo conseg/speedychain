@@ -56,7 +56,8 @@ def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device = "device")
     # print("Create New Block 3")
     previousBlockSignature = "None"
     if previousExpiredBlockHash is not "None":
-        previousBlockSignature = CryptoFunctions.encryptRSA2(previousExpiredBlock.publicKey, previousExpiredBlockHash)
+        # previousBlockSignature = CryptoFunctions.encryptRSA2(previousExpiredBlock.publicKey, previousExpiredBlockHash)
+        previousBlockSignature = CryptoFunctions.signInfoECDSA(previousExpiredBlock.publicKey, previousExpiredBlockHash)
     # print("Create New Block 4")
     newBlock = generateNextBlock("new block", devPubKey, getLatestBlock(), gwPvt, blockContext,
                                  consensus, previousExpiredBlockHash, previousBlockSignature, device)
@@ -278,7 +279,7 @@ def findBlock(key):
             return False
     except Exception as e:
         print("Error on findBlock")
-        print(e)
+        # print(e)
         return False
 
 
@@ -346,8 +347,8 @@ def getGenesisBlock():
     @return BlockHeader - with the genesis block
     """
     k = """-----BEGIN PUBLIC KEY-----
-MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAM39ONP614uHF5m3C7nEh6XrtEaAk2ys
-LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEA+PhdFWnzljQhM/zzMlhcpuU+PAh
+7nKD9F59qhNP0q9dpawtdMHBCaC9K48wAro+t5/nJ58zp2loIpOlxBiLoQ==
 -----END PUBLIC KEY-----"""
     index = 0
     previousHash = "0"
@@ -386,7 +387,7 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
                 nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp,
                                                     nonce, pubKey, blockContext, device)
         # print("####nonce = " + str(nonce))
-        sign = CryptoFunctions.signInfo(gwPvtKey, nextHash)
+        sign = CryptoFunctions.signInfoECDSA(gwPvtKey, nextHash)
         inf = Transaction.Transaction(0, nextHash, nextTimestamp, blockData, sign, 0)
         print("####nonce = " + str(nonce))
         return BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash,
