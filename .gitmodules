@@ -1,0 +1,3 @@
+[submodule "stordy"]
+	path = stordy
+	url = https://github.com/conseg/stordy.git
