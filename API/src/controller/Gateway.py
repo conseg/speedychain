@@ -14,6 +14,8 @@ import thread
 import random
 import json
 import Queue
+import psutil
+
 
 from flask import Flask, request
 
@@ -31,6 +33,14 @@ from ..tools import DeviceInfo
 from ..tools import DeviceKeyMapping
 from ..tools import Logger
 
+# def get_memory_usage():
+#     process = psutil.Process(os.getpid())
+#     memory_info = process.memory_info()
+#     return memory_info.rss / 1024 / 1024
+def get_memory_usage():
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+    return memory_info.rss / 1024 / 1024
 
 def getMyIP():
     """ Return the IP from the gateway
@@ -220,17 +230,16 @@ def sendTransactionToPeers(devPublicKey, transaction):
     """
     global peers
     for peer in peers:
-        print("peer")
         print(peer.object)
         obj = peer.object
-        print("Sending transaction to peer ")
+        # print("Sending transaction to peer ")
         print(peer.peerURI)
         trans = pickle.dumps(transaction)
-        print("trans")
+        # print("trans")
         # print(trans)
         res = obj.updateBlockLedger(devPublicKey, trans)
-        print("aqui")
-        print ("sendTransactionToPeers res = "+res)
+        # print("aqui")
+        # print ("sendTransactionToPeers res = "+res)
         # transaction.__class__ = Transaction.Transaction
         # candidateDevInfo = transaction.data
         # candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
@@ -1678,10 +1687,13 @@ class R2ac(object):
         global gwPub
 
         t1 = time.time()
-        print("Add transaction")
+        # print("Add transaction")
         print(devPublicKey)
         blk = ChainFunctions.findBlock(devPublicKey)
-        print(blk)
+        t2 = time.time()
+        logger.info("Time to add find a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        t1 = time.time()
+        # print(blk)
 
         # self.addContextinLockList(devPublicKey)
         try:
@@ -1692,8 +1704,12 @@ class R2ac(object):
                     #             str(blk.index) + "...")
                     # plainObject contains [Signature + Time + Data]
 
+                    t1 = time.time()
                     plainObject = CryptoFunctions.decryptAES(
                         encryptedObj, devAESKey)
+                    t2 = time.time()
+                    logger.info("Time to decrypt AES;" + '{0:.12f}'.format((t2 - t1) * 1000))
+
                     signature = plainObject[:-20]  # remove the last 20 chars
                     # remove the 16 char of timestamp
                     devTime = plainObject[-20:-4]
@@ -1701,8 +1717,11 @@ class R2ac(object):
                     deviceData = plainObject[-4:]
 
                     d = devTime+deviceData
+                    t1 = time.time()
                     isSigned = CryptoFunctions.signVerify(
                         d, signature, devPublicKey)
+                    t2 = time.time()
+                    logger.info("Time to sign verify" + '{0:.12f}'.format((t2 - t1) * 1000))
 
                     if isSigned:
                         deviceInfo = DeviceInfo.DeviceInfo(
@@ -1711,12 +1730,13 @@ class R2ac(object):
 
                         # nextInt = blk.transactions[len(
                         #     blk.transactions) - 1].index + 1
-
+                        t1 = time.time()
                         lastTransaction = ChainFunctions.getLatestBlockTransaction(blk)
-
-                        print("Last Transaction")
-                        print(lastTransaction)
-                        print(lastTransaction is None)
+                        t2 = time.time()
+                        logger.info("Time to get latest transaction;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                        # print("Last Transaction")
+                        # print(lastTransaction)
+                        # print(lastTransaction is None)
                         nextInt = 0
                         if lastTransaction != None:
                             print("lastTransacion != None")
@@ -1724,13 +1744,16 @@ class R2ac(object):
                         # nextInt = 0 if lastTransaction is None else lastTransaction.index + 1
                         # Get last transaction hash
 
+                        t1 = time.time()
                         signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                        t2 = time.time()
+                        logger.info("Time to sign info;" + '{0:.12f}'.format((t2 - t1) * 1000))
                         gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
                         # code responsible to create the hash between Info nodes.
-                        print("prevInfoHash")
+                        # print("prevInfoHash")
                         prevInfoHash = "" if lastTransaction is None else CryptoFunctions.calculateTransactionHash(lastTransaction)
-                        print("prevInfoHash")
-                        print(prevInfoHash)
+                        # print("prevInfoHash")
+                        # print(prevInfoHash)
                         transaction = Transaction.Transaction(
                             nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
 
@@ -1740,8 +1763,11 @@ class R2ac(object):
                         # if not PBFTConsensus(blk, gwPub, devPublicKey):
                         #     return "Consensus Not Reached"
 
+                        t1 = time.time()
                         ChainFunctions.addBlockTransaction(blk, transaction)
-                        print("addBlockTransaction sucess")
+                        t2 = time.time()
+                        logger.info("Time to add transaction on block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                        # print("addBlockTransaction sucess")
                         # logger.debug("Block #" + str(blk.index) + " added locally")
                         # logger.debug("Sending block #" +
                         #             str(blk.index) + " to peers...")
@@ -1756,13 +1782,16 @@ class R2ac(object):
                             "gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
                                 (currentTimestamp - float(devTime)) / 1000))
 
-                        print("sendTransactionToPeers")
+                        # print("sendTransactionToPeers")
                         # --->> this function should be run in a different thread.
+                        t1 = time.time()
                         sendTransactionToPeers(devPublicKey, transaction)
-                        print("sendTransactionToPeers")
-                        # print("all done")
-                        # self.removeLockfromContext(devPublicKey)
-                        return "ok!"
+                        t2 = time.time()
+                        logger.info("Time to send transaction to peers;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                        # print("sendTransactionToPeers")
+
+                        memory_usage = "{:.2f}MB".format(get_memory_usage())
+                        return "ok! - " + memory_usage
                     else:
                         # logger.debug("--Transaction not appended--Transaction Invalid Signature")
                         # self.removeLockfromContext(devPublicKey)
@@ -2340,7 +2369,7 @@ class R2ac(object):
         """ Log all chain \n
             @return "ok" - done
         """
-        try: 
+        try:
             res = ""
             res += ("Showing Block Header data for peer: " + myURI)
             size = ChainFunctions.getBlockchainSize()
@@ -2452,14 +2481,14 @@ class R2ac(object):
 
         if blk == False:
             return "Block does not exist"
-        
+
         print("Block for index " + str(index))
         print(blk)
-        
+
         transactions = ChainFunctions.getTransactions(blk)
         # blk = ChainFunctions.getBlockByIndex(index)
         # print("Block for index"+str(index))
-        
+
         size = len(transactions)
         # logger.info("Block Ledger size: " + str(size))
         # logger.info("-------")
@@ -2556,28 +2585,32 @@ class R2ac(object):
 
 
     def electNewOrchestrator(self):
-        global votesForNewOrchestrator
-        global orchestratorObject
-        t1 = time.time()
-        votesForNewOrchestrator =[]
-        for peer in peers:
-            obj = peer.object
-            # print("objeto criado")
-            receivedVote = obj.peerVoteNewOrchestrator()
+        try:
+            global votesForNewOrchestrator
+            global orchestratorObject
+            t1 = time.time()
+            votesForNewOrchestrator =[]
+            for peer in peers:
+                obj = peer.object
+                # print("objeto criado")
+                receivedVote = obj.peerVoteNewOrchestrator()
 
-            votesForNewOrchestrator.append(pickle.loads(receivedVote))
-            # logger.info("remote vote for: " + str(pickle.loads(receivedVote)))
-        voteNewOrchestrator()
-        # newOrchestratorURI = mode(votesForNewOrchestrator)
-        newOrchestratorURI = max(
-            set(votesForNewOrchestrator), key=votesForNewOrchestrator.count)
-        # logger.info("Elected node was" + str(newOrchestratorURI))
-        orchestratorObject = Pyro4.Proxy(newOrchestratorURI)
-        for peer in peers:
-            obj = peer.object
-            dat = pickle.dumps(orchestratorObject)
-            obj.loadElectedOrchestrator(dat)
-        t2 = time.time()
+                votesForNewOrchestrator.append(pickle.loads(receivedVote))
+                # logger.info("remote vote for: " + str(pickle.loads(receivedVote)))
+            voteNewOrchestrator()
+            # newOrchestratorURI = mode(votesForNewOrchestrator)
+            newOrchestratorURI = max(
+                set(votesForNewOrchestrator), key=votesForNewOrchestrator.count)
+            # logger.info("Elected node was" + str(newOrchestratorURI))
+            orchestratorObject = Pyro4.Proxy(newOrchestratorURI)
+            for peer in peers:
+                obj = peer.object
+                dat = pickle.dumps(orchestratorObject)
+                obj.loadElectedOrchestrator(dat)
+            t2 = time.time()
+        except Exception as e:
+            print("Error in electNewOrchestrator")
+            print(e)
         # logger.info("gateway;" + gatewayName + ";" + consensus + ";T7;Time to execute new election block consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
         # logger.info("New Orchestator loaded is: " + str(newOrchestratorURI))
         # orchestratorObject
