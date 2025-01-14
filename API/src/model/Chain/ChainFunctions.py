@@ -63,7 +63,7 @@ def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device = "device")
                                  consensus, previousExpiredBlockHash, previousBlockSignature, device)
     ##@Regio addBlockHeader is done during consensus! please take it off for running pbft
     #addBlockHeader(newBlock)
-    print("New Block ")
+    # print("New Block ")
     return newBlock
 
 def addBlockHeader(newBlockHeader):
@@ -78,10 +78,10 @@ def addBlockHeader(newBlockHeader):
                                 block_context = str(newBlockHeader.blockContext), device = str(newBlockHeader.device),
                                 previous_expired_block_hash = str(newBlockHeader.previousExpiredBlockHash),
                                 previous_block_signature = str(newBlockHeader.previousBlockSignature))
-        start = time.time()
+        # start = time.time()
         response = stub_block.AddBlock(block)
-        end = time.time()
-        print("Time to add block: " + str((end - start ) * 1000) + " seconds")
+        # end = time.time()
+        # print("Time to add block: " + str((end - start ) * 1000) + " seconds")
         # print(response)
     except Exception as e:
         print("Error on addBlockHeader")
@@ -97,7 +97,7 @@ def addBlockTransaction(block, transaction):
     """
     # block.transactions.append(transaction)
     try:
-        print("Add Block Transaction")
+        # print("Add Block Transaction index " + str(transaction.index))
         transaction = transaction_pb2.Transaction(
             index = int(transaction.index), previousHash = str(transaction.previousHash), timestamp = int(transaction.timestamp),
             data= str(transaction.data), signature = str(transaction.signature), nonce = int(transaction.nonce),
@@ -106,10 +106,7 @@ def addBlockTransaction(block, transaction):
         )
 
         request = transaction_pb2.AddTransactionRequest(block_public_key = str(block.publicKey), transaction = transaction)
-        start = time.time()
-        response = stub_transaction.AddTransaction(request)
-        end = time.time()
-        print("Time to add transaction on block: " + str((end - start ) * 1000) + "ms")
+        stub_transaction.AddTransaction(request)
         # print(response)
     except Exception as e:
         print("Error on addBlockTransaction")
@@ -137,17 +134,10 @@ def getLatestBlockTransaction(blk):
     try:
         request = transaction_pb2.FindLastTransactionRequest(block_public_key=blk.publicKey)
         response = stub_transaction.FindLastTransaction(request)
-        print("Get Latest Block Transaction")
-        print(response.previousHash)
-        print(response.nonce)
-        print(response)
         # def __init__(self, index, previousHash, timestamp, data, signature, nonce, id = "id"): self.index = index
-        print("Get Latest Block Transaction 2")
         transaction = Transaction.Transaction(index = response.index, previousHash = response.previousHash, timestamp = response.timestamp,
                                 data = response.data, signature = response.signature, nonce = response.nonce,
                                 id = response.identification, hash = response.hash)
-        print("Get Latest Block Transaction 3")
-        print(transaction)
         return transaction
     except Exception as e:
         print("Error on getLatestBlockTransaction")
@@ -160,13 +150,13 @@ def getTransactions(block):
     # print(block.publicKey)
     response = stub_transaction.FindAllTransactions(request)
     response = response.transactions
-    
+
     # if isinstance(response, list) == False:
-        
+
         # response = [response]
-        
+
     # print(response)
-    
+
     transactions = []
 
     for tr in response:
@@ -175,7 +165,7 @@ def getTransactions(block):
                                   data = tr.data, signature = tr.signature, nonce = tr.nonce,
                                   id = tr.identification, hash = tr.hash)
         transactions.append(transaction)
-        
+
     return transactions
 
 
@@ -227,7 +217,7 @@ def findBlockByIndex(index):
         print("Error on findBlock")
         print(e)
         return False
-    
+
 def lengthOfBlock(block):
     """ Return the amount of transactions on a block\n
     @param block - BlockHeader object\n
@@ -242,7 +232,7 @@ def lengthOfBlock(block):
         request = transaction_pb2.FindLastTransactionRequest(block_public_key=block.publicKey)
         response = stub_transaction.FindLastTransaction(request)
         return response.index
-    
+
     except Exception as e:
         print("Error on lengthOfBlock")
         print(e)
@@ -307,19 +297,19 @@ def getFullChain():
         response = stub_block.GetFullChain(empty)
         blocks = []
         for b in response.blocks:
-            
-            
+
+
             block = BlockHeader(index = b.index, previousHash = b.previous_hash, timestamp = b.timestamp,
                                 transaction = [], hash = b.hash, nonce = b.nonce,
                                 publicKey = b.public_key, blockContext = b.block_context, device = b.device,
                                 previousExpiredBlock = b.previous_expired_block_hash, previousBlockSignature = b.previous_block_signature)
-            
+
             # length = lengthOfBlock(block)
             # block.setNumberOfTransactions(length)
-            
+
             transactions = getTransactions(block)
             block.setTransactions(transactions)
-            
+
             blocks.append(block)
         return blocks
     except Exception as e:
