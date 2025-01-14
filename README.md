@@ -96,7 +96,7 @@ git clone https://github.com/conseg/speedychain.git
 Clone the STORDY storage module:
 
 ```bash
-git clone https://github.com/leonardocreatus/stordy.git
+git clone https://github.com/conseg/stordy.git
 ```
 
 ---
@@ -119,8 +119,9 @@ Install the necessary Python 2 packages:
 pip2 install Pyro4
 pip2 install Flask
 pip2 install merkle
-pip2 install pycryptodome
+pip2 install cryptography
 pip2 install requests
+pip2 install psutil
 ```
 
 ---
@@ -165,11 +166,11 @@ cargo run
 
 ### **8.1 Switch to the Correct Branch**
 
-Navigate to the **SpeedyCHAIN** repository and switch to the `stordy-module` branch:
+Navigate to the **SpeedyCHAIN** repository and switch to the `stordy-module-RSA` branch:
 
 ```bash
 cd ../speedychain
-git checkout stordy-module
+git checkout stordy-module-RSA
 ```
 
 ### **8.2 Navigate to the API Directory**
@@ -194,19 +195,27 @@ python3 -m Pyro4.naming -n 127.0.0.1 -p 9090
 
 ### **9.2 Start the Gateways**
 
-Start two gateways using Python 2:
+Start at least two gateways using Python 2 (for test):
 
 1. Start Gateway A:
 
    ```bash
-   python2 runner.py -n 127.0.0.1 -p 9090 -G gwa -C 0001 -S 1
+   python2 runner.py -n 127.0.0.1 -p 9090 -G gwa -C 0001 -S 100
    ```
 
 2. Start Gateway B:
 
    ```bash
-   python2 runner.py -n 127.0.0.1 -p 9090 -G gwb -C 0001 -S 1
+   python2 runner.py -n 127.0.0.1 -p 9090 -G gwb -C 0001 -S 100
    ```
+
+### **9.3 Run in Interactive Mode**
+
+Start a device simulator using Python2:
+
+```bash
+python2 src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a
+```
 
 ---
 
