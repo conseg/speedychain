@@ -59,32 +59,28 @@ def encryptAES(text, k):
         @paran text - text that will be encrypted\n
         @return enc64 - text encrypted
     """
-    # print("\tentrou no encryptAES!!")
+    # print("\tentered encryptAES!!")
     try:
         # print("text: {}".format(text))
         # print("key: {}".format(base64.b64encode(k)))
         # print("len(k): {}".format(len(k)))
-        # instancia o algoritmo de Cifra
+        
+        # instantiates the Cipher algorithm
         cypher = Cipher(algorithms.AES(k),modes.CBC(iv)).encryptor()
-        # instancia o padder e faz o padding
+        # instantiate the padder and do the padding
         padder = symmetricPadding.PKCS7(algorithms.AES.block_size).padder()
         textPadded = padder.update(text)
         textPadded += padder.finalize()
-        #cifra
+        # cipher
         cy = cypher.update(textPadded)
         cy += cypher.finalize()
-        #encoda em b64
+        # encode in b64
         enc64 = base64.b64encode(cy)
-        # print("\tsaiu do encryptAES com sucesso!!")
+        # print("\tsuccessfully exited encryptAES!!")
         return enc64
     except Exception as e:
-        # print("\tsaiu do encryptAES sem sucesso!!")
-        print("erro: {}".format(e))
-    # cypher = AES.new(k, AES.MODE_CBC, iv)
-    # textPadded = pad(text)
-    # cy = cypher.encrypt(textPadded)
-    # enc64 = base64.b64encode(cy)
-    # return enc64
+        # print("\tunsuccessfully exited encryptAES!!")
+        print("error: {}".format(e))
 
 def decryptAES(text, k):
     """ Receive a key and a text and decrypt the text with the key using AES \n
@@ -92,61 +88,53 @@ def decryptAES(text, k):
         @param text - text encrypted\n
         @return plainTextUnpadded - text decrypted
     """
-    # print("\tentrou no decryptAES!!")
+    # print("\tentered decryptAES!!")
     try:
-        # print("texto: {}".format(text))
+        # print("text: {}".format(text))
         # print("k: {}".format(base64.b64encode(k)))
         # print("k-size: {}".format(len(k)))
 
         # decode the text in b64
         enc = base64.b64decode(text)
-        # instancia o algoritmo de Cifra
+        # instantiates the Cipher algorithm
         decypher = Cipher(algorithms.AES(k),modes.CBC(iv)).decryptor()
         
-        #decifra
+        # decipher
         plain_text = decypher.update(enc)
         plain_text += decypher.finalize()
         
-        # instancia o unpadder e faz o unpadding
+        # instantiates the unpadder and do the unpadding
         unpadder = symmetricPadding.PKCS7(algorithms.AES.block_size).unpadder()
         plainTextUnpadded = unpadder.update(plain_text)
         plainTextUnpadded += unpadder.finalize()
         
         # print("plaintext: {}".format(plainTextUnpadded))
-        
-        # print("\tsaiu do decryptAES com sucesso!!")
+        # print("\tsuccessfully exited decryptAES!!")
         return plainTextUnpadded
     except Exception as e:
-        # print("\tsaiu do decryptAES sem sucesso!!")
-        print("erro: {}".format(e))
+        # print("\tunsuccessfully exited decryptAES!!")
+        print("error: {}".format(e))
         
-    # enc = base64.b64decode(text)
-    # decryption_suite = AES.new(k, AES.MODE_CBC, iv)
-    # plain_text = decryption_suite.decrypt(enc)
-    # plainTextUnpadded = unpad(plain_text)
-    # return plainTextUnpadded
-
-# RSA
+## RSA
 
 def encryptRSA2(key, plaintext):
     """ Receive a key and a text and encrypt it on Base 64\n
         @param key - key to make the encrypt\n
         @paran text - text that will be encrypted\n
-        @return enc64 - text encrypted
-    """
+        @return ciphertext64 - text encrypted in base64
+    """    
+    # print("\tentered encryptRSA!!")
     try:
-        # print("\tentrou no encryptRSA!!")
         # print("key: \n{}size: {}".format(key,len(key)))
-                
-        key = key.encode('utf-8')
         
-        #load key
+        # load key
+        key = key.encode('utf-8')
         pubkey = serialization.load_pem_public_key(
             key
         )
+        # print("\tsuccessfully loaded the key!!")
         
-        # print("\tcarregou a chave com sucesso!!")
-        #encrypt the text
+        # encrypt the text
         ciphertext = pubkey.encrypt(
             plaintext,
             padding.OAEP(
@@ -155,40 +143,34 @@ def encryptRSA2(key, plaintext):
                 label=None
             )
         )
-        #encode the ciphertext in b64
+        # encode the ciphertext in b64
         ciphertext64 = base64.b64encode(ciphertext)
         
-        # print("saiu do encryptRSA com ciphertext: \n{}".format(ciphertext64))
-        # print("\tsaiu do encryptRSA!!")
+        # print("\tsuccessfully exited encryptRSA!!")
     except Exception as e:
-        print("saiu do encryptRSA com erro")
-        print("erro: {}".format(e))
+        # print("\tunsuccessfully exited encryptRSA!!")
+        print("error: {}".format(e))
     return ciphertext64
-    # k = RSA.importKey(key)
-    # # enc = k.encrypt(text, 42)[0]
-    # Cipher = PKCS1_OAEP.new(k)
-    # enc = Cipher.encrypt(text)
-    # enc64 = base64.b64encode(enc)
-    # return enc64
 
-def decryptRSA2(key, ciphertext, password=None):
+def decryptRSA2(key, ciphertext,password=None):
     """ Receive a key and a text and decrypt the text with the key using Base 64 \n
         @param key - key to make te decrypt\n
         @param text - text encrypted\n
         @return data - text decrypted
-    """
+    """    
+    # print("\tentered decryptRSA2!!")
     try:
-        # print("\tentrou no decryptRSA2!!")
-        key = key.encode('utf-8')
         #load key
+        key = key.encode('utf-8')
         privkey = serialization.load_pem_private_key(
             key,
             password
         )
-        # print("\tcarregou a chave sem erro!!")
-        #decifra
+        # print("\tsuccessfully loaded key!!")
+
+        # decipher
         plaintext = privkey.decrypt(
-            #decode the b64 ciphertext
+            # decode the b64 ciphertext
             base64.b64decode(ciphertext),
             padding.OAEP(
                 mgf=padding.MGF1(hashes.SHA256()),
@@ -196,18 +178,12 @@ def decryptRSA2(key, ciphertext, password=None):
                 label=None
             )
         )
-        # print("saiu do decryptRSA sem erro")
+        # print("\tsuccessfully exited decryptRSA!!")
         return plaintext    
     except Exception as e:
-        print("saiu do decryptRSA com erro")
-        print("erro: {}".format(e))
+        # print("\tunsuccessfully exited decryptRSA!!")
+        print("error: {}".format(e))
         return ""
-    # k = RSA.importKey(key)
-    # deb = base64.b64decode(text)
-    # Cipher = PKCS1_OAEP.new(k)
-    # # data = k.decrypt(deb)
-    # data = Cipher.decrypt(deb)
-    # return data
 
 def signInfo(gwPvtKey, data,password=None):
     """ Sign some data with the peer's private key\n 
@@ -215,17 +191,18 @@ def signInfo(gwPvtKey, data,password=None):
         @param data - data to sign\n
         @return sinature - signature of the data maked with the private key
     """
+    # print("\tentered signInfo!!")
     try:
-        # print("\tantes de carregar a chave de assinatura!!")
+        # load key
         key = gwPvtKey.encode('utf-8')
-        #load key
         privkey = serialization.load_pem_private_key(
             key,
             password
         )
-        # print("\tchave carregada com sucesso!!")
-        #sign the data
-        #TODO prehashed
+        # print("\tsuccessfully loaded key!!")
+        
+        # sign the data
+        # TODO prehashed
         sig = privkey.sign(
             data,
             padding.PSS(
@@ -234,26 +211,17 @@ def signInfo(gwPvtKey, data,password=None):
             ),
             hashes.SHA256()
         )
-        # print("\tassinado com sucesso!!")
-        #encode the signature in b64
+        # print("\tsuccessfully signed!!")
+
+        # encode the signature in b64
         signature = base64.b64encode(sig)
-        # print("assinatura em b64: {}".format(signature))
+        # print("b64 signature: {}".format(signature))
+        # print("\tsuccessfully exited signInfo!!")
         return signature
     except Exception as e:
-        print("\tsaiu da assinatura RSA sem sucesso!!")
+        # print("\tunsuccessfully exited signInfo!!")
         print("error: {}".format(e))
         return ""
-    # try:
-    #     k = RSA.importKey(gwPvtKey)
-    #     signer = PKCS1_v1_5.new(k)
-    #     digest = SHA256.new()
-    #     digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
-    #     #digest.update(data)
-    #     s = signer.sign(digest)
-    #     signature = base64.b64encode(s)
-    #     return signature
-    # except:
-    #     return ""
 
 def signVerify(data, signature, gwPubKey):
     """ Verify if a data sign by a private key it's unaltered\n
@@ -261,20 +229,19 @@ def signVerify(data, signature, gwPubKey):
         @param signature - signature of the data to be validated\n
         @param gwPubKey - peer's private key
     """
-    # print("\tentrou no valida assinatura RSA!!")
+    # print("\tentered signVerify!!")
     try:
-        # print("\tantes de carregar a chave de verificacao RSA!!")
-        key = gwPubKey.encode('utf-8')
-        # print("key: {}".format(key))
         #load key
+        key = gwPubKey.encode('utf-8')
         pubkey = serialization.load_pem_public_key(
             key
         )
-        # print("\tchave carregada com sucesso!!")
-        #verify the signature
-        #TODO prehashed
+        # print("\tsuccessfully loaded key!!")
+        
+        # verify the signature
+        # TODO prehashed
         pubkey.verify(
-            #decode the b64 signature
+            # decode the b64 signature
             base64.b64decode(signature),
             data,
             padding.PSS(
@@ -283,30 +250,20 @@ def signVerify(data, signature, gwPubKey):
             ),
             hashes.SHA256()
         )
-        # print("\tassinatura valida!!")
+        # print("\tvalid signature!!")
+        # print("\tsuccessfully exited signVerify!!")
         return True
     except Exception as e:
-        print("\tsaiu da verificacao RSA sem sucesso!!")
+        # print("\tunsuccessfully exited signVerify!!")
         print("error: {}".format(e))
         return False
-    # try:
-    #     k = RSA.importKey(gwPubKey)
-    #     signer = PKCS1_v1_5.new(k)
-    #     digest = SHA256.new()
-    #     digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
-    #     #digest.update(data)
-    #     signaturerOr = base64.b64decode(signature)
-    #     result = signer.verify(digest, signaturerOr)
-    #     return result
-    # except:
-    #     return False
 
 def generateRSAKeyPair():
     """ Generate a pair of RSA keys using RSA 3072\n
         @return pub, prv - public and private key
     """
+    # print("entered generate RSA keys")
     try:
-        #print("entrou no generate RSA keys")
         keysize = 3072
         publicexpoent = 65537
 
@@ -314,37 +271,24 @@ def generateRSAKeyPair():
             publicexpoent,
             key_size=keysize
         )
-        #print("gerou a chave privada")
-
         pubKey = private.public_key()
-
-        #print("gerou a chave publica")
         
         prv = private.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption()
         )
-        # print("serializou a chave privada: \n{}\nsize: {}".format(prv,len(prv)))
         pub = pubKey.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo    
         )
-        # print("serializou a chave publica: \n{}\nsize: {}".format(pub,len(pub)))
         
-        #print("saiu do generate RSA keys")
+        # print("successfully exited generate RSA keys")
         return pub, prv
     except Exception as e:
+        # print("\tunsuccessfully exited generate RSA keys")
         print("error: {}".format(e))
         return "",""
-
-        # private = RSA.generate(3072)
-
-        # pubKey = private.public_key()
-        # prv = private.export_key()
-        # pub = pubKey.export_key()
-        # return pub, prv
-
 # ECC
 
 ## ECDSA
@@ -355,8 +299,7 @@ def signInfoECDSA(gwPvtKey, data, password=None):
         @param data - data to sign\n
         @return sinature - signature of the data maked with the private key
     """
-    # print("\tinside signInfoECDSA!!")
-    # print("gwPvtKey: {} \ndata: {} \npassword: {}".format(gwPvtKey,data,password))
+    # print("\tentered signInfoECDSA!!")
     try:
         #load key
         key = gwPvtKey.encode('utf-8')
@@ -364,21 +307,23 @@ def signInfoECDSA(gwPvtKey, data, password=None):
             key,
             password
         )
-        # print("successful loaded key!!")
+        # print("successfully loaded key!!")
+
         # sign the data
         # TODO prehashed
         sign = privatekey.sign(
             data,
             ec.ECDSA(hashes.SHA256())
         )
-        # print("successful signed!!")
+        # print("successfully signed!!")
+
         # encode the signature in b64
         signatureb64 = base64.b64encode(sign)
         # print("signatureb64: {}".format(signatureb64))
-        # print("\texited signInfoECDSA with success!!")
+        # print("\tsuccessfully exited signInfoECDSA!!")
         return signatureb64
     except Exception as e:
-        print("\texited signInfoECDSA without success!!")
+        # print("\tunsuccessfully exited signInfoECDSA!!")
         print("error: {}".format(e))
         return ""
 
@@ -388,15 +333,15 @@ def signVerifyECDSA(data, signature, gwPubKey):
         @param signature - signature of the data to be validated\n
         @param gwPubKey - peer's private key
     """
-    # print("\tinside signVerifyECDSA!!")
-    # print("data: {} \nsignature: {} \ngwPubKey: {}".format(data,signature,gwPubKey))
+    # print("\tentered signInfoECDSA!!")
     try:
         # load key
         key = gwPubKey.encode('utf-8')
         publickey = serialization.load_pem_public_key(
             key
         )
-        # print("successful loaded key!!")
+        # print("successfully loaded key!!")
+
         # verify the signature
         # TODO prehashed
         publickey.verify(
@@ -406,10 +351,10 @@ def signVerifyECDSA(data, signature, gwPubKey):
             ec.ECDSA(hashes.SHA256())
         )
         # print("valid signature!!")
-        # print("\texited signVerifyECDSA with success!!")
+        # print("\tsuccessfully exited signVerifyECDSA!!")
         return True
     except Exception as e:
-        print("\texited signVerifyECDSA without success!!")
+        # print("\tunsuccessfully exited signVerifyECDSA!!")
         print("error: {}".format(e))
         return False
 
@@ -417,31 +362,27 @@ def generateECDSAKeyPair():
     """ Generate a pair of ECDSA keys using SECP256R1\n
         @return pub, prv - public and private key
     """
-    # print("\tinside generateECDSAKeyPair!!")
+    # print("\tentered generate ECDSA keys!!")
     try:
         privatekey = ec.generate_private_key(
             ec.SECP256R1
         )
-        # print("private key generated")
         publickey = privatekey.public_key()
-        # print("public key generated")
         
         prv = privatekey.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption()
         )
-        # print("private key serialized: {}".format(prv))
         pub = publickey.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
-        # print("public key serialized: {}".format(pub))
         
-        # print("\texited generateECDSAKeyPair with success!!")
+        # print("\tsuccessfully exited generate ECDSA keys!!")
         return pub, prv
     except Exception as e:
-        print("\texited generateECDSAKeyPair without success!!")
+        # print("\tunsuccessfully exited generate ECDSA keys!!")
         print("error: {}".format(e))
         return "",""
 
@@ -453,10 +394,7 @@ def generateSharedKey(myPrivatekey, otherPublicKey, password=None):
         @Param otherPublicKey - the public key of the part to share the key\n
         @Return sharedKey - the key shared between the parties
     """
-    # print("\tinside generateSharedKey!!")
-    # print("types:")
-    # print("myprivatekey: {}".format(type(myPrivatekey)))
-    # print("otherpublickey: {}".format(type(otherPublicKey)))
+    # print("\tentered generateSharedKey!!")
     try:
         # load keys
         myPrivatekey = myPrivatekey.encode('utf-8')
@@ -468,14 +406,12 @@ def generateSharedKey(myPrivatekey, otherPublicKey, password=None):
         DHPubKey = serialization.load_pem_public_key(
             otherPublicKey
         )
-        # print("\tsuccesful loaded keys!!")
-        # print("DHPrivKey: {} \nDHPubKey: {}".format(type(DHPrivKey),type(DHPubKey)))
-        # print("")
-        # print("myPrivatekey: \n{} \notherPublicKey: \n{}".format(myPrivatekey,otherPublicKey))
+        # print("\tsuccessfully loaded keys!!")
+        
         sharedKey = DHPrivKey.exchange(ec.ECDH(),DHPubKey)
         # print("sharedKey: {}".format(type(sharedKey)))
-        # print("\texited generateSharedKey with success!!")
+        # print("\tsuccessfully exited generateSharedKey!!")
         return sharedKey
     except Exception as e:
-        print("\texited generateSharedKey without success!!")
+        # print("\tsuccessfully exited generateSharedKey!!")
         print("error: {}".format(e))
