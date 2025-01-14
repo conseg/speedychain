@@ -180,7 +180,7 @@ def sendData():
     ttransact1 = time.time()
     
     no_transactions = input("How many transactions do you want to create?")
-    
+
     for i in range(int(no_transactions)):
         temperature = readSensorTemperature()
         t = ((time.time() * 1000) * 1000)
@@ -228,10 +228,26 @@ def sendData():
             print("transact size logged")
             logger.error("passed through sendData except")
         try:
-            if(server.addTransaction(publicKey, encobj)!="ok!"):
+            start = time.time()
+            result = server.addTransaction(publicKey, encobj)
+            splited = result.split(" - ")
+            if(splited[0]!="ok!"):
                 logger.error("something went wrong when sending data")
                 break;
-            # time.sleep(0.)
+            end = time.time()
+            # print(splited[1])
+            # elapsed = end - start
+
+            if (i + 1) % 1024 == 0:
+                qtd = i + 1
+                file_path = "/Users/leonardobarbosa/time-to-append.txt"
+                with open(file_path, "a") as file:
+                    msg = str(qtd) + "\t\t\t\t" + str((end - start ) * 1000) + "ms" + "\t\t\t\t" + splited[1] + "\n"
+                    print(str(qtd) + "\t\t\t\t" + str((end - start ) * 1000) + "ms" + "\t\t\t\t" + splited[1] + "\n")
+                    file.write(msg)
+                # print("Time to add transaction on block: " + str((end - start ) * 1000) + "ms with "  + splited[1] + " memory")
+                # os.system('say "beep"')
+
         except:
             logger.error("some exception with addTransaction now...")
 
@@ -270,7 +286,7 @@ def addPeer():
 
 def listBlockHeader():
     """ Log all blocks """
-    try:    
+    try:
         print("listBlockHeader")
         res = server.showIoTLedger()
         print("listBlockHeader")
@@ -285,7 +301,7 @@ def listBlockHeader():
 def listTransactions():
     """ Ask for the user to input an index and show all transaction of the block with that index """
     index = input("Which IoT Block do you want to print?")
-    try: 
+    try:
         server.showBlockLedger(int(index))
     except Exception as e:
         print("Error on listTransactions")
@@ -1744,3 +1760,9 @@ if __name__ == '__main__':
         # os.system("clear")
         # loadConnection()
         # main()
+
+
+# key = method_8
+# while:
+    # dado = gerar
+    # method_4(dado)
