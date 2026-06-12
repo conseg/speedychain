@@ -101,7 +101,7 @@ def addBlockOnChain():
     print("###addBlockonChain in devicesimulator, publicKey")
     print(publicKey, lifecycleDeviceName)
     serverAESEncKey = server.addBlock(publicKey, lifecycleDeviceName)
-    if serverAESEncKey == "":
+    if serverAESEncKey == "" or serverAESEncKey == -1:
         print("Block already added with this public key")
         logger.error("it was not possible to add block - problem in the key")
         return False

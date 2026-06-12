@@ -1,316 +1,224 @@
----
+# SpeedyChain + Stordy
 
-# **SpeedyCHAIN and STORDY Installation and Execution Guide (Linux)**
+![SpeedyChain Logo](API/pages/assets/images/speedychain-logo.svg)
 
-![SpeedyCHAIN Logo](API/pages/assets/images/speedychain-logo.svg)
+**SpeedyChain** é um protótipo de blockchain para dispositivos IoT. Esta branch integra o módulo de armazenamento **Stordy** (submódulo Git) e oferece dois modos de execução:
 
-**SpeedyCHAIN** is a blockchain prototype designed to run on IoT devices. It integrates with **STORDY**, a storage module, and also includes an optional **Ethereum Virtual Machine (EVM)** integration for testing purposes. This guide provides step-by-step instructions on installing and running SpeedyCHAIN, STORDY, and the EVM.
+- **Docker** — dois gateways (`gwa` e `gwb`) com storage isolado, name server Pyro4 e device simulador
+- **VPS** — instalação nativa em Linux, sem containers (instruções abaixo)
 
----
+## Arquitetura
 
-## **1. Update the Linux Environment**
+| Componente | Porta / identificador | Função |
+|------------|----------------------|--------|
+| Name server (Pyro4) | `9090` | Registro de gateways e devices |
+| Gateway A | `gwa` | Nó de entrada com blockchain |
+| Gateway B | `gwb` | Segundo gateway (testes multi-gateway) |
+| Stordy | gRPC `50052` | Persistência de blocos e transações |
+| Device simulador | `dev-a` (padrão) | Menu interativo de testes |
 
-Before proceeding, ensure your system is up to date:
+## Obter o código
 
 ```bash
-sudo apt update
-sudo apt upgrade
+git clone --recurse-submodules -b feat/complete-version git@github.com:conseg/speedychain.git
+cd speedychain
+```
+
+Se já clonou sem submódulos:
+
+```bash
+git submodule update --init --recursive
 ```
 
 ---
 
-## **2. Install Git**
+## Execução via Docker
 
-Git is required for cloning the necessary repositories. Install it with:
+Recomendado para testar **dois gateways com storage isolado** (cada um com seu próprio Stordy).
+
+### Pré-requisitos
+
+- Docker e Docker Compose
+- Submódulo `stordy/` inicializado (ver acima)
+
+### 1. Subir os containers
+
+Na raiz do repositório:
 
 ```bash
-sudo apt install git
+docker compose up -d --build
 ```
+
+Isso inicia:
+
+- `name-server` na porta **9090**
+- `gateway-a` (`gwa`) com dados em `./volumes/gwa`
+- `gateway-b` (`gwb`) com dados em `./volumes/gwb`
+
+Verifique que os serviços estão rodando:
+
+```bash
+docker compose ps
+```
+
+Todos devem aparecer como `Up`.
+
+#### Ambiente limpo (primeira execução ou reset)
+
+```bash
+docker compose down
+rm -rf ./volumes/gwa/* ./volumes/gwb/*
+docker compose up -d --build
+```
+
+### 2. Abrir o device
+
+Em um **segundo terminal**, execute o simulador em foreground:
+
+```bash
+docker compose --profile interactive run --rm device
+```
+
+Por padrão o device conecta ao gateway `gwa` (`DEVICE_NAME=dev-a`). O entrypoint aguarda o gateway registrar no name server antes de abrir o menu.
+
+Para usar outro gateway:
+
+```bash
+docker compose --profile interactive run --rm \
+  -e GATEWAY_NAME=gwb -e DEVICE_NAME=dev-b device
+```
+
+### 3. Fluxo mínimo de teste
+
+No menu do device, execute nesta ordem:
+
+| Passo | Opção | Entrada | O que faz |
+|-------|-------|---------|-----------|
+| 1 | **12** | `None` | Define consenso sem algoritmo |
+| 2 | **3** | *(Enter)* | Autenticação — cria bloco do device e obtém chave AES |
+| 3 | **4** | `1` | Envia 1 transação (sensor simulado) |
+| 4 | **5** | *(opcional)* | Lista blocos; o bloco do device deve mostrar `Number of transactions: 1` |
+
+Evite a opção **8** (`Recreate Device KeyPair`) no primeiro teste — ela invalida a chave AES obtida na opção 3.
+
+### 4. Acompanhar transações
+
+A opção **6** (`List Transactions`) imprime no **gateway**, não no terminal do device (comportamento do Pyro4). Para ver as transações adicionadas, use um **terceiro terminal**:
+
+```bash
+docker compose logs -f gateway-a
+```
+
+Após a opção 4, procure mensagens como `addTransaction`, `Block Ledger size` e os dados das transações.
+
+### 5. Encerrar
+
+```bash
+docker compose down
+```
+
+Os dados da blockchain permanecem em `./volumes/gwa` e `./volumes/gwb`.
+
+### Fluxo resumido (Docker)
+
+```mermaid
+flowchart LR
+  subgraph term1 [Terminal 1]
+    up["docker compose up -d --build"]
+  end
+  subgraph term2 [Terminal 2]
+    device["docker compose run device"]
+    menu["12 None → 3 → 4 1"]
+  end
+  subgraph term3 [Terminal 3]
+    logs["docker compose logs -f gateway-a"]
+  end
+  up --> device
+  device --> menu
+  menu --> logs
+```
+
+### Troubleshooting (Docker)
+
+Para erros comuns (`unknown name: gwa`, rebuild, Apple Silicon, GLIBC), consulte [docker/README.md](docker/README.md).
 
 ---
 
-## **3. Install Python 2 and Pip2**
+## Execução em VPS (sem Docker)
 
-### **3.1 Install Python 2**
+Instruções para instalação nativa em Linux (Ubuntu/Debian). Neste modo, **dois gateways na mesma máquina compartilham um único Stordy** (porta fixa `50052`). Para storage isolado por gateway, use a seção Docker ou duas VPS distintas.
 
-```bash
-sudo apt install python2
-```
-
-Verify the installation:
+### Pré-requisitos
 
 ```bash
-python2 --version
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git python2 python3-pip cargo protobuf-compiler \
+  gcc g++ make libffi-dev libssl-dev
 ```
 
-### **3.2 Install Pip2**
-
-1. Download the Pip installation script for Python 2:
-
-   ```bash
-   curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-   ```
-
-2. Run the script to install Pip2:
-
-   ```bash
-   sudo python2 get-pip.py
-   ```
-
-3. Verify the installation:
-
-   ```bash
-   pip2 --version
-   ```
-
----
-
-## **4. Install Python 3 and Pip3**
-
-Install Python 3 and Pip3:
+#### Pip para Python 2
 
 ```bash
-sudo apt install python3-pip
+curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+sudo python2 get-pip.py
 ```
 
-Verify the installation:
-
-```bash
-pip3 --version
-```
-
----
-
-## **5. Clone the SpeedyCHAIN and STORDY Repositories**
-
-### **5.1 Clone SpeedyCHAIN**
-
-Clone the SpeedyCHAIN repository:
-
-```bash
-git clone https://github.com/conseg/speedychain.git
-```
-
-### **5.2 Clone STORDY**
-
-Clone the STORDY storage module:
-
-```bash
-git clone https://github.com/leonardocreatus/stordy.git
-```
-
----
-
-## **6. Install Required Dependencies**
-
-### **6.1 Python 3 Dependencies**
-
-Install the required dependency for Python 3:
+#### Dependências Python
 
 ```bash
 pip3 install Pyro4
+pip2 install Pyro4 Flask merkle pycryptodome requests colorlog protobuf grpcio psutil
 ```
 
-### **6.2 Python 2 Dependencies**
-
-Install the necessary Python 2 packages:
+### Obter o código
 
 ```bash
-pip2 install Pyro4
-pip2 install Flask
-pip2 install merkle
-pip2 install pycryptodome
-pip2 install requests
+git clone --recurse-submodules -b feat/complete-version git@github.com:conseg/speedychain.git
+cd speedychain
 ```
 
----
+### Layout de terminais
 
-## **7. Running STORDY**
+Abra **cinco terminais** na raiz do repositório:
 
-### **7.1 Navigate to the STORDY Directory**
+| Terminal | Comando | Notas |
+|----------|---------|-------|
+| T1 | `python3 -m Pyro4.naming -n 0.0.0.0 -p 9090` | Name server |
+| T2 | `cd stordy && cargo run --release` | Stordy (porta 50052) |
+| T3 | `cd API && python2 runner.py -n 127.0.0.1 -p 9090 -G gwa -C 0001 -S 1` | Gateway A |
+| T4 | `cd API && python2 runner.py -n 127.0.0.1 -p 9090 -G gwb -C 0001 -S 1` | Gateway B (compartilha o mesmo Stordy) |
+| T5 | `cd API && python2 src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a` | Device simulador |
 
-Navigate to the **STORDY** directory:
+Aguarde o Stordy exibir `Stordy initialize!!` e os gateways registrarem no name server antes de abrir o device (T5).
 
-```bash
-cd stordy
-```
+### Fluxo mínimo de teste (VPS)
 
-### **7.2 Install Cargo**
+No menu do device (T5), use o mesmo fluxo da seção Docker:
 
-Install Cargo on your system:
+1. Opção **12** → `None`
+2. Opção **3** → *(Enter)*
+3. Opção **4** → `1`
+4. Opção **5** → *(opcional)* para listar blocos
 
-```bash
-sudo apt install cargo
-```
+### Limitação multi-gateway na VPS
 
-### **7.3 Install protobuf-compiler**
+O binário Stordy escuta em `0.0.0.0:50052` e usa diretórios relativos `blocks/` e `transactions/`. Na mesma máquina, apenas **uma** instância pode rodar. Os dois gateways (T3 e T4) compartilham esse storage.
 
-Install protobuf-compiler:
-
-```bash
-sudo apt-get install protobuf-compiler
-```
-
-### **7.4 Run STORDY**
-
-Run the STORDY storage module using Cargo (make sure you have Rust installed):
-
-```bash
-cargo run
-```
+Para **dois gateways com dados isolados** (como no Docker), use `docker compose` ou execute cada par gateway+stordy em **VPS separadas**, com o name server acessível por rede.
 
 ---
 
-## **8. Running SpeedyCHAIN with the STORDY Module**
+## Referências opcionais
 
-### **8.1 Switch to the Correct Branch**
-
-Navigate to the **SpeedyCHAIN** repository and switch to the `stordy-module` branch:
-
-```bash
-cd ../speedychain
-git checkout stordy-module
-```
-
-### **8.2 Navigate to the API Directory**
-
-Go to the API directory inside the **SpeedyCHAIN** project:
-
-```bash
-cd API
-```
+- **EVM (Go Ethereum)** — integração opcional para testes com smart contracts; ver scripts em `API/quickstart.sh`
+- **P2P** — script `API/P2P.py` para rede peer-to-peer (cenários avançados)
+- **CORE Emulator** — [tutorial em vídeo](https://www.youtube.com/watch?v=xCGu3r73xl4)
 
 ---
 
-## **9. Running SpeedyCHAIN**
+## Glossário
 
-### **9.1 Start the Network Node**
-
-Start a Pyro4 naming service (a network node) using Python 3:
-
-```bash
-python3 -m Pyro4.naming -n 127.0.0.1 -p 9090
-```
-
-### **9.2 Start the Gateways**
-
-Start two gateways using Python 2:
-
-1. Start Gateway A:
-
-   ```bash
-   python2 runner.py -n 127.0.0.1 -p 9090 -G gwa -C 0001 -S 1
-   ```
-
-2. Start Gateway B:
-
-   ```bash
-   python2 runner.py -n 127.0.0.1 -p 9090 -G gwb -C 0001 -S 1
-   ```
-
----
-
-## **10. Optional: Ethereum Virtual Machine (EVM) Integration**
-
-The **Ethereum Virtual Machine (EVM)**, written in Go, can be used for testing. Here's how to set it up:
-
-### **10.1 Install Golang**
-
-Follow the official Go installation guide: [Golang Install Instructions](https://golang.org/doc/install)
-
-### **10.2 Compile the EVM**
-
-After installing Go, use the following commands to set up the EVM:
-
-1. Fetch the Go Ethereum package:
-
-   ```bash
-   go get github.com/ethereum/go-ethereum
-   ```
-
-2. Navigate to the EVM folder:
-
-   ```bash
-   cd go-ethereum
-   ```
-
-3. Build the EVM:
-
-   ```bash
-   go build
-   ```
-
-### **10.3 Quickstart**
-
-To quickly start the EVM, follow the steps below:
-
-1. Run the `quickstart.sh` script:
-
-   ```bash
-   ./quickstart.sh
-   ```
-
-2. If the EVM is needed for testing, uncomment the EVM-related line in the `quickstart.sh` script and re-run it.
-
----
-
-## **11. Running the P2P Script**
-
-The **P2P.py** script manages the peer-to-peer network within SpeedyCHAIN.
-
-### **How to Run P2P.py:**
-
-1. Adjust the IP in the `P2P.py` file to match your setup.
-2. Run the script using Python 3:
-
-   ```bash
-   sudo python3 P2P.py
-   ```
-
-   (Note: An `[Errno 98]` error is normal and expected.)
-
-3. Execute the `sendRequest.sh` script:
-
-   ```bash
-   sudo ./sendRequest.sh
-   ```
-
-4. Follow the script prompts:
-   - Option 5: Insert the IP.
-   - Option 7: Select it.
-   - Option 1: Initiate the connection.
-   - Option 2: Send the request.
-   - Option 8: List information.
-
-5. Repeat steps 6 and 7 as necessary.
-
----
-
-## **12. TODO List for Further Improvements**
-
-- Implement a consensus algorithm.
-- Improve REST methods.
-- Auto-generate keys (for testing purposes).
-- Instrumentalize code and parameterize time collection.
-- Modify the genesis block hash to point to the block header hash.
-
----
-
-## **13. Additional Resources**
-
-- **Key folder**: This folder contains a set of public and private keys generated for testing purposes.
-- **CORE Emulator Tutorial**: [Setting up CORE emulator infrastructure](https://www.youtube.com/watch?v=xCGu3r73xl4)
-- **SpeedyCHAIN & DeviceSimulator (Deprecated)**: [Setup tutorial](https://www.youtube.com/watch?v=3MA8HBgbA8k)
-
----
-
-## **Final Considerations**
-
-- **Node**: Represents a point in the SpeedyCHAIN network that communicates with other nodes.
-- **Gateway**: Entry points that connect and transmit data between nodes.
-- **STORDY**: Storage module integrated with SpeedyCHAIN for handling data persistence.
-- **EVM**: Optional Ethereum Virtual Machine integration for testing smart contracts.
-
-By now, both **SpeedyCHAIN** and **STORDY** should be set up and running on your Linux environment. If you encounter any issues, review the steps carefully and ensure that all dependencies are installed correctly.
-
----
+- **Node** — ponto na rede SpeedyChain que se comunica com outros nós
+- **Gateway** — ponto de entrada que conecta devices à blockchain
+- **Stordy** — módulo de armazenamento (Rust/gRPC) integrado aos gateways
+- **Device** — dispositivo IoT simulado que envia transações

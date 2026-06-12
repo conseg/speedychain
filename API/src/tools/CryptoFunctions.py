@@ -1,6 +1,7 @@
 import base64
 import hashlib
 from Crypto.Cipher import AES
+from Crypto.Cipher import PKCS1_v1_5 as PKCS1_v1_5_Cipher
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
@@ -52,7 +53,10 @@ def encryptRSA2(key, text):
         @return enc64 - text encrypted
     """
     k = RSA.importKey(key)
-    enc = k.encrypt(text, 42)[0]
+    cipher = PKCS1_v1_5_Cipher.new(k)
+    enc = cipher.encrypt(text)
+    if enc is None:
+        raise ValueError("RSA encryption failed")
     enc64 = base64.b64encode(enc)
     return enc64
 
@@ -63,8 +67,11 @@ def decryptRSA2(key, text):
         @return data - text decrypted
     """
     k = RSA.importKey(key)
+    cipher = PKCS1_v1_5_Cipher.new(k)
     deb = base64.b64decode(text)
-    data = k.decrypt(deb)
+    data = cipher.decrypt(deb, None)
+    if data is None:
+        raise ValueError("RSA decryption failed")
     return data
 
 def encryptAES(text, k):

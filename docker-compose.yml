@@ -1,0 +1,72 @@
+services:
+  name-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.name-server
+    container_name: name-server
+    ports:
+      - "9090:9090"
+    networks:
+      - speedychain
+
+  gateway-a:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gateway
+    container_name: gateway-a
+    environment:
+      NAME_SERVER_HOST: name-server
+      GATEWAY_NAME: gwa
+      GATEWAY_CONTEXT: "0001"
+      POOL_SIZE: "1"
+    volumes:
+      - ./volumes/gwa:/data
+    depends_on:
+      - name-server
+    restart: unless-stopped
+    networks:
+      - speedychain
+    platform: linux/amd64
+
+  gateway-b:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gateway
+    container_name: gateway-b
+    environment:
+      NAME_SERVER_HOST: name-server
+      GATEWAY_NAME: gwb
+      GATEWAY_CONTEXT: "0001"
+      POOL_SIZE: "1"
+    volumes:
+      - ./volumes/gwb:/data
+    depends_on:
+      - name-server
+    restart: unless-stopped
+    networks:
+      - speedychain
+    platform: linux/amd64
+
+  device:
+    profiles:
+      - interactive
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.device
+    stdin_open: true
+    tty: true
+    environment:
+      NAME_SERVER_HOST: name-server
+      GATEWAY_NAME: gwa
+      DEVICE_NAME: dev-a
+    depends_on:
+      - name-server
+      - gateway-a
+      - gateway-b
+    networks:
+      - speedychain
+    platform: linux/amd64
+
+networks:
+  speedychain:
+    driver: bridge

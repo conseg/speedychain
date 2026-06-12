@@ -28,7 +28,7 @@ def startBlockChain():
     """ Add the genesis block to the chain """
     genesis = getGenesisBlock()
     try:
-        request = block_pb2.findBlockRequest(public_key= genesis.publicKey)
+        request = block_pb2.FindBlockRequest(public_key= genesis.publicKey)
         response = stub_block.FindBlock(request)
         if response:
             print("Genesis Block already exists")
