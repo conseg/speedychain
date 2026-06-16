@@ -13,6 +13,7 @@ import json
 import requests
 import traceback
 import threading
+from datetime import datetime
 
 from Crypto.PublicKey import RSA
 
@@ -28,8 +29,8 @@ fname = socket.gethostname()
 server = "localhost"
 serverAESEncKey = ""
 serverAESKey = ""
-privateKey = "-----BEGIN PRIVATE KEY-----\nMIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEA7P6DKm54NjLE7ajy\nTks298FEJeHJNxGT+7DjbTQgJdZKjQ6X9lYW8ittiMnvds6qDL95eYFgZCvO22YT\nd1vU1QIDAQABAkBEzTajEOMRSPfmzw9ZL3jLwG3aWYwi0pWVkirUPze+A8MTp1Gj\njaGgR3sPinZ3EqtiTA+PveMQqBsCv0rKA8NZAiEA/swxaCp2TnJ4zDHyUTipvJH2\nqe+KTPBHMvOAX5zLNNcCIQDuHM/gISL2hF2FZHBBMT0kGFOCcWBW1FMbsUqtWcpi\nMwIhAM5s0a5JkHV3qkQMRvvkgydBvevpJEu28ofl3OAZYEwbAiBJHKmrfSE6Jlx8\n5+Eb8119psaFiAB3yMwX9bEjVy2wRwIgd5X3n2wD8tQXcq1T6S9nr1U1dmTz7407\n1UbKzu4J8GQ=\n-----END PRIVATE KEY-----\n"
-publicKey = "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOz+gypueDYyxO2o8k5LNvfBRCXhyTcR\nk/uw4200ICXWSo0Ol/ZWFvIrbYjJ73bOqgy/eXmBYGQrzttmE3db1NUCAwEAAQ==\n-----END PUBLIC KEY-----\n"
+privateKey = ""
+publicKey = ""
 keysArray =[] # structure to save private, public, and aes key from a device
 trInterval = 10000 # interval between transactions
 
@@ -45,6 +46,14 @@ lifecycleMethods = []
 lifecycleTypes = []
 lifecycleDeviceName = ""
 lifecycleMultiMode = "lifecycleMulti"
+
+logCreateSignTime = []
+logVerifySignTime = []
+logCreateTransactTime = []
+logSignSize = []
+logTransactSize = []
+logXTransactSize = []
+signatureAlgoritm = "ECDSA"
 
 def getMyIP():
      """ Return the IP from the gateway
@@ -68,19 +77,19 @@ def getMyIP():
          s.close()
      return myIP
 
-def generateRSAKeyPair():
-    """ Creates a pair of RSA key, one public and one private.\n
-        @return pub - public key\n
-        @return prv - private key
-    """
-    #randValue = Random.random.randrange(24)
-    private = RSA.generate(1024)
+# def generateRSAKeyPair():
+#     """ Creates a pair of RSA key, one public and one private.\n
+#         @return pub - public key\n
+#         @return prv - private key
+#     """
+#     #randValue = Random.random.randrange(24)
+#     private = RSA.generate(1024)
 
-    #private = RSA.generate(1024,randValue)
-    pubKey = private.publickey()
-    prv = private.exportKey()
-    pub = pubKey.exportKey()
-    return pub, prv
+#     #private = RSA.generate(1024,randValue)
+#     pubKey = private.publickey()
+#     prv = private.exportKey()
+#     pub = pubKey.exportKey()
+#     return pub, prv
 
 def setServer():
     """ Ask for the user to input the server URI and put it in the global var 'server' """
@@ -100,7 +109,15 @@ def addBlockOnChain():
     global serverAESEncKey
     print("###addBlockonChain in devicesimulator, publicKey")
     print(publicKey, lifecycleDeviceName)
-    serverAESEncKey = server.addBlock(publicKey, lifecycleDeviceName)
+    
+    # generate new keys for the ECDHKE-E
+    publicDHKey, privateDHKey = CryptoFunctions.generateECDSAKeyPair()
+    
+    # Receive the Gateway DH public key while add the block
+    DHGatewayPubKey = server.addBlock(publicKey, lifecycleDeviceName,publicDHKey)
+    # generate the same AES shared key using the gateway DH public key and the device DH private key
+    serverAESEncKey = CryptoFunctions.generateSharedKey(privateDHKey,DHGatewayPubKey)
+
     if serverAESEncKey == "" or serverAESEncKey == -1:
         print("Block already added with this public key")
         logger.error("it was not possible to add block - problem in the key")
@@ -110,7 +127,9 @@ def addBlockOnChain():
         # print(serverAESEncKey)
         # while len(serverAESEncKey) < 10:
         #    serverAESEncKey = server.addBlock(publicKey)
-        decryptAESKey(serverAESEncKey)
+        # decryptAESKey(serverAESEncKey)
+        global serverAESKey
+        serverAESKey = serverAESEncKey
         # print("###after decrypt aes")
     return True
     # print("###after decrypt aes")
@@ -120,7 +139,16 @@ def addBlockOnChainv2(devPubKey, devPrivKey):
     # print("###addBlockonChain in devicesimulator, publicKey")
     # print(publicKey)
     # pickedDevPubKey = pickle.dumps(devPubKey)
-    serverAESEncKey = server.addBlock(devPubKey, lifecycleDeviceName)
+    
+    # generate new keys for the ECDHKE-E
+    publicDHKey, privateDHKey = CryptoFunctions.generateECDSAKeyPair()
+    
+    # Receive the Gateway DH public key while add the block
+    DHGatewayPubKey = server.addBlock(devPubKey, lifecycleDeviceName, publicDHKey)
+    # generate the same AES shared key using the gateway DH public key and the device DH private key
+    serverAESEncKey = CryptoFunctions.generateSharedKey(privateDHKey,DHGatewayPubKey)
+    
+    # serverAESEncKey = server.addBlock(devPubKey, lifecycleDeviceName)
     if (len(str(serverAESEncKey))<10):
         logger.error("it was not possible to add block - problem in the key")
         return False
@@ -129,28 +157,49 @@ def addBlockOnChainv2(devPubKey, devPrivKey):
     # while len(serverAESEncKey) < 10:
     #    serverAESEncKey = server.addBlock(publicKey)
     try:
-        AESKey = CryptoFunctions.decryptRSA2(devPrivKey, serverAESEncKey)
+        # AESKey = CryptoFunctions.decryptRSA2(devPrivKey, serverAESEncKey)
+        # TODO verificar esse try
+        print("")
     except:
         logger.error("problem decrypting the AES key")
         return False
-    return AESKey
+    return serverAESEncKey
 
 
 def sendDataTest():
     """ Send fake data to test the system """
-    pub, priv = generateRSAKeyPair()
+    global logCreateSignTime
+    global logVerifySignTime
+    global logSignSize
+    pub, priv = CryptoFunctions.generateECDSAKeyPair()
     temperature = readSensorTemperature()
     t = ((time.time() * 1000) * 1000)
     timeStr = "{:.0f}".format(t)
     data = timeStr + temperature
-    signedData = CryptoFunctions.signInfo(priv, data)
-    ver = CryptoFunctions.signVerify(data, signedData, pub)
+    t1 = time.time()
+    signedData = CryptoFunctions.signInfoECDSA(priv, data)
+    t2 = time.time()
+    logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+    print("sign logged")
+    signSize = len(signedData)
+    logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data test" )
+    print("size logged")
+    t3 = time.time()
+    ver = CryptoFunctions.signVerifyECDSA(data, signedData, pub)
+    t4 = time.time()
+    logVerifySignTime.append("SignatureVerify;"+ signatureAlgoritm + ";{0:.12f};ms".format((t4 - t3) * 1000))
+    print("verify logged")
     logger.debug("Sending data test " + str(ver) + "...")
     # print ("done: "+str(ver))
 
 def sendData():
     """ Read the sensor data, encrypt it and send it as a transaction to be validated by the peers """
-
+    global logCreateSignTime
+    global logSignSize
+    global logCreateTransactTime
+    global logTransactSize
+    ttransact1 = time.time()
+    
     no_transactions = input("How many transactions do you want to create?")
 
     for i in range(int(no_transactions)):
@@ -159,18 +208,45 @@ def sendData():
         timeStr = "{:.0f}".format(t)
         data = timeStr + temperature
         logger.debug("data = "+data)
-        signedData = CryptoFunctions.signInfo(privateKey, data)
+        t1 = time.time()
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+        t2 = time.time()
+        logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+        print("sign logged")
+        signSize = len(signedData)
+        logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data in transaction" )
+        print("size logged")
         toSend = signedData + timeStr + temperature
         try:
 
             encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            ttransact2 = time.time()
+            logCreateTransactTime.append("TransactionCreate;"+signatureAlgoritm+";{0:.12f};ms".format((ttransact2 - ttransact1) * 1000))
+            print("transact time logged")
+            sizeTransact = len(encobj)
+            logTransactSize.append("TransactionSize;"+ signatureAlgoritm +";"+str(sizeTransact)+";Bytes")
+            print("transact size logged")
         except:
             logger.error("was not possible to encrypt... verify aeskey")
             newKeyPair()
             addBlockOnChain() # this will force gateway to recreate the aes key
-            signedData = CryptoFunctions.signInfo(privateKey, data)
+            ttransact3 = time.time()
+            t1 = time.time()
+            signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+            t2 = time.time()
+            logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+            print("sign logged")
+            signSize = len(signedData)
+            logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data in transaction" )
+            print("size logged")
             toSend = signedData + timeStr + temperature
             encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            ttransact4 = time.time()
+            logCreateTransactTime.append("TransactionCreate;"+signatureAlgoritm+";{0:.12f};ms".format((ttransact4 - ttransact3) * 1000))
+            print("transact time logged")
+            sizeTransact = len(encobj)
+            logTransactSize.append("TransactionSize;"+ signatureAlgoritm +";"+str(sizeTransact)+";Bytes")
+            print("transact size logged")
             logger.error("passed through sendData except")
         try:
             start = time.time()
@@ -201,7 +277,7 @@ def sendDataSC(stringSC):
     t = ((time.time() * 1000) * 1000)
     timeStr = "{:.0f}".format(t)
     data = timeStr + stringSC
-    signedData = CryptoFunctions.signInfo(privateKey, data)
+    signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
     logger.debug("###Printing Signing Data before sending: "+signedData)
     # print ("###Signature lenght: " + str(len(signedData)))
     toSend = signedData + timeStr + stringSC
@@ -262,9 +338,9 @@ def newKeyPair():
     """ Generates a new pair of keys and put is on global vars 'privateKey' and 'publicKey' """
     global privateKey
     global publicKey
-    publicKey, privateKey = generateRSAKeyPair()
+    publicKey, privateKey = CryptoFunctions.generateECDSAKeyPair()
     while len(publicKey) < 10 or len(privateKey) < 10:
-        publicKey, privateKey = generateRSAKeyPair()
+        publicKey, privateKey = CryptoFunctions.generateECDSAKeyPair()
 
 
 def brutePairAuth(retry):
@@ -300,7 +376,9 @@ def bruteSend(retry):
             return False # addBlockConsensusCandiate
 
 def multSend(devPubK, devPrivateK, AESKey, retry, blk):
+    # print("\no multsend")
     try:
+        # print("tentando send data args")
         return sendDataArgs(devPubK, devPrivateK, AESKey, retry, blk)
     except KeyboardInterrupt:
         sys.exit()
@@ -319,31 +397,69 @@ def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
     global logT30
     global logT31
     global keysArray
+    global logCreateSignTime
+    global logSignSize
+    global logCreateTransactTime
+    global logTransactSize
+    ttransact1 = time.time()
     temperature = readSensorTemperature()
     t = ((time.time() * 1000) * 1000)
     timeStr = "{:.0f}".format(t)
     data = timeStr + temperature
     logger.debug("data = "+data)
-    signedData = CryptoFunctions.signInfo(devPrivateK, data)
+    t1 = time.time()
+    signedData = CryptoFunctions.signInfoECDSA(devPrivateK, data)
+    t2 = time.time()
+    logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+    print("sign logged")
+    signSize = len(signedData)
+    logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data in transaction args" )
+    print("size logged")
     toSend = signedData + timeStr + temperature
+    # print("dados coletados e assinados")
+    # print("assinatura: {}".format(signedData))
+    # print("tamanho assinatura: {}".format(len(signedData)))
+    # print("objeto aberto: {}".format(toSend))
 
     try:
+        # print("tenta cifrar com AES")
         encobj = CryptoFunctions.encryptAES(toSend, AESKey)
+        ttransact2 = time.time()
+        logCreateTransactTime.append("TransactionCreate;"+signatureAlgoritm+";{0:.12f};ms".format((ttransact2 - ttransact1) * 1000))
+        print("transact time logged")
+        sizeTransact = len(encobj)
+        logTransactSize.append("TransactionSize;"+ signatureAlgoritm +";"+str(sizeTransact)+";Bytes")
+        print("transact size logged")
+        # print("objeto cifrado: {}".format(encobj))
         t2 = ((time.time() * 1000) * 1000)
         logT30.append("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000))
         # print(("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000)))
 
     except:
         logger.error("was not possible to encrypt... verify aeskey: "+ str(AESKey) +" in blk: " + str(blk) + "tr: " + str(trans))
-        devPubK, devPrivateK = generateRSAKeyPair()
+        devPubK, devPrivateK = CryptoFunctions.generateECDSAKeyPair()
         AESKey = addBlockOnChainv2(devPubK, devPrivateK) # this will force gateway to recreate the aes key
         # logger.error("New aeskey is: "+ str(AESKey))
+        ttransact3 = time.time()
         t = ((time.time() * 1000) * 1000)
         timeStr = "{:.0f}".format(t)
         data = timeStr + temperature
-        signedData = CryptoFunctions.signInfo(devPrivateK, data)
+        t1 = time.time()
+        signedData = CryptoFunctions.signInfoECDSA(devPrivateK, data)
+        t2 = time.time()
+        logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+        print("sign logged")
+        signSize = len(signedData)
+        logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data in transaction" )
+        print("size logged")
         toSend = signedData + timeStr + temperature
         encobj = CryptoFunctions.encryptAES(toSend, AESKey)
+        ttransact4 = time.time()
+        logCreateTransactTime.append("TransactionCreate;"+signatureAlgoritm+";{0:.12f};ms".format((ttransact4 - ttransact3) * 1000))
+        print("transact time logged")
+        sizeTransact = len(encobj)
+        logTransactSize.append("TransactionSize;"+ signatureAlgoritm +";"+str(sizeTransact)+";Bytes")
+        print("transact size logged")
         t2 = ((time.time() * 1000) * 1000)
         logT30.append("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000))
         # print(("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000)))
@@ -434,6 +550,7 @@ def consensusTrans():
 
 # for parallel simulation of devices and insertions use this
 def simDevBlockAndTransSequential(blk, trans):
+    # print("\tsimDevBlockAndTransSequential")
     numTrans = trans
     # trInterval is amount of time to wait before send the next tr in ms
     global trInterval
@@ -441,13 +558,14 @@ def simDevBlockAndTransSequential(blk, trans):
     global keysArray
 
     if (trans == 0):
-        devPubK, devPrivK = generateRSAKeyPair()
+        # print("if (trans == 0):")
+        devPubK, devPrivK = CryptoFunctions.generateECDSAKeyPair()
         counter = 0
         AESKey = addBlockOnChainv2(devPubK, devPrivK)
         keysArray.append([devPubK, devPrivK, AESKey])
         while (AESKey == False):
             logger.error("ERROR: creating a new key pair and trying to create a new block")
-            devPubK, devPrivK = generateRSAKeyPair()
+            devPubK, devPrivK = CryptoFunctions.generateECDSAKeyPair()
             AESKey = addBlockOnChainv2(devPubK, devPrivK)
             keysArray[blk]=[devPubK, devPrivK, AESKey]
             counter = counter + 1
@@ -477,7 +595,7 @@ def simDevBlockAndTransSequential(blk, trans):
 
 def simDevBlockAndTrans(blk, trans):
     numTrans=trans
-    devPubK,devPrivK = generateRSAKeyPair()
+    devPubK,devPrivK = CryptoFunctions.generateECDSAKeyPair()
     # trInterval is amount of time to wait before send the next tr in ms
     global trInterval
     global startTime
@@ -488,7 +606,7 @@ def simDevBlockAndTrans(blk, trans):
     AESKey = addBlockOnChainv2(devPubK,devPrivK)
     while (AESKey == False):
         logger.error("ERROR: creating a new key pair and trying to create a new block")
-        devPubK, devPrivK = generateRSAKeyPair()
+        devPubK, devPrivK = CryptoFunctions.generateECDSAKeyPair()
         AESKey = addBlockOnChainv2(devPubK, devPrivK)
         counter = counter + 1
         if (counter > 10):
@@ -606,11 +724,13 @@ def simulateDevices(blocks,trans,mode):
         for tr in range(0, trans):
             t1 = time.time()
             for blk in range(0, blocks):
-                # print("SEQUENTIAL"+str(tr)+"transaction sent")
+                print("SEQUENTIAL"+str(tr)+"transaction sent")
                 simDevBlockAndTransSequential(blk,tr)
             t2= time.time()
             if ((t2 - t1) * 1000 < trInterval):
                 time.sleep((trInterval - ((t2 - t1) * 1000)) / 1000)
+        return
+    
     if(mode==lifecycleMultiMode):
         for tr in range(0, trans):
             for i in range(4):
@@ -701,7 +821,7 @@ def callEVMInterface():
     origin = str(input("From account: "))
     dest = str(input("Destination account: "))
     scInfo = callType+data+origin+dest
-    signedData = CryptoFunctions.signInfo(privateKey,scInfo)
+    signedData = CryptoFunctions.signInfoECDSA(privateKey,scInfo)
 
     scType = pickle.dumps(callType)
     scData = pickle.dumps(data)
@@ -852,7 +972,7 @@ def sendLifecycleEventsAsText():
         print("")
         print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
 
-        signedData = CryptoFunctions.signInfo(privateKey, data)
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
         print ("###Signature lenght: " + str(len(signedData)))
         toSend = signedData + data
         print ("toSend = "+toSend)
@@ -863,7 +983,7 @@ def sendLifecycleEventsAsText():
             logger.error("was not possible to encrypt... verify aeskey")
             newKeyPair()
             addBlockOnChain() # this will force gateway to recreate the aes key
-            signedData = CryptoFunctions.signInfo(privateKey, data)
+            signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
             toSend = signedData + data
             encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
             logger.error("passed through sendData except")
@@ -896,7 +1016,7 @@ def sendLifecycleEventsAsStructure():
         #print("")
         #print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
 
-        signedData = CryptoFunctions.signInfo(privateKey, data)
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
         #print ("###Signature lenght: " + str(len(signedData)))
         toSend = signedData + data
         #print ("toSend = "+toSend)
@@ -907,7 +1027,7 @@ def sendLifecycleEventsAsStructure():
             logger.error("was not possible to encrypt... verify aeskey")
             newKeyPair()
             addBlockOnChain() # this will force gateway to recreate the aes key
-            signedData = CryptoFunctions.signInfo(privateKey, data)
+            signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
             toSend = signedData + data
             encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
             logger.error("passed through sendLifecycleEventsAsStructure except")
@@ -931,7 +1051,7 @@ def sendLifecycleEventsMulti():
         #print("")
         #print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
 
-        signedData = CryptoFunctions.signInfo(privateKey, data)
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
         #print ("###Signature lenght: " + str(len(signedData)))
         toSend = signedData + data
         #print ("toSend = "+toSend)
@@ -942,7 +1062,7 @@ def sendLifecycleEventsMulti():
             logger.error("was not possible to encrypt... verify aeskey")
             newKeyPair()
             addBlockOnChainMulti() # this will force gateway to recreate the aes key
-            signedData = CryptoFunctions.signInfo(privateKey, data)
+            signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
             toSend = signedData + data
             encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
             logger.error("passed through sendLifecycleEventsMulti except")
@@ -964,7 +1084,7 @@ def sendEventMulti(event, chainIndex):
     #print("")
     #print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
 
-    signedData = CryptoFunctions.signInfo(privateKey, data)
+    signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
     #print ("###Signature lenght: " + str(len(signedData)))
     toSend = signedData + data
     #print ("toSend = "+toSend)
@@ -975,7 +1095,7 @@ def sendEventMulti(event, chainIndex):
         logger.error("was not possible to encrypt... verify aeskey")
         newKeyPair()
         addBlockOnChainMulti() # this will force gateway to recreate the aes key
-        signedData = CryptoFunctions.signInfo(privateKey, data)
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
         toSend = signedData + data
         encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
         logger.error("passed through sendLifecycleEventsMulti except")
@@ -1000,7 +1120,7 @@ def sendLifecycleEventsSingle():
         #print("")
         #print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
 
-        signedData = CryptoFunctions.signInfo(privateKey, data)
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
         #print ("###Signature lenght: " + str(len(signedData)))
         toSend = signedData + data
         #print ("toSend = "+toSend)
@@ -1012,7 +1132,7 @@ def sendLifecycleEventsSingle():
             logger.error("was not possible to encrypt... verify aeskey")
             newKeyPair()
             addBlockOnChain() # this will force gateway to recreate the aes key
-            signedData = CryptoFunctions.signInfo(privateKey, data)
+            signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
             toSend = signedData + data
             encobj[i] = CryptoFunctions.encryptAES(toSend, serverAESKey)
             logger.error("passed through sendLifecycleEventsSingle except")
@@ -1210,13 +1330,13 @@ def simDevBlockAndTransMulti(blk, trans, index):
     global keysArray
 
     if (trans == 0 and index == 0):
-        devPubK, devPrivK = generateRSAKeyPair()
+        devPubK, devPrivK = CryptoFunctions.generateECDSAKeyPair()
         counter = 0
         AESKey = addBlockOnChainMultiV2(devPubK, devPrivK)
         keysArray.append([devPubK, devPrivK, AESKey])
         while (AESKey == False):
             logger.error("ERROR: creating a new key pair and trying to create a new block")
-            devPubK, devPrivK = generateRSAKeyPair()
+            devPubK, devPrivK = CryptoFunctions.generateECDSAKeyPair()
             AESKey = addBlockOnChainMultiV2(devPubK, devPrivK)
             keysArray[blk]=[devPubK, devPrivK, AESKey]
             counter = counter + 1
@@ -1288,7 +1408,7 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
     timeStr = " {:.0f}".format(t)
     data = timeStr + valStr
     #logger.debug("data = "+data)
-    signedData = CryptoFunctions.signInfo(devPrivateK, data)
+    signedData = CryptoFunctions.signInfoECDSA(devPrivateK, data)
     toSend = signedData + data
 
     try:
@@ -1300,13 +1420,13 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
     except:
         logger.error("was not possible to encrypt... verify aeskey: "+ str(AESKey) +" in blk: " + str(blk) + "tr: " + str(trans))
         logger.info("ERROR: was not possible to encrypt... verify aeskey: "+ str(AESKey) +" in blk: " + str(blk) + "tr: " + str(trans))
-        devPubK, devPrivateK = generateRSAKeyPair()
+        devPubK, devPrivateK = CryptoFunctions.generateECDSAKeyPair()
         AESKey = addBlockOnChainMultiV2(devPubK, devPrivateK) # this will force gateway to recreate the aes key
         # logger.error("New aeskey is: "+ str(AESKey))
         t = ((time.time() * 1000) * 1000)
         timeStr = "{:.0f}".format(t)
         data = timeStr + valStr
-        signedData = CryptoFunctions.signInfo(devPrivateK, data)
+        signedData = CryptoFunctions.signInfoECDSA(devPrivateK, data)
         toSend = signedData + data
         encobj = CryptoFunctions.encryptAES(toSend, AESKey)
         t2 = ((time.time() * 1000) * 1000)
@@ -1363,6 +1483,114 @@ def changeComponents():
 
         setServerWithUri(gatewayURI)
 
+def showkeys():
+    print("deviceName {} keys:".format(deviceName))
+    print("publicKey: \n{}".format(publicKey))
+    print("privateKey: \n{}".format(privateKey))
+
+def testsignverify():
+    global logCreateSignTime
+    global logVerifySignTime
+    global logSignSize
+    data = b"um dado qualquer"
+    t1 = time.time()
+    sig = CryptoFunctions.signInfoECDSA(privateKey,data)
+    t2 = time.time()
+    logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+    print("sign logged")
+    signSize = len(sig)
+    logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data in test sign" )
+    print("size logged")
+    t3 = time.time()
+    veri = CryptoFunctions.signVerifyECDSA(data,sig,publicKey)
+    t4 = time.time()
+    logVerifySignTime.append("SignatureVerify;"+ signatureAlgoritm + ";{0:.12f};ms".format((t4 - t3) * 1000))
+    print("verify logged")
+    if veri:
+        print("assinatura verificada com sucesso!!")
+    else:
+        print("assinatura com erros!!")
+        
+def saveTimesSizes():
+    saveTimesSizesLocal()
+    # Save the logs in the server too
+    server.saveTimesSizes()
+
+def saveTimesSizesLocal():
+    global logCreateSignTime
+    global logVerifySignTime
+    global logSignSize
+    global logCreateTransactTime
+    global logTransactSize
+    global logXTransactSize
+    
+    numberGateways = 4
+    numberTransactions = 10
+    numberBlocks = 5
+    
+    directory = "./results/"+signatureAlgoritm
+    filename = deviceName+"-"+str(numberBlocks)+"Bl-"+str(numberTransactions)+"Tr-("+str(datetime.now().strftime("%d-%b-%Y--%H-%M-%S"))+").logs"
+    filepath = os.path.join(directory,filename)
+    
+    if not os.path.exists(directory):
+        print("creating diretory in dv")
+        os.makedirs(directory)
+    
+    with open(filepath,'w') as file:
+        file.write("#######################################################################\n")
+        file.write("Runtime infos\n")
+        file.write("Number of Gateways: "+str(numberGateways)+'\n')
+        file.write("Number of Transactions: "+str(numberTransactions)+'\n')
+        file.write("Number of Blocks: "+str(numberBlocks)+'\n')
+        file.write("Consensus: PBFT\n")
+        file.write("#######################################################################\n")
+    
+        logger.info("#############################################################")
+        logger.info("###################### Times & Sizes ########################")
+        logger.info("#############################################################")
+        file.write("#############################################################\n")
+        file.write("###################### Times & Sizes ########################\n")
+        file.write("#############################################################\n")
+        
+        for i in range(len(logCreateSignTime)):
+            logger.info(logCreateSignTime[i])
+            file.write(logCreateSignTime[i] + '\n')
+        print("Log logCreateSignTime saved")
+        logCreateSignTime = []
+        
+        for i in range(len(logVerifySignTime)):
+            logger.info(logVerifySignTime[i])
+            file.write(logVerifySignTime[i] + '\n')
+        print("Log logVerifySignTime saved")
+        logVerifySignTime = []
+        
+        for i in range(len(logSignSize)):
+            logger.info(logSignSize[i])
+            file.write(logSignSize[i] + '\n')
+        print("Log logSignSize saved")
+        logSignSize = []
+        
+        for i in range(len(logCreateTransactTime)):
+            logger.info(logCreateTransactTime[i])
+            file.write(logCreateTransactTime[i] + '\n')
+        print("Log logCreateTransactTime saved")
+        logCreateTransactTime = []
+        
+        for i in range(len(logTransactSize)):
+            logger.info(logTransactSize[i])
+            file.write(logTransactSize[i] + '\n')
+        print("Log logTransactSize saved")
+        logTransactSize = []
+        
+        # for i in range(len(logXTransactSize)):
+        #     logger.info(logXTransactSize[i])
+        #     file.write(logXTransactSize[i] + '\n')
+        # print("Log logXTransactSize saved")
+        # logXTransactSize = []
+        logger.info("#############################################################")
+        file.write("#############################################################")
+ 
+
 #############################################################################
 #############################################################################
 ######################          Main         ################################
@@ -1407,6 +1635,9 @@ def InteractiveMain():
         29: automateLifecycleEvents,
         30: sendLifecycleEventsSingle,
         31: changeComponents,
+        32: showkeys,
+        33: testsignverify,
+        34: saveTimesSizes,
     }
 
     mode = -1
@@ -1450,6 +1681,9 @@ def InteractiveMain():
             "29 - Automatically create X blocks for each device with Y transactions for each component (X and Y should be changed on code)")
         print("30 - Send all lifecycle events as a structure to block, a single transaction with all components")
         print("31 - Change components between devices")
+        print("32 - Show device keys")
+        print("33 - Test sign & verify")
+        print("34 - Save times & sizes logs")
         print("#############################################################")
 
 
@@ -1483,6 +1717,9 @@ if __name__ == '__main__':
     global trInterval
     global lifecycleMethods
     global lifecycleTypes
+    global publicKey
+    global privateKey
+    publicKey, privateKey = CryptoFunctions.generateECDSAKeyPair()
 
     lifecycleTypes = ["CPU", "RAM", "SSD", "VID"]
     lifecycleMethods = [readSpeedCPU, readSpeedRAM, readSpeedSSD, readSpeedVid]
