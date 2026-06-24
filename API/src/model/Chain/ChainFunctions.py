@@ -34,8 +34,8 @@ def startBlockChain():
             print("Genesis Block already exists")
             return
     except Exception as e:
-        print("Error on startBlockChain")
-        # print(e)
+        print("Error on startBlockChain: ")
+        print(e)
 
     addBlockHeader(genesis)
     # BlockHeaderChain.append(getGenesisBlock())

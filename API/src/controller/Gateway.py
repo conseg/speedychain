@@ -173,7 +173,7 @@ class ThreadWithReturn(Thread):
 #     return wrapper
 
 def bootstrapChain2():
-    """ generate the RSA key pair for the gateway and create the chain"""
+    """ generate the ECDSA key pair for the gateway and create the chain"""
     global gwPub
     global gwPvt
     print("bootstrapping chain")
