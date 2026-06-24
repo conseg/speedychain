@@ -15,7 +15,7 @@ import traceback
 import threading
 from datetime import datetime
 
-from Crypto.PublicKey import RSA
+# from Crypto.PublicKey import RSA
 
 # SpeedCHAIN modules
 import Logger as Logger
@@ -40,7 +40,7 @@ logT30 = []
 logT31 = []
 startTime=0
 endTime=0
-# input = getattr(__builtin__, 'raw_input', input)
+# input = getattr(__builtin__, 'input', input)
 
 lifecycleMethods = []
 lifecycleTypes = []
@@ -93,8 +93,8 @@ def getMyIP():
 
 def setServer():
     """ Ask for the user to input the server URI and put it in the global var 'server' """
-    #server = raw_input('Gateway IP:')
-    uri = raw_input("Enter the uri of the gateway: ").strip()
+    #server = input('Gateway IP:')
+    uri = input("Enter the uri of the gateway: ").strip()
     setServerWithUri(uri)
 
 def setServerWithUri(uri):
@@ -301,7 +301,7 @@ def readSensorTemperature():
 def addPeer():
     """ Ask for the user to inform a peer URI and add it to the server """
     # if sys.version_info < (3, 0):
-    #     input = raw_input
+    #     input = input
     uri = input("Enter the PEER uri: ").strip()
     server.addPeer(uri, True)
 
@@ -1183,12 +1183,12 @@ def restoreChainFromFile():
     return True
 
 def listBlocksWithId():
-    deviceId = raw_input("Which device ID do you want to search on blocks?").strip()
+    deviceId = input("Which device ID do you want to search on blocks?").strip()
     status = server.showBlockWithId(deviceId)
     status = server.showBlockWithIdMulti(deviceId)
 
 def listTransactionsWithId():
-    componentId = raw_input("Which component ID do you want to search?").strip()
+    componentId = input("Which component ID do you want to search?").strip()
     listTransactionsWithId2(componentId, False)
 
 def listTransactionsWithId2(componentId, showTransactions, f):
@@ -1459,9 +1459,9 @@ def sendDataArgsMulti(devPubK, devPrivateK, AESKey, trans, blk, index):
 
 def changeComponents():
     # Change the target component from this Device to a new one and put the old component to an other Device
-    gwUri = raw_input("Which is the device URI that will receive the component? (gateway URI)").strip()
-    comp = raw_input("Which component? (SSD, RAM, VID or CPU)").strip()
-    type = raw_input("What is the chain type? (0-default, 1-MultiChains, 2-SingleStructure)").strip()
+    gwUri = input("Which is the device URI that will receive the component? (gateway URI)").strip()
+    comp = input("Which component? (SSD, RAM, VID or CPU)").strip()
+    type = input("What is the chain type? (0-default, 1-MultiChains, 2-SingleStructure)").strip()
 
     if type == 1:
         chainIndex = 0
@@ -1714,11 +1714,11 @@ if __name__ == '__main__':
         # ---->
         # os.system("clear")
         # print("running automatically")
-    global trInterval
-    global lifecycleMethods
-    global lifecycleTypes
-    global publicKey
-    global privateKey
+    trInterval
+    lifecycleMethods
+    lifecycleTypes
+    publicKey
+    privateKey
     publicKey, privateKey = CryptoFunctions.generateECDSAKeyPair()
 
     lifecycleTypes = ["CPU", "RAM", "SSD", "VID"]
