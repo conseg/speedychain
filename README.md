@@ -167,7 +167,7 @@ sudo python2 get-pip.py
 
 ```bash
 pip3 install Pyro4
-pip2 install Pyro4 Flask merkle pycryptodome requests colorlog protobuf grpcio psutil
+pip2 install Pyro4 Flask merkle cryptography requests colorlog protobuf psutil grpcio==1.39.0
 ```
 
 ### Obter o código
