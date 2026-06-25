@@ -2290,7 +2290,7 @@ class R2ac(object):
     def addBlock(self, devPubKey, lifecycleDeviceName, DHDevicePublicKey):
         """ Receive a device public key from a device and link it to a block on the chain\n
             @param devPubKey - request's device public key\n
-            @return encKey - RSA encrypted key for the device be able to communicate with the peers
+            @return DHGatewayPubKey - Gateway DHKE key for the device be able to generate the shared AES key
         """
         try:
 

@@ -77,19 +77,7 @@ def getMyIP():
          s.close()
      return myIP
 
-# def generateRSAKeyPair():
-#     """ Creates a pair of RSA key, one public and one private.\n
-#         @return pub - public key\n
-#         @return prv - private key
-#     """
-#     #randValue = Random.random.randrange(24)
-#     private = RSA.generate(1024)
 
-#     #private = RSA.generate(1024,randValue)
-#     pubKey = private.publickey()
-#     prv = private.exportKey()
-#     pub = pubKey.exportKey()
-#     return pub, prv
 
 def setServer():
     """ Ask for the user to input the server URI and put it in the global var 'server' """
