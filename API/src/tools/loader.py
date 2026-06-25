@@ -17,8 +17,8 @@ import json
 import requests
 import traceback
 
-from Crypto.PublicKey import RSA
-from Crypto.PublicKey import RSA
+# from Crypto.PublicKey import RSA
+# from Crypto.PublicKey import RSA
 
 # SpeedCHAIN modules
 import Logger as Logger

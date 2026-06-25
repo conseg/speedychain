@@ -13,7 +13,7 @@ import json
 import requests
 import traceback
 
-from Crypto.PublicKey import RSA
+# from Crypto.PublicKey import RSA
 # SpeedCHAIN modules
 from API.src.tools import Logger
 from API.src.tools import CryptoFunctions
