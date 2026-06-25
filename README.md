@@ -152,9 +152,11 @@ Instruções para instalação nativa em Linux (Ubuntu/Debian). Neste modo, **do
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y git python2 python3-pip cargo protobuf-compiler \
-  gcc g++ make libffi-dev libssl-dev
+sudo apt install -y git python3-pip cargo protobuf-compiler \
+  gcc g++ make libffi-dev libssl-dev python2
 ```
+##### Instalação alternativa do Python 2
+Caso não consiga instalar o python2 com o comando anterior, instale com o Pyenv [tutorial aqui](InstalPython2.md) (ele provavelmente virá com o pip2).
 
 #### Pip para Python 2
 
@@ -166,20 +168,30 @@ sudo python2 get-pip.py
 #### Dependências Python
 
 ```bash
-pip3 install Pyro4
+pip3 install Pyro4 (meio que não precisa do python3, só o python2 é suficiente)
 pip2 install Pyro4 Flask merkle cryptography requests colorlog protobuf psutil grpcio==1.39.0
 ```
 
 ### Obter o código
 
+TODO: talvez mudar a url para https
+
 ```bash
-git clone --recurse-submodules -b feat/complete-version git@github.com:conseg/speedychain.git
+git clone --recurse-submodules -b complete-ECC git@github.com:conseg/speedychain.git
 cd speedychain
+```
+
+Se já clonou sem submódulos:
+
+```bash
+git submodule update --init --recursive
 ```
 
 ### Layout de terminais
 
 Abra **cinco terminais** na raiz do repositório:
+
+TODO: retirar o python3 do tutorial
 
 | Terminal | Comando | Notas |
 |----------|---------|-------|
@@ -189,7 +201,7 @@ Abra **cinco terminais** na raiz do repositório:
 | T4 | `cd API && python2 runner.py -n 127.0.0.1 -p 9090 -G gwb -C 0001 -S 1` | Gateway B (compartilha o mesmo Stordy) |
 | T5 | `cd API && python2 src/tools/DeviceSimulator.py 127.0.0.1 9090 gwa dev-a` | Device simulador |
 
-Aguarde o Stordy exibir `Stordy initialize!!` e os gateways registrarem no name server antes de abrir o device (T5).
+Aguarde o Stordy exibir `Stordy initialize!!` e os gateways registrarem no name server (`SpeedyCHAIN Gateway initialized`) antes de inicializar o device (T5).
 
 ### Fluxo mínimo de teste (VPS)
 
@@ -203,6 +215,7 @@ No menu do device (T5), use o mesmo fluxo da seção Docker:
 ### Limitação multi-gateway na VPS
 
 O binário Stordy escuta em `0.0.0.0:50052` e usa diretórios relativos `blocks/` e `transactions/`. Na mesma máquina, apenas **uma** instância pode rodar. Os dois gateways (T3 e T4) compartilham esse storage.
+Outros gateways além do primeiro apresentarão erros ao tentar inserir blocos e transações, esse é um comportamente esperado, pois já estão armazenados localmente.
 
 Para **dois gateways com dados isolados** (como no Docker), use `docker compose` ou execute cada par gateway+stordy em **VPS separadas**, com o name server acessível por rede.
 
