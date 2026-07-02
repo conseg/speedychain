@@ -117,3 +117,9 @@ venv.bak/
 
 # Chain persistent files
 # *.txt
+
+# Docker volume data (keep directory structure)
+volumes/gwa/**
+!volumes/gwa/.gitkeep
+volumes/gwb/**
+!volumes/gwb/.gitkeep

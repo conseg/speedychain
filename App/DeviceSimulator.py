@@ -13,7 +13,7 @@ import json
 import requests
 import traceback
 
-from Crypto.PublicKey import RSA
+# from Crypto.PublicKey import RSA
 # SpeedCHAIN modules
 from API.src.tools import Logger
 from API.src.tools import CryptoFunctions
@@ -168,7 +168,10 @@ def addPeer():
 def listBlockHeader():
     """ Log all blocks """
     try:
-        server.showIoTLedger()
+        print("showIoTLedger")
+        res = server.showIoTLedger()
+        print("list Block Header")
+        print(res)
     except:
         print("Failed to show list of Blocks")
         print("Returning to main menu...")
@@ -177,7 +180,7 @@ def listTransactions():
     """ Ask for the user to input an index and show all transaction of the block with that index """
     index = input("Which IoT Block do you want to print?")
     try:
-        server.showBlockLedger(int(index))
+        server.showBlockLedger(str(index))
     except:
         print("Failed to show transactions of the requested block...")
         print("Returning to main menu...")

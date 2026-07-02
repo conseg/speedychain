@@ -1,0 +1,7 @@
+FROM python:3-slim
+
+RUN pip install --no-cache-dir Pyro4
+
+EXPOSE 9090
+
+CMD ["python3", "-m", "Pyro4.naming", "-n", "0.0.0.0", "-p", "9090"]

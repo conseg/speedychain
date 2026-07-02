@@ -11,6 +11,7 @@ BlockHeaderChain = []
 def startBlockChain():
     """ Add the genesis block to the chain 
     """
+    
     BlockHeaderChain.append(getGenesisBlock())
 
 def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device):

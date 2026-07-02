@@ -1,0 +1,35 @@
+FROM --platform=linux/amd64 rust:1-bookworm AS stordy-builder
+
+RUN apt-get update && \
+    apt-get install -y protobuf-compiler musl-tools && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN rustup target add x86_64-unknown-linux-musl
+
+WORKDIR /build
+COPY stordy/ .
+ENV RUSTFLAGS="-C target-feature=+crt-static"
+RUN cargo build --release --target x86_64-unknown-linux-musl
+
+FROM --platform=linux/amd64 python:2.7-slim
+
+RUN echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until && \
+    sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+    sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list && \
+    sed -i '/buster-updates/d' /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y gcc g++ make libffi-dev libssl-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=stordy-builder /build/target/x86_64-unknown-linux-musl/release/stordy /usr/local/bin/stordy
+
+WORKDIR /app/API
+COPY API/ .
+
+COPY docker/requirements-gateway.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY docker/gateway-entrypoint.sh /usr/local/bin/gateway-entrypoint.sh
+RUN chmod +x /usr/local/bin/gateway-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/gateway-entrypoint.sh"]

@@ -1,0 +1,9 @@
+flask>=1.0.2
+Pyro4>=4.76
+cryptography>=3.2.1
+merkle>=0.1.3
+requests>=2.16.0
+colorlog>=4.0.2,<5
+protobuf>=3.12.0,<4
+grpcio>=1.30.0
+psutil>=5.7.0

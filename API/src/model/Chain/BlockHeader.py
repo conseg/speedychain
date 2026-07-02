@@ -1,7 +1,7 @@
 class BlockHeader:
     #Nonce field added for PoW
     def __init__(self, index, previousHash, timestamp, transaction, hash, nonce, publicKey, blockContext, 
-                 previousExpiredBlock, previousBlockSignature, device = "device"):
+                 previousExpiredBlock, previousBlockSignature = "", device = "device"):
         self.index = index
         self.previousHash = previousHash
         self.timestamp = timestamp
@@ -14,6 +14,10 @@ class BlockHeader:
         self.device = device
         self.previousExpiredBlockHash = previousExpiredBlock
         self.previousBlockSignature = previousBlockSignature
+        self.numberOfTransactions = 0
+        
+    def setTransactions(self, transactions):
+        self.transactions = transactions
 
     def __str__(self):
         return "%s,%s,%s,%s,%s,%s,%s,%s,%s" % (
@@ -29,12 +33,14 @@ class BlockHeader:
         txt = " Index: " + str(self.index) + "\n Previous Hash: " + str(self.previousHash) + "\n Time Stamp: " + str(
             self.timestamp) + "\n Hash: " + str(self.hash) + "\n Nonce:" + str(self.nonce) + "\n Public Key: " + str(
             self.publicKey) + "\n Block Context: " + str(self.blockContext) + "\n Device: " + str(
-            self.device) + "\n Number of transactions: " + str(len(
-            self.transactions)) + "\n Previous expired block hash: " + str(
+            self.device) + "\n Number of transactions: " + str(self.numberOfTransactions) + "\n Previous expired block hash: " + str(
             self.previousExpiredBlockHash) + "\n Previous block signature: " + str(
             self.previousBlockSignature) + "\n"
 
         return txt
+    
+    def setNumberOfTransactions(self, number):
+        self.numberOfTransactions = number
     
     def strBlockToSave(self):
         transaction = self.transactions[0]
