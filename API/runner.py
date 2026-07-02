@@ -27,6 +27,10 @@ def runPyro(nameServerIP, nameServerPort):
 import sys
 import argparse
 
+from pycallgraph import PyCallGraph, Config, GlobbingFilter
+from pycallgraph.output import GraphvizOutput
+import os
+
 from src.controller import Gateway
 
 parser = argparse.ArgumentParser(description='Run the Gateway')
@@ -38,4 +42,33 @@ parser.add_argument('-C', '--gatewayContext', type=str, metavar='', help='The co
 parser.add_argument('-S', '--poolSize', type=str, metavar='', help='Amount of Tx from each Pool')
 args = parser.parse_args()
 
-Gateway.main(args.nameServerIP, int(args.nameServerPort), args.gatewayName, args.gatewayContext,int(args.poolSize))
+# 1. Configuracao estrita dos filtros do PyCallGraph
+config = Config()
+
+# Rastreia apenas as suas subpastas dentro de API/src/
+config.trace_filter = GlobbingFilter(
+    include=['*'], # Deixa tudo passar...
+    exclude=[      # ...e vai podando o mato alto
+        'pycallgraph.*', 'serpent.*', 'selectors34.*', 'Pyro4.*', 
+        'encodings.*', 'sys.*', 'os.*', 'posix.*', 'socket.*', 'threading.*'
+    ]
+)
+
+# 2. Configuracao do arquivo de saida PNG
+# Ele sera salvo na mesma pasta de onde voce disparar o terminal
+output = GraphvizOutput()
+output.output_file = os.path.abspath('fluxo_execucao_gateway.png')
+
+print("================================================================")
+print(" INICIANDO GATEWAY COM MAPEAMENTO DINAMICO ATIVADO")
+print(" Execute seus testes. Para gerar o grafico, pare este terminal com CTRL+C.")
+print("================================================================")
+
+# 3. Execucao protegida
+try:
+    with PyCallGraph(output=output, config=config):
+        Gateway.main(args.nameServerIP, int(args.nameServerPort), args.gatewayName, args.gatewayContext,int(args.poolSize))
+except KeyboardInterrupt:
+    print("\n[INFO] Sinal de parada recebido. Renderizando grafico...")
+    print("[SUCESSO] Grafico salvo em: {}".format(output.output_file))
+

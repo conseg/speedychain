@@ -15,6 +15,9 @@ import traceback
 import threading
 from datetime import datetime
 
+from pycallgraph import PyCallGraph, Config, GlobbingFilter
+from pycallgraph.output import GraphvizOutput
+
 # from Crypto.PublicKey import RSA
 
 # SpeedCHAIN modules
@@ -1729,7 +1732,38 @@ if __name__ == '__main__':
             gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
 
             logger.info("Connected to gateway: " + gatewayURI.asString())
-            InteractiveMain()
+            
+            
+            # 1. Configuracao estrita dos filtros do PyCallGraph
+            config = Config()
+
+            # Rastreia apenas as suas subpastas dentro de API/src/
+            config.trace_filter = GlobbingFilter(
+                include=['*'], 
+                exclude=[
+                    'pycallgraph.*', 'serpent.*', 'selectors34.*', 'Pyro4.*', 
+                    'encodings.*', 'sys.*', 'os.*', 'posix.*', 'socket.*', 'threading.*'
+                ]
+            )
+
+            # 2. Configuracao do arquivo de saida PNG
+            # Ele sera salvo na mesma pasta de onde voce disparar o terminal
+            output = GraphvizOutput()
+            output.output_file = os.path.abspath('fluxo_execucao_device.png')
+
+            print("================================================================")
+            print(" INICIANDO GATEWAY COM MAPEAMENTO DINAMICO ATIVADO")
+            print(" Execute seus testes. Para gerar o grafico, pare este terminal com CTRL+C.")
+            print("================================================================")
+
+            # 3. Execucao protegida
+            try:
+                with PyCallGraph(output=output, config=config):
+                    InteractiveMain()
+            except KeyboardInterrupt:
+                print("\n[INFO] Sinal de parada recebido. Renderizando grafico...")
+                print("[SUCESSO] Grafico salvo em: {}".format(output.output_file))
+                
         else:
 
 

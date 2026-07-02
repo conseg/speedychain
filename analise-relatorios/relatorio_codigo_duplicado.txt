@@ -1,0 +1,2481 @@
+Found a 121 line (487 tokens) duplication in the following files: 
+Starting at line 24 of /home/aschemitt/reps/speedychain/API/src/controller/loader.py
+Starting at line 25 of /home/aschemitt/reps/speedychain/API/src/tools/loader.py
+
+from ..tools import CryptoFunctions
+
+# from Crypto.PublicKey import RSA
+
+global server
+global privateKey
+global publicKey
+global serverAESEncKey
+
+
+#Functions
+def defineConsensus(receivedConsensus):
+    #receivedConsensus = str(input('Set a consensus (None, PBFT, PoW, dBFT or Witness3) (None is default) : '))
+    # server will set its consensus and send it to all peers
+    server.setConsensus(receivedConsensus)
+    # print("Consensus " + receivedConsensus + " was defined")
+    return True
+
+def addBlockOnChain():
+    """ Take the value of 'publicKey' var, and add it to the chain as a block"""
+    global serverAESEncKey
+    serverAESEncKey = server.addBlock(publicKey)
+    decryptAESKey(serverAESEncKey)
+
+def decryptAESKey(data):
+    """ Receive a encrypted data, decrypt it and put it in the global var 'serverAESKey' """
+    global serverAESKey
+    serverAESKey = CryptoFunctions.decryptRSA2(privateKey, data)
+
+def sendDataSC(stringSC):
+    t = ((time.time() * 1000) * 1000)
+    timeStr = "{:.0f}".format(t)
+    data = timeStr + stringSC
+    signedData = CryptoFunctions.signInfo(privateKey, data)
+    #logger.debug("###Printing Signing Data before sending: "+signedData)
+    # print ("###Signature lenght: " + str(len(signedData)))
+    toSend = signedData + timeStr + stringSC
+    encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+    server.addTransactionSC(publicKey, encobj)
+    # server.addTransaction(toSend)
+
+def createBlockForSC2(SK, PK):
+    #newKeyPair()
+
+    global privateKey
+    global publicKey
+    privateKey = SK
+    publicKey = PK
+
+    addBlockOnChain()
+    while (not (server.isBlockInTheChain(publicKey))):
+        continue
+        # time.sleep(1)
+    firstTransactionSC = '{ "Tipo" : "", "Data": "", "From": "", "To" : "", "Root" : "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421" }'
+    sendDataSC(firstTransactionSC)
+    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+def callEVMInterface(privatekey, publickey, callType, data, origin, dest):
+
+    #callType = str(input("Type (Exec,Criar,Cham): "))
+    #data = str(input("Data (binary in hexa): "))
+    #origin = str(input("From account: "))
+    #dest = str(input("Destination account: "))
+    scInfo = callType+data+origin+dest
+    signedData = CryptoFunctions.signInfo(privateKey,scInfo)
+    scType = pickle.dumps(callType)
+    scData = pickle.dumps(data)
+    scFrom = pickle.dumps(origin)
+    scDest = pickle.dumps(dest)
+    scSignedData = pickle.dumps(signedData)
+    scPublicKey = pickle.dumps(publicKey)
+    #logger.debug("###Printing Signing Sc before sending: "+signedData)
+
+    server.callEVM(scType,scData,scFrom,scDest,scSignedData,scPublicKey)
+    #print("depois do callEVM")
+    return True
+
+
+def loadConnection(nameServerIP, nameServerPort, gatewayName):
+    #global deviceName
+    """ Load the URI of the connection  """
+    # ----> Adicionado por Arruda
+    ns = Pyro4.locateNS(host=nameServerIP) #, port=nameServerPort)
+    gatewayURI = ns.lookup(gatewayName)
+    # print(gatewayURI)
+    global server
+    # fname = socket.gethostname()
+    # text_file = open("localhost", "r")
+    # uri = text_file.read()
+    # print(uri)
+    server = Pyro4.Proxy(gatewayURI)
+    # text_file.close()
+    # os.remove(fname)
+    # ---->
+    defineConsensus("dBFT")
+    return gatewayURI
+
+#Loading args
+argpaerser = argparse.ArgumentParser(description='Load test batch')
+argpaerser.add_argument('-ip', type=str, help='Server IP', required=True)
+argpaerser.add_argument('-port', type=str, help='Server Port', required=True)
+argpaerser.add_argument('-gn', type=str, help='Gateway Name', required=True)
+argpaerser.add_argument('-file', type=str, help='file name', required=True)
+args = argpaerser.parse_args()
+
+#Connecting to server
+print ("Conectando " + args.ip + ":" + args.port )
+nameServerIP = args.ip 
+nameServerPort = args.port 
+gatewayName = args.gn
+
+gatewayURI = loadConnection(nameServerIP, nameServerPort, gatewayName)
+
+
+#Loading csv
+print ("Carregando " + args.file)
+
+with open(args.file) as csvfile:
+    reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
+
+    for row in reader: #Starting Batch
+
+=====================================================================
+Found a 15 line (219 tokens) duplication in the following files: 
+Starting at line 22 of /home/aschemitt/reps/speedychain/API/src/model/Chain/BlockHeader.py
+Starting at line 22 of /home/aschemitt/reps/speedychain/API/src/model/Chain/BlockHeaderMulti.py
+
+    def __str__(self):
+        return "%s,%s,%s,%s,%s,%s,%s,%s,%s" % (
+            str(self.index), str(self.previousHash), str(self.timestamp), str(self.transactions), str(self.hash), str(self.nonce),
+            str(self.publicKey), str(self.blockContext), str(self.device))
+
+    def __repr__(self):
+        return "<%s, %s, %s, %s, %s, %s, %s, %s>" % (
+            str(self.index), str(self.previousHash), str(self.timestamp), str(self.transactions), str(self.hash), str(self.nonce),
+            str(self.publicKey), str(self.blockContext))
+
+    def strBlock(self):
+        txt = " Index: " + str(self.index) + "\n Previous Hash: " + str(self.previousHash) + "\n Time Stamp: " + str(
+            self.timestamp) + "\n Hash: " + str(self.hash) + "\n Nonce:" + str(self.nonce) + "\n Public Key: " + str(
+            self.publicKey) + "\n Block Context: " + str(self.blockContext) + "\n Device: " + str(
+            self.device) + "\n Number of transactions: " + str(self.numberOfTransactions) + "\n Previous expired block hash: " + str(
+
+=====================================================================
+Found a 31 line (196 tokens) duplication in the following files: 
+Starting at line 2681 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1544 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+            file.write("#######################################################################\n")
+
+            for i in range(len(logCreateSignTime)):
+                logger.info(logCreateSignTime[i])
+                file.write(logCreateSignTime[i] + '\n')
+            print("Log logCreateSignTime saved")
+            logCreateSignTime = []
+            
+            for i in range(len(logVerifySignTime)):
+                logger.info(logVerifySignTime[i])
+                file.write(logVerifySignTime[i] + '\n')
+            print("Log logVerifySignTime saved")
+            logVerifySignTime = []
+            
+            for i in range(len(logSignSize)):
+                logger.info(logSignSize[i])
+                file.write(logSignSize[i] + '\n')
+            print("Log logSignSize saved")
+            logSignSize = []
+            
+            for i in range(len(logCreateTransactTime)):
+                logger.info(logCreateTransactTime[i])
+                file.write(logCreateTransactTime[i] + '\n')
+            print("Log logCreateTransactTime saved")
+            logCreateTransactTime = []
+            
+            for i in range(len(logTransactSize)):
+                logger.info(logTransactSize[i])
+                file.write(logTransactSize[i] + '\n')
+            print("Log logTransactSize saved")
+            logTransactSize = []
+
+=====================================================================
+Found a 40 line (180 tokens) duplication in the following files: 
+Starting at line 740 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4528 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        while(len(candidatePool)==0):
+            tcc1 = ((time.time()) * 1000) * 1000
+            # just to not printing in every time that enters here, leave it only for interactive
+
+            while(self.addContextinLockList(context)==False):
+                # logger.error("I AM NOT WITH LOCK!!!!!")
+                time.sleep(0.001)
+            tempContextPeers = []
+            for x in range(len(contextPeers)):
+                # print(" ***VVVVV **** context? " +contextPeers[x][0])
+                if (contextPeers[x][0] == context):
+                    tempContextPeers = contextPeers[x][1]
+            # use this if you want to get all elements from trpool
+            # pickedCandidatePool = self.getLocalTransactionPool(context)
+            # use this if you want to get first sizePool elements
+            pickedCandidatePool = self.getNElementsLocalTransactionPool(context,sizePool)
+            myPool = pickle.loads(pickedCandidatePool)
+            if (myPool != False):
+                candidatePool = myPool
+                # print("I got my pool in PBFT")
+
+            for p in tempContextPeers:
+                peer = p.object
+                while(peer.addContextinLockList(context)==False):
+                    time.sleep(0.001)
+                # pickedRemotePool = peer.getLocalTransactionPool(context)
+                pickedRemotePool = peer.getNElementsLocalTransactionPool(context,sizePool)
+                remoteCandidatePool = pickle.loads(pickedRemotePool)
+
+                if(remoteCandidatePool!=False):
+                    # .extend append each from another list
+                    candidatePool.extend(remoteCandidatePool)
+                    # while(len(remoteCandidatePool)>0):
+                    #     # cant just append the remoteCandidatePool, should add each tuple
+                    #     remoteTR = remoteCandidatePool.pop(0)
+                    #     candidatePool.append((remoteTR[0],remoteTR[1]))
+
+                    # candidatePool.append(remoteCandidatePool)
+            candidatePoolSize = len(candidatePool)
+            if (candidatePoolSize!=0):
+
+=====================================================================
+Found a 22 line (140 tokens) duplication in the following files: 
+Starting at line 781 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4570 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                self.prepareContextPBFT(context,candidatePool,tempContextPeers)
+
+                # if you want to set a min interval between consensus
+                tcc2 = ((time.time()) * 1000) * 1000
+
+                # te2 = ((time.time()) * 1000) * 1000
+                # logger.error("ELECTION; " + str((te2-te1)/1000))
+                self.removeLockfromContext(context)
+                for p in tempContextPeers:
+                    peer = p.object
+                    peer.removeLockfromContext(context)
+
+                # if ((tcc2 - tcc1) / 1000 < minInterval):
+                #     time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
+                # election for new orchestrator
+                self.electNewContextOrchestrator(context)
+                # orchestratorContextObject.performTransactionPoolPBFTConsensus(context)
+                tcc2 = ((time.time()) * 1000) * 1000
+                logT22.append("T22 CONTEXT; "+context+";PBFT CONSENSUS TIME; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize) + ";TPUT;" + str((candidatePoolSize)/(((tcc2-tcc1)/1000)/1000)))
+                # call to execute the consensus for the new leader
+                for index in range(len(orchestratorContextObject)):
+                    if (orchestratorContextObject[index][0] == context):
+
+=====================================================================
+Found a 23 line (136 tokens) duplication in the following files: 
+Starting at line 1215 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1409 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+            while(len(candidatePool)>0):
+                candidateTransaction = candidatePool.pop(0)
+               # print("popped element from Pool")
+                # print(candidateTransaction)
+                if(candidateTransaction != False):
+                    # print("AAAAAAAAAAAAAAAA passed the if")
+                    devPublicKey = candidateTransaction[0]
+                    deviceInfo= candidateTransaction[1]
+                    blk = ChainFunctions.findBlock(devPublicKey)
+                    # print("passed the blk")
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfoECDSA(gwPvt, str(deviceInfo))
+                    # print("BBBBBBBBBBBBB passed the devinfo")
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                        ChainFunctions.getLatestBlockTransaction(blk))
+
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+
+=====================================================================
+Found a 15 line (135 tokens) duplication in the following files: 
+Starting at line 146 of /home/aschemitt/reps/speedychain/API/src/controller/loader.py
+Starting at line 145 of /home/aschemitt/reps/speedychain/API/src/tools/loader.py
+
+        if row['Command'] == "1":
+            createBlockForSC2(row['SK'], row['PK'])
+            #continue
+        elif row['Command'] == "2":
+            callEVMInterface(row['SK'], row['PK'], "Exec", row['Data'], row['From'], row['To'])
+            #continue
+        elif row['Command'] == "3":
+            callEVMInterface(row['SK'], row['PK'], "Criar", row['Data'], row['From'], row['To'])
+            #continue
+        elif row['Command'] == "4":
+            callEVMInterface(row['SK'], row['PK'], "Cham", row['Data'], row['From'], row['To'])
+            #continue
+
+#Closing
+print ("Finalizando")
+
+=====================================================================
+Found a 29 line (132 tokens) duplication in the following files: 
+Starting at line 2047 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 2131 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    deviceInfo = DeviceInfo.DeviceInfo(signedDatabyDevice, devTime, transactionData)
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfoECDSA(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                        ChainFunctions.getLatestBlockTransaction(blk))
+
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0) #nonce = 0
+                    #
+                    #Set a lock for each device/sc pubkey
+                    #verify lock
+                    #perform consensus if it is not locked
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #              str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+
+=====================================================================
+Found a 16 line (130 tokens) duplication in the following files: 
+Starting at line 365 of /home/aschemitt/reps/speedychain/API/src/model/Chain/ChainFunctions.py
+Starting at line 153 of /home/aschemitt/reps/speedychain/API/src/model/Chain/ChainFunctionsMulti.py
+
+        nextIndex = previousBlock.index + 1
+        nextTimestamp = "{:.0f}".format(((time.time() * 1000) * 1000))
+        previousBlockHash = CryptoFunctions.calculateHashForBlock(previousBlock)
+        nonce = 0
+        nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp,
+                                                nonce, pubKey, blockContext, device)
+        if(consensus == 'PoW'):
+            # PoW nonce difficulty
+            difficulty_bits = 12 #2 bytes or 4 hex or 16 bits of zeros in the left of hash
+            target = 2 ** (256 - difficulty_bits) #resulting value is lower when it has more 0 in the left of hash
+            while ((long(nextHash,16) > target ) and (nonce < (2 ** 32))): #convert hash to long to verify when it achieve difficulty
+                nonce=nonce+1
+                nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, nextTimestamp,
+                                                    nonce, pubKey, blockContext, device)
+        # print("####nonce = " + str(nonce))
+        sign = CryptoFunctions.signInfoECDSA(gwPvtKey, nextHash)
+
+=====================================================================
+Found a 13 line (121 tokens) duplication in the following files: 
+Starting at line 926 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1891 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    nextInt = blk.transactions[len(blk.transactions) - 1].index + 1
+                    tsign1 = time.time()
+                    signData = CryptoFunctions.signInfoECDSA(gwPvt, str(deviceInfo))
+                    tsign2 = time.time()
+                    logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((tsign2 - tsign1) * 1000))
+                    print("sign logged")
+                    signSize = len(signData)
+                    logSignSize.append("SizeSignature;"+ signatureAlgoritm+ ";" + str(signSize) + ";Bytes" + ";transaction "+ str(nextInt) + ";block " + str(blk.index))
+                    print("size logged")
+                    # print("BBBBBBBBBBBBB passed the devinfo")
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(ChainFunctions.getLatestBlockTransaction(blk))
+
+=====================================================================
+Found a 26 line (117 tokens) duplication in the following files: 
+Starting at line 3758 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4055 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
+                    #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info(
+                        "gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info(
+                        "gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+                    # print("all done")
+                    return "ok!"
+
+=====================================================================
+Found a 33 line (112 tokens) duplication in the following files: 
+Starting at line 2385 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4157 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                if(consensus == "dBFT" or consensus == "Witness3"):
+                    # print("indo pro dbft")
+                    # consensusLock.acquire(1) # only 1 consensus can be running at same time
+                    # for p in peers:
+                    #     obj=p.object
+                    #     obj.acquireLockRemote()
+                    self.lockForConsensus()
+
+                    orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                    # print("blockadded!")
+                    counter_fails = 0
+                    while (orchestratorObject.rundBFT() == False):
+                        # logger.info("##### second attempt for a block")
+                        orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                        logger.error("Consensus not achieved, trying another one")
+                        self.electNewOrchestrator()
+                        orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                        counter_fails = counter_fails +1
+                        if (counter_fails > 200):
+                            return -1
+                    # print("after rundbft")
+                if(consensus == "PoW"):
+                    # consensusLock.acquire(1) # only 1 consensus can be running at same time
+                    # for p in peers:
+                    #     obj=p.object
+                    #     obj.acquireLockRemote()
+                    self.lockForConsensus()
+                    # print("ConsensusLocks acquired!")
+                    self.addBlockConsensusCandidate(pickedKey)
+                    self.runPoW()
+                if(consensus == "None"):
+                    self.addBlockConsensusCandidate(pickedKey)
+                    self.runNoConsesus(lifecycleDeviceName)
+
+=====================================================================
+Found a 19 line (110 tokens) duplication in the following files: 
+Starting at line 189 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 221 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 118 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 258 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 361 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='public_key', full_name='stordy.block.FindBlockRequest.public_key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=322,
+
+=====================================================================
+Found a 20 line (109 tokens) duplication in the following files: 
+Starting at line 601 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 5090 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+    lastBlk = ChainFunctions.getLatestBlock()
+    # print("Index:"+str(lastBlk.index)+" prevHash:"+str(lastBlk.previousHash)+ " time:"+str(lastBlk.timestamp)+ " pubKey:")
+    # lastBlkHash = CryptoFunctions.calculateHash(lastBlk)
+
+    lastBlkHash = CryptoFunctions.calculateHash(lastBlk.index, lastBlk.previousHash, lastBlk.timestamp,
+                        lastBlk.nonce, lastBlk.publicKey, lastBlk.blockContext, lastBlk.device)
+
+    # print ("This Hash:"+str(lastBlkHash))
+    # print ("Last Hash:"+str(block.previousHash))
+    if(lastBlkHash == block.previousHash):
+        # logger.info("isBlockValid == true")
+        return True
+    else:
+        logger.error("isBlockValid == false")
+        logger.error("lastBlkHash = " + str(lastBlkHash))
+        logger.error("block.previous = " + str(block.previousHash))
+        logger.error("lastBlk Index = " + str(lastBlk.index))
+        logger.error("block.index = " + str(block.index))
+        # return False
+        return True
+
+=====================================================================
+Found a 16 line (107 tokens) duplication in the following files: 
+Starting at line 3864 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3963 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    timeDiff = str('{0:.12f}'.format((t2 - t1) * 1000))
+
+                    # f = open('trans_normal.txt', "a")
+                    # f.write(timeDiff + "\n")
+                    # f.close
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + timeDiff)
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info("gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+
+=====================================================================
+Found a 19 line (106 tokens) duplication in the following files: 
+Starting at line 62 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 150 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='blocks', full_name='stordy.block.GetFullChainReply.blocks', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=38,
+
+=====================================================================
+Found a 25 line (104 tokens) duplication in the following files: 
+Starting at line 1131 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4863 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    lastTrDevInfo = blk.transactions[len(blk.transactions) - 1].data
+                    lastTrDevInfo.__class__ = DeviceInfo.DeviceInfo
+
+                    if(lastTrDevInfo.timestamp >= candidateDevInfo.timestamp):
+                        logger.error("***********************")
+                        logger.error("***Invalid device info time*")
+                        logger.error("***********************")
+                        validation = False
+
+            else:
+                logger.error("***********************")
+                logger.error("***Invalid PubKey -> it is not in BC*")
+                logger.error("***********************")
+                validation = False
+
+
+            if(validation==True):
+                # trSign = CryptoFunctions.signInfoECDSA(gwPvt, str(candidateTr))
+                # votesPool.append([(receivedDevPub, candidateTr), trSign])
+                # send only de candidate Tr signature
+                votesPool.append([(candidateTr.signature), "valid"])
+            # if it is not valid, do not vote as valid
+            else:
+                votesPool.append([(candidateTr.signature), ""])
+            validation = True
+
+=====================================================================
+Found a 8 line (102 tokens) duplication in the following files: 
+Starting at line 2215 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4778 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                candidateDevInfo = deviceTrans.data
+                candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+                originalTimestamp = float (candidateDevInfo.timestamp)
+                gwTimestamp = float(deviceTrans.timestamp)
+                currentTimestamp = float (((time.time())*1000)*1000)
+                logT20.append("gateway;" + gatewayName +";Context;" +blk.blockContext + ";T20;Transaction Latency;" + str((currentTimestamp - originalTimestamp)/1000))
+                if(isFirst):
+                    logT26.append("gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str((currentTimestamp - originalTimestamp) / 1000))
+
+=====================================================================
+Found a 18 line (102 tokens) duplication in the following files: 
+Starting at line 158 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 190 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 222 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 87 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 119 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 259 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 298 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 362 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      number=10, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=97,
+
+=====================================================================
+Found a 13 line (101 tokens) duplication in the following files: 
+Starting at line 694 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 932 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+            signSize = len(signData)
+            logSignSize.append("SizeSignature;"+ signatureAlgoritm+ ";" + str(signSize) + ";Bytes" + ";transaction "+ str(nextInt) + ";block " + str(blk.index))
+            print("size logged")
+            # print("BBBBBBBBBBBBB passed the devinfo")
+            gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+            # code responsible to create the hash between Info nodes.
+            prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                ChainFunctions.getLatestBlockTransaction(blk))
+
+            transaction = Transaction.Transaction(
+                nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+
+            ttransact2 = time.time()
+
+=====================================================================
+Found a 15 line (101 tokens) duplication in the following files: 
+Starting at line 1928 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3766 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4064 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                        logger.info("Time to add transaction on block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                        # print("addBlockTransaction sucess")
+                        # logger.debug("Block #" + str(blk.index) + " added locally")
+                        # logger.debug("Sending block #" +
+                        #             str(blk.index) + " to peers...")
+                        t2 = time.time()
+                        logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                        # new data collection
+                        currentTimestamp = float(((time.time()) * 1000) * 1000)
+                        logger.info(
+                            "gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                                (currentTimestamp - float(devTime)) / 1000))
+                        logger.info(
+                            "gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                                (currentTimestamp - float(devTime)) / 1000))
+
+=====================================================================
+Found a 24 line (97 tokens) duplication in the following files: 
+Starting at line 761 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 849 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+            for p in tempContextPeers:
+                peer = p.object
+                while(peer.addContextinLockList(context)==False):
+                    time.sleep(0.001)
+                # pickedRemotePool = peer.getLocalTransactionPool(context)
+                pickedRemotePool = peer.getNElementsLocalTransactionPool(context,sizePool)
+                remoteCandidatePool = pickle.loads(pickedRemotePool)
+
+                if(remoteCandidatePool!=False):
+                    # .extend append each from another list
+                    candidatePool.extend(remoteCandidatePool)
+                    # while(len(remoteCandidatePool)>0):
+                    #     # cant just append the remoteCandidatePool, should add each tuple
+                    #     remoteTR = remoteCandidatePool.pop(0)
+                    #     candidatePool.append((remoteTR[0],remoteTR[1]))
+
+                    # candidatePool.append(remoteCandidatePool)
+            candidatePoolSize = len(candidatePool)
+            if (candidatePoolSize!=0):
+                # logger.info("**************Inside PBFT Transaction ***************")
+                self.prepareContextPBFT(context,candidatePool,tempContextPeers)
+
+                # if you want to set a min interval between consensus
+                tcc2 = ((time.time()) * 1000) * 1000
+
+=====================================================================
+Found a 15 line (92 tokens) duplication in the following files: 
+Starting at line 1223 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1420 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 2047 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 2131 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    blk = ChainFunctions.findBlock(devPublicKey)
+                    # print("passed the blk")
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfoECDSA(gwPvt, str(deviceInfo))
+                    # print("BBBBBBBBBBBBB passed the devinfo")
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                        ChainFunctions.getLatestBlockTransaction(blk))
+
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+
+=====================================================================
+Found a 18 line (91 tokens) duplication in the following files: 
+Starting at line 3545 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3606 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        restartChains(keys)
+
+        # Gets the blocks/transations
+        devPubKey = ""
+        for line in f:
+            #print ("")
+            stripped_line = line.rstrip('\n')
+            split_aux = stripped_line.split('= ', 1)
+            split = split_aux[1].split('  ')
+            #print(str(stripped_line))
+            if (stripped_line.startswith('block')):
+                devPubKey = split[0].replace('\\n', '\n')
+                #print("Dev Public Key = " + str(devPubKey))
+                blockContext = split[1]
+                timestamp = split[2]
+                nonce = split[3]
+                signature = split[4]
+                blockData = split[5]
+
+=====================================================================
+Found a 23 line (90 tokens) duplication in the following files: 
+Starting at line 3771 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3874 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info(
+                        "gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info(
+                        "gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+                    # print("all done")
+                    return "ok!"
+                else:
+                    # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    return "Invalid Signature"
+            # logger.debug("--Transaction not appended--Key not found")
+            return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
+
+    def addLifecycleEventStructure(self, devPublicKey, encryptedObj, type):
+
+=====================================================================
+Found a 28 line (90 tokens) duplication in the following files: 
+Starting at line 3807 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3911 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        blk = ChainFunctions.findBlock(devPublicKey)
+
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                #logger.info("Appending transaction to block #" + str(blk.index) + "...")
+                # print("Appending transaction to block #" + str(blk.index) + "...")
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+                #print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars
+                #print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                #print("devTime = " + str(devTime))
+                #print(devTime)
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                #print("deviceData = " + str(deviceData))
+
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerifyECDSA(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+
+=====================================================================
+Found a 10 line (86 tokens) duplication in the following files: 
+Starting at line 201 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 224 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        logger.debug("data = "+data)
+        t1 = time.time()
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+        t2 = time.time()
+        logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+        print("sign logged")
+        signSize = len(signedData)
+        logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data in transaction" )
+        print("size logged")
+        toSend = signedData + timeStr + temperature
+
+=====================================================================
+Found a 9 line (85 tokens) duplication in the following files: 
+Starting at line 999 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4682 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                for index in range(len(votes)):
+                    # if there is a vote
+                    if(votes[index][1]=="valid"):
+                        # append a new vote
+                        votesPoolTotal[index][1].append(votes[index][1])
+                        # verify if it get the minimun number of votes
+                        if (len(votesPoolTotal[index][1]) > ((2 / 3) * len(alivePeers))):
+                            # verify if it was not already inserted
+                            if(not(votesPoolTotal[index][0] in validTransactionPool)):
+
+=====================================================================
+Found a 16 line (85 tokens) duplication in the following files: 
+Starting at line 254 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 197 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      number=1, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+
+=====================================================================
+Found a 19 line (84 tokens) duplication in the following files: 
+Starting at line 1001 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1036 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+    for i in range(4):
+        val, valStr = lifecycleMethods[i]()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = " {:.0f}".format(t)
+        data = timeStr + valStr
+        #logger.debug("data = "+data)
+        #print("")
+        #print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
+
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+        #print ("###Signature lenght: " + str(len(signedData)))
+        toSend = signedData + data
+        #print ("toSend = "+toSend)
+        #logger.debug("ServeAESKEY = " + serverAESKey)
+        try:
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        except:
+            logger.error("was not possible to encrypt... verify aeskey")
+            newKeyPair()
+
+=====================================================================
+Found a 18 line (84 tokens) duplication in the following files: 
+Starting at line 1045 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1078 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+        #print ("###Signature lenght: " + str(len(signedData)))
+        toSend = signedData + data
+        #print ("toSend = "+toSend)
+        #logger.debug("ServeAESKEY = " + serverAESKey)
+        try:
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        except:
+            logger.error("was not possible to encrypt... verify aeskey")
+            newKeyPair()
+            addBlockOnChainMulti() # this will force gateway to recreate the aes key
+            signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+            toSend = signedData + data
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            logger.error("passed through sendLifecycleEventsMulti except")
+        try:
+            #print ("encobj = "+encobj)
+            res = server.addLifecycleEventMulti(publicKey, encobj, i, lifecycleTypes[i])
+
+=====================================================================
+Found a 11 line (83 tokens) duplication in the following files: 
+Starting at line 384 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 2501 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        for x,y in newPeerContext:
+            foundContextPeer = False
+            for index in range(len(contextPeers)):
+                if (contextPeers[index][0] == x):
+                    print("Context found: " + x)
+                    contextPeers[index][1].append(newPeer)
+                    print("Peer added2 to context Peer" + str(contextPeers))
+                    foundContextPeer = True
+            if (foundContextPeer == False):
+                # print("2did not find context in contextPeers, creating and appending")
+                contextPeers.append([x, [newPeer]])
+
+=====================================================================
+Found a 14 line (83 tokens) duplication in the following files: 
+Starting at line 2124 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3743 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                d = devTime+deviceData
+                isSigned = CryptoFunctions.signVerifyECDSA(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    # print("it is signed!!!")
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfoECDSA(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
+
+=====================================================================
+Found a 8 line (79 tokens) duplication in the following files: 
+Starting at line 938 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1906 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(ChainFunctions.getLatestBlockTransaction(blk))
+                    transaction = Transaction.Transaction(nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+                    ttransact2 = time.time()
+                    logCreateTransactTime.append("TransactionCreate;"+signatureAlgoritm+";{0:.12f};ms".format((ttransact2 - ttransact1) * 1000))
+                    print("transact time logged")
+                    sizeTransact = transaction.getBytes()
+                    logTransactSize.append("TransactionSize;"+ signatureAlgoritm +";"+str(sizeTransact)+";Bytes")
+                    print("transact size logged")
+
+=====================================================================
+Found a 8 line (79 tokens) duplication in the following files: 
+Starting at line 3947 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4967 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    nextInt = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).index + 1
+                    signData = CryptoFunctions.signInfoECDSA(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).hash
+
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, matching[0])
+
+=====================================================================
+Found a 8 line (79 tokens) duplication in the following files: 
+Starting at line 101 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 44 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='previous_hash', full_name='stordy.block.Block.previous_hash', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='stordy.block.Block.timestamp', index=2,
+
+=====================================================================
+Found a 9 line (79 tokens) duplication in the following files: 
+Starting at line 226 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 439 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+            signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+            t2 = time.time()
+            logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+            print("sign logged")
+            signSize = len(signedData)
+            logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data in transaction" )
+            print("size logged")
+            toSend = signedData + timeStr + temperature
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+
+=====================================================================
+Found a 15 line (77 tokens) duplication in the following files: 
+Starting at line 1245 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1434 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    logT26.append("gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str((currentTimestamp - originalTimestamp) / 1000))
+                    # --->> this function should be run in a different thread.
+                    candidatePooltoSend.append((devPublicKey, transaction))
+                    # instead of sending transactions individually, it will be sent in batch
+                    # sendTransactionToPeers(devPublicKey, transaction)
+
+            if(len(candidatePooltoSend)>0):
+                # print("BBBBB: "+str(candidatePooltoSend))
+                # context = blockContext
+                dumpedSetTrans = pickle.dumps(candidatePooltoSend)
+                for index in range(len(contextPeers)):
+                    if(contextPeers[index][0] == context):
+                        for p in contextPeers[index][1]:
+                            obj=p.object
+                            obj.updateBlockLedgerSetTrans(dumpedSetTrans,False)
+
+=====================================================================
+Found a 11 line (77 tokens) duplication in the following files: 
+Starting at line 3186 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3215 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus, lifecycleDeviceName)
+        signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers)
+        if (signature == False):
+            logger.info("Consesus was not achieved: block #" +
+                        str(newBlock.index) + " will not be added")
+            return False
+        ChainFunctions.addBlockHeader(newBlock)
+        sendBlockToPeers(newBlock)
+        t2 = float(((time.time()) * 1000) * 1000)
+        logT5.append(
+            "gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with no consensus;" + str(
+
+=====================================================================
+Found a 10 line (77 tokens) duplication in the following files: 
+Starting at line 3749 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3840 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                        signature, devTime, deviceData)
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfoECDSA(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
+
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
+
+=====================================================================
+Found a 17 line (77 tokens) duplication in the following files: 
+Starting at line 64 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 159 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 191 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 223 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 255 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 88 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 120 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 152 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 260 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 299 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 331 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 363 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=38,
+
+=====================================================================
+Found a 16 line (75 tokens) duplication in the following files: 
+Starting at line 803 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 880 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                        threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensus, args=[context]).start()
+                # logger.error("CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
+                return
+
+            else:
+                self.removeLockfromContext(context)
+                for p in tempContextPeers:
+                    peer = p.object
+                    peer.removeLockfromContext(context)
+                tcc2 = ((time.time()) * 1000) * 1000
+                if((tcc2 - tcc1) / 1000 < minInterval):
+                    time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
+                    # print("****** sleeping " + str((minInterval - ((tcc2 - tcc1) / 1000)) / 1000) + "ms")
+
+
+    def performTransactionPooldBFTConsensus(self, context):
+
+=====================================================================
+Found a 12 line (75 tokens) duplication in the following files: 
+Starting at line 880 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4594 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    candidatePoolSize) + ";TPUT;" + str((candidatePoolSize) / (((tcc2 - tcc1) / 1000) / 1000)))
+            # logger.error("CONTEXT "+context+" dBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
+            return
+
+        else:
+            self.removeLockfromContext(context)
+            for p in tempContextPeers:
+                peer = p.object
+                peer.removeLockfromContext(context)
+            tcc2 = ((time.time()) * 1000) * 1000
+            if ((tcc2 - tcc1) / 1000 < minInterval):
+                time.sleep((minInterval - ((tcc2 - tcc1) / 1000))/1000)
+
+=====================================================================
+Found a 10 line (75 tokens) duplication in the following files: 
+Starting at line 3874 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4069 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + timeDiff)
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info("gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+                    #print("all done")
+                    return "ok!"
+
+=====================================================================
+Found a 8 line (75 tokens) duplication in the following files: 
+Starting at line 115 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 58 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='hash', full_name='stordy.block.Block.hash', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='nonce', full_name='stordy.block.Block.nonce', index=4,
+
+=====================================================================
+Found a 8 line (75 tokens) duplication in the following files: 
+Starting at line 136 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 79 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='block_context', full_name='stordy.block.Block.block_context', index=6,
+      number=7, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='device', full_name='stordy.block.Block.device', index=7,
+
+=====================================================================
+Found a 8 line (75 tokens) duplication in the following files: 
+Starting at line 182 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 290 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='block_public_key', full_name='stordy.transaction.AddTransactionRequest.block_public_key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='transaction', full_name='stordy.transaction.AddTransactionRequest.transaction', index=1,
+
+=====================================================================
+Found a 12 line (74 tokens) duplication in the following files: 
+Starting at line 803 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4594 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                        threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensus, args=[context]).start()
+                # logger.error("CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
+                return
+
+            else:
+                self.removeLockfromContext(context)
+                for p in tempContextPeers:
+                    peer = p.object
+                    peer.removeLockfromContext(context)
+                tcc2 = ((time.time()) * 1000) * 1000
+                if((tcc2 - tcc1) / 1000 < minInterval):
+                    time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
+
+=====================================================================
+Found a 12 line (74 tokens) duplication in the following files: 
+Starting at line 1301 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1313 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                newOrchestratorURI = ns.lookup(peerName)
+                for orc in range(len(orchestratorContextObject)):
+                    if (orchestratorContextObject[orc][0] == context):
+                        orchestratorContextObject[orc][1] = Pyro4.Proxy(newOrchestratorURI)
+                for peer in tempContextPeers:
+                    obj = peer.object
+                    dat = pickle.dumps(Pyro4.Proxy(newOrchestratorURI))
+                    obj.loadElectedContextOrchestrator(context, dat)
+
+                return True
+
+            if (i== len(gwListDict)-1):
+
+=====================================================================
+Found a 15 line (73 tokens) duplication in the following files: 
+Starting at line 64 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 159 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 191 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 223 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 88 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 120 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 152 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 198 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 260 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 299 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 331 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 363 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+
+=====================================================================
+Found a 13 line (72 tokens) duplication in the following files: 
+Starting at line 849 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4549 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        for p in tempContextPeers:
+            peer = p.object
+            while (peer.addContextinLockList(context) == False):
+                time.sleep(0.001)
+            # pickedRemotePool = peer.getLocalTransactionPool(context)
+            pickedRemotePool = peer.getNElementsLocalTransactionPool(context, sizePool)
+            remoteCandidatePool = pickle.loads(pickedRemotePool)
+
+            if (remoteCandidatePool != False):
+                # .extend append each from another list
+                candidatePool.extend(remoteCandidatePool)
+        candidatePoolSize = len(candidatePool)
+        if (candidatePoolSize != 0):
+
+=====================================================================
+Found a 6 line (72 tokens) duplication in the following files: 
+Starting at line 122 of /home/aschemitt/reps/speedychain/API/src/model/Chain/ChainFunctions.py
+Starting at line 261 of /home/aschemitt/reps/speedychain/API/src/model/Chain/ChainFunctions.py
+
+    response = stub_block.GetLastBlock(empty)
+    block = BlockHeader(index = response.index, previousHash = response.previous_hash, timestamp = response.timestamp,
+                        transaction = [], hash = response.hash, nonce = response.nonce,
+                        publicKey = response.public_key, blockContext = response.block_context, device = response.device,
+                        previousExpiredBlock = response.previous_expired_block_hash, previousBlockSignature = response.previous_block_signature)
+    return block
+
+=====================================================================
+Found a 7 line (72 tokens) duplication in the following files: 
+Starting at line 401 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 438 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+    t1 = time.time()
+    signedData = CryptoFunctions.signInfoECDSA(devPrivateK, data)
+    t2 = time.time()
+    logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+    print("sign logged")
+    signSize = len(signedData)
+    logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data in transaction args" )
+
+=====================================================================
+Found a 8 line (72 tokens) duplication in the following files: 
+Starting at line 419 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 449 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        logCreateTransactTime.append("TransactionCreate;"+signatureAlgoritm+";{0:.12f};ms".format((ttransact2 - ttransact1) * 1000))
+        print("transact time logged")
+        sizeTransact = len(encobj)
+        logTransactSize.append("TransactionSize;"+ signatureAlgoritm +";"+str(sizeTransact)+";Bytes")
+        print("transact size logged")
+        # print("objeto cifrado: {}".format(encobj))
+        t2 = ((time.time() * 1000) * 1000)
+        logT30.append("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000))
+
+=====================================================================
+Found a 10 line (71 tokens) duplication in the following files: 
+Starting at line 1077 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4812 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        t1 = (time.time()*1000)
+        validation = True
+        votesPool =[]
+        receivedPool = pickle.loads(candidatePool)
+        receivedGwPub = pickle.loads(pickedGwPub)
+        while(len(receivedPool) > 0):
+            candidate = receivedPool.pop(0)
+            receivedDevPub = candidate[0]
+            candidateTr = candidate[1]
+            candidateTr.__class__ = Transaction.Transaction
+
+=====================================================================
+Found a 20 line (71 tokens) duplication in the following files: 
+Starting at line 3730 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3816 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+                #print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars      #signature = plainObject[:-20]  # remove the last 20 chars
+                #print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                #print("devTime = " + str(devTime))
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                #print("deviceData = " + str(deviceData))
+
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerifyECDSA(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+
+=====================================================================
+Found a 7 line (71 tokens) duplication in the following files: 
+Starting at line 116 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 66 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='nonce', full_name='stordy.block.Block.nonce', index=4,
+
+=====================================================================
+Found a 8 line (71 tokens) duplication in the following files: 
+Starting at line 203 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 439 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+        t2 = time.time()
+        logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+        print("sign logged")
+        signSize = len(signedData)
+        logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data in transaction" )
+        print("size logged")
+        toSend = signedData + timeStr + temperature
+
+=====================================================================
+Found a 8 line (70 tokens) duplication in the following files: 
+Starting at line 1301 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1313 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3008 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                newOrchestratorURI = ns.lookup(peerName)
+                for orc in range(len(orchestratorContextObject)):
+                    if (orchestratorContextObject[orc][0] == context):
+                        orchestratorContextObject[orc][1] = Pyro4.Proxy(newOrchestratorURI)
+                for peer in tempContextPeers:
+                    obj = peer.object
+                    dat = pickle.dumps(Pyro4.Proxy(newOrchestratorURI))
+                    obj.loadElectedContextOrchestrator(context, dat)
+
+=====================================================================
+Found a 21 line (70 tokens) duplication in the following files: 
+Starting at line 3910 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4929 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        t1 = time.time()
+        blk = ChainFunctionsMulti.findBlock(devPublicKey)
+
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                #logger.info("Appending transaction to block #" + str(blk.index) + "...")
+                # print("Appending transaction to block #" + str(blk.index) + "...")
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+                # print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars
+                # print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                # print("devTime = " + str(devTime))
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+
+=====================================================================
+Found a 4 line (70 tokens) duplication in the following files: 
+Starting at line 46 of /home/aschemitt/reps/speedychain/API/src/model/Chain/BlockHeader.py
+Starting at line 50 of /home/aschemitt/reps/speedychain/API/src/model/Chain/BlockHeaderMulti.py
+
+        transaction = self.transactions[0]
+        txt = str(self.publicKey).replace('\n', '\\n') + "  " + str(self.blockContext) + "  " + str(
+            self.timestamp) + "  " + str(self.nonce) + "  " + str(transaction.signature) + "  " + str(
+            transaction.data) + "  " + str(self.index) + "  " + str(self.device) + "  " + str(
+
+=====================================================================
+Found a 8 line (70 tokens) duplication in the following files: 
+Starting at line 94 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 37 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='index', full_name='stordy.block.Block.index', index=0,
+      number=1, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='previous_hash', full_name='stordy.block.Block.previous_hash', index=1,
+
+=====================================================================
+Found a 8 line (70 tokens) duplication in the following files: 
+Starting at line 108 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 51 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='timestamp', full_name='stordy.block.Block.timestamp', index=2,
+      number=3, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='hash', full_name='stordy.block.Block.hash', index=3,
+
+=====================================================================
+Found a 6 line (69 tokens) duplication in the following files: 
+Starting at line 101 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 44 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 297 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='previous_hash', full_name='stordy.block.Block.previous_hash', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+
+=====================================================================
+Found a 6 line (69 tokens) duplication in the following files: 
+Starting at line 143 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 86 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='device', full_name='stordy.block.Block.device', index=7,
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+
+=====================================================================
+Found a 6 line (69 tokens) duplication in the following files: 
+Starting at line 189 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 221 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 118 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 182 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 258 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 290 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 361 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='public_key', full_name='stordy.block.FindBlockRequest.public_key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+
+=====================================================================
+Found a 16 line (68 tokens) duplication in the following files: 
+Starting at line 3119 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3148 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        t1 = float(((time.time()) * 1000) * 1000)
+        global gwPvt
+        global blockContext
+        global logT5
+        global blkCounter
+        devPubKey = getBlockFromSyncList()
+        #verififyKeyContext()
+        #vblockContext = "0001"
+
+        #@TODO define somehow a device is in a context
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
+        blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
+        # logger.info("after blk, before consensus")
+        # logger.debug("Running dBFT function to block(" + str(blk.index) + ")")
+        if((PBFTConsensus(blk, gwPub, devPubKey)) == False):
+
+=====================================================================
+Found a 9 line (67 tokens) duplication in the following files: 
+Starting at line 1934 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3771 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3874 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3972 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4069 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                        logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                        # new data collection
+                        currentTimestamp = float(((time.time()) * 1000) * 1000)
+                        logger.info(
+                            "gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                                (currentTimestamp - float(devTime)) / 1000))
+                        logger.info(
+                            "gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                                (currentTimestamp - float(devTime)) / 1000))
+
+=====================================================================
+Found a 14 line (67 tokens) duplication in the following files: 
+Starting at line 3173 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3202 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+    def runNoConsesus(self, lifecycleDeviceName):
+        # print("Running without consensus")
+        t1 = float(((time.time()) * 1000) * 1000)
+        global peers
+        global blockContext
+        global logT5
+        global blkCounter
+        devPubKey = getBlockFromSyncList()
+        #verififyKeyContext()
+        #vblockContext = "0001"
+        #@TODO define somehow a device is in a context
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
+        newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus, lifecycleDeviceName)
+
+=====================================================================
+Found a 7 line (67 tokens) duplication in the following files: 
+Starting at line 102 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 116 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 130 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 137 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 144 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 151 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 45 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 59 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 66 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 80 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 183 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 291 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='stordy.block.Block.timestamp', index=2,
+
+=====================================================================
+Found a 21 line (66 tokens) duplication in the following files: 
+Starting at line 3807 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4930 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        blk = ChainFunctions.findBlock(devPublicKey)
+
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                #logger.info("Appending transaction to block #" + str(blk.index) + "...")
+                # print("Appending transaction to block #" + str(blk.index) + "...")
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+                #print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars
+                #print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                #print("devTime = " + str(devTime))
+                #print(devTime)
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+
+=====================================================================
+Found a 23 line (66 tokens) duplication in the following files: 
+Starting at line 3817 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4016 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    encryptedObj, devAESKey)
+                #print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars
+                #print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                #print("devTime = " + str(devTime))
+                #print(devTime)
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                #print("deviceData = " + str(deviceData))
+
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerifyECDSA(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+                    #print("DeviceInfo: "+str(deviceInfo))
+                    #print(deviceInfo)
+                    matching = getComponentNameByType(type)
+
+=====================================================================
+Found a 7 line (65 tokens) duplication in the following files: 
+Starting at line 694 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1900 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+            signSize = len(signData)
+            logSignSize.append("SizeSignature;"+ signatureAlgoritm+ ";" + str(signSize) + ";Bytes" + ";transaction "+ str(nextInt) + ";block " + str(blk.index))
+            print("size logged")
+            # print("BBBBBBBBBBBBB passed the devinfo")
+            gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+            # code responsible to create the hash between Info nodes.
+            prevInfoHash = CryptoFunctions.calculateTransactionHash(
+
+=====================================================================
+Found a 11 line (65 tokens) duplication in the following files: 
+Starting at line 4408 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4427 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        blocks = ChainFunctions.getBlocksById(deviceId)
+        t2 = time.time()
+        print("Time to get blocks: " + '{0:.12f}'.format((t2 - t1) * 1000))
+        print("Device blocks count: " + str(len(blocks)))
+        print("|-----------------------------------------|")
+        for b in blocks:
+            print(b.strBlock())
+            print("|-----------------------------------------|")
+        return "ok"
+
+    def showBlockWithIdMulti(self, deviceId):
+
+=====================================================================
+Found a 22 line (64 tokens) duplication in the following files: 
+Starting at line 969 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4657 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+            arrayPeersThreads.append(ThreadWithReturn(target=self.startRemoteVoting, args=(context, dumpedPool, dumpedGwPub, p)))
+            # arrayPeersThreads.append(threading.Thread(target=self.startRemoteVoting, args=(context,dumpedPool,dumpedGwPub,p)))
+            # start the last inserted thread in array
+            arrayPeersThreads[-1].start()
+            # counter = counter+1
+
+
+        # logger.error("after start")
+        for i in range(len(arrayPeersThreads)):
+
+            # default class of thread used to have a return on join
+            pickedVotes, pickedVotesSignature, remoteGwPk = arrayPeersThreads[i].join()
+            # arrayPeersThreads[i].join()
+            # logger.error("after join")
+
+            # will get from a queue of returns (from votes)
+            # pickedVotes, pickedVotesSignature, remoteGwPk = my_queue.get()
+
+            # logger.error("got stuff")
+            # pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
+            votes = pickle.loads(pickedVotes)
+            votesSignature = pickle.loads(pickedVotesSignature)
+
+=====================================================================
+Found a 19 line (64 tokens) duplication in the following files: 
+Starting at line 3731 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4016 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    encryptedObj, devAESKey)
+                #print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars      #signature = plainObject[:-20]  # remove the last 20 chars
+                #print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                #print("devTime = " + str(devTime))
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                #print("deviceData = " + str(deviceData))
+
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerifyECDSA(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+
+=====================================================================
+Found a 6 line (64 tokens) duplication in the following files: 
+Starting at line 94 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 253 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 37 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      name='index', full_name='stordy.block.Block.index', index=0,
+      number=1, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+
+=====================================================================
+Found a 8 line (64 tokens) duplication in the following files: 
+Starting at line 423 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1406 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        print("transact size logged")
+        # print("objeto cifrado: {}".format(encobj))
+        t2 = ((time.time() * 1000) * 1000)
+        logT30.append("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000))
+        # print(("Device;" + deviceName + ";T30; Time to create a transaction;" + str((t2 - t) / 1000)))
+
+    except:
+        logger.error("was not possible to encrypt... verify aeskey: "+ str(AESKey) +" in blk: " + str(blk) + "tr: " + str(trans))
+
+=====================================================================
+Found a 16 line (64 tokens) duplication in the following files: 
+Starting at line 1001 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1036 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1105 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+    for i in range(4):
+        val, valStr = lifecycleMethods[i]()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = " {:.0f}".format(t)
+        data = timeStr + valStr
+        #logger.debug("data = "+data)
+        #print("")
+        #print("data "+lifecycleTypes[i]+" ="+valStr+", with time: "+data)
+
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+        #print ("###Signature lenght: " + str(len(signedData)))
+        toSend = signedData + data
+        #print ("toSend = "+toSend)
+        #logger.debug("ServeAESKEY = " + serverAESKey)
+        try:
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+
+=====================================================================
+Found a 19 line (63 tokens) duplication in the following files: 
+Starting at line 30 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 226 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+  full_name='stordy.block.Empty',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=29,
+
+=====================================================================
+Found a 7 line (62 tokens) duplication in the following files: 
+Starting at line 95 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 123 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 38 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 73 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      number=1, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='previous_hash', full_name='stordy.block.Block.previous_hash', index=1,
+
+=====================================================================
+Found a 8 line (61 tokens) duplication in the following files: 
+Starting at line 681 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 923 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+            blk = ChainFunctions.findBlock(devPublicKey)
+            # print("passed the blk")
+            ttransact1 = time.time()
+            nextInt = blk.transactions[len(
+                blk.transactions) - 1].index + 1
+            tsign1 = time.time()
+            signData = CryptoFunctions.signInfoECDSA(gwPvt, str(deviceInfo))
+            tsign2 = time.time()
+
+=====================================================================
+Found a 5 line (61 tokens) duplication in the following files: 
+Starting at line 102 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 116 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 130 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 137 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 144 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 151 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 158 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 190 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 222 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 45 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 59 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 66 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 80 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 87 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 119 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 183 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 259 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 291 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 298 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 362 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+
+=====================================================================
+Found a 18 line (60 tokens) duplication in the following files: 
+Starting at line 2056 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 2140 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3757 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0) #nonce = 0
+                    #
+                    #Set a lock for each device/sc pubkey
+                    #verify lock
+                    #perform consensus if it is not locked
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #              str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+
+=====================================================================
+Found a 9 line (60 tokens) duplication in the following files: 
+Starting at line 2318 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4100 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+            print("blk: " + str(blk))
+            if (blk != False and blk.index > 0):
+                # print("inside first if")
+                logger.error("It may be already be registered, generating another aeskey")
+                aesKey = findAESKey(devPubKey)
+                logger.error("passed by findAESKEY")
+                if ((aesKey == False) or (len(aesKey) != 32)):
+                    logger.error("aeskey had a problem...")
+                    removeAESKey(aesKey)
+
+=====================================================================
+Found a 10 line (60 tokens) duplication in the following files: 
+Starting at line 3107 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4298 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        if ((PBFTConsensus(blk, gwPub, devPubKey, lifecycleDeviceName)) == False):
+            logger.error("Consensus not finished")
+            return False
+        t2 = float(((time.time()) * 1000) * 1000)
+        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus;" +  str((t2 - t1) / 1000))
+        # logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        return True
+        # print("Finish PBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
+
+    def rundBFT(self):
+
+=====================================================================
+Found a 7 line (60 tokens) duplication in the following files: 
+Starting at line 213 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 417 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            ttransact2 = time.time()
+            logCreateTransactTime.append("TransactionCreate;"+signatureAlgoritm+";{0:.12f};ms".format((ttransact2 - ttransact1) * 1000))
+            print("transact time logged")
+            sizeTransact = len(encobj)
+            logTransactSize.append("TransactionSize;"+ signatureAlgoritm +";"+str(sizeTransact)+";Bytes")
+            print("transact size logged")
+
+=====================================================================
+Found a 7 line (60 tokens) duplication in the following files: 
+Starting at line 234 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 447 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            ttransact4 = time.time()
+            logCreateTransactTime.append("TransactionCreate;"+signatureAlgoritm+";{0:.12f};ms".format((ttransact4 - ttransact3) * 1000))
+            print("transact time logged")
+            sizeTransact = len(encobj)
+            logTransactSize.append("TransactionSize;"+ signatureAlgoritm +";"+str(sizeTransact)+";Bytes")
+            print("transact size logged")
+
+=====================================================================
+Found a 10 line (59 tokens) duplication in the following files: 
+Starting at line 1774 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1865 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                d = devTime+deviceData
+                tVerify1 = time.time()
+                isSigned = CryptoFunctions.signVerifyECDSA(
+                    d, signature, devPublicKey)
+                tVerify2 = time.time()
+                logVerifySignTime.append("SignatureVerify;"+ signatureAlgoritm + ";{0:.12f};ms".format((tVerify2 - tVerify1) * 1000))
+                print("verify logged")
+
+                # print("pos verificar assinatura: {}".format(isSigned))
+                if isSigned:
+
+=====================================================================
+Found a 17 line (59 tokens) duplication in the following files: 
+Starting at line 2444 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4217 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                if(consensus == "PBFT" or consensus == "dBFT" or consensus == "Witness3" or consensus == "PoW" or consensus == "PoA"):
+                    self.releaseLockForConsensus()
+                    for p in peers:
+                        obj = p.object
+                        obj.releaseLockRemote()
+                    # print("ConsensusLocks released!")
+                ######end of lock consensus################
+
+                # print("Before encryption of rsa2")
+
+                t3 = time.time()
+                timeDiff = '{0:.12f}'.format((t3 - t1) * 1000)
+                # f = open('trans_normal.txt', "a")
+                # f.write(timeDiff + "\n")
+                # f.close
+                # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + timeDiff)
+
+=====================================================================
+Found a 18 line (59 tokens) duplication in the following files: 
+Starting at line 3730 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3920 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+                #print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars      #signature = plainObject[:-20]  # remove the last 20 chars
+                #print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                #print("devTime = " + str(devTime))
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                #print("deviceData = " + str(deviceData))
+
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerifyECDSA(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+
+=====================================================================
+Found a 14 line (58 tokens) duplication in the following files: 
+Starting at line 3202 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4238 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+    def runPoA(self):
+        # print("Running without consensus")
+        t1 = float(((time.time()) * 1000) * 1000)
+        global peers
+        global blockContext
+        global logT5
+        global blkCounter
+        devPubKey = getBlockFromSyncList()
+        #verififyKeyContext()
+        #vblockContext = "0001"
+        #@TODO define somehow a device is in a context
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
+        newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
+
+=====================================================================
+Found a 6 line (58 tokens) duplication in the following files: 
+Starting at line 171 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 203 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 226 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 402 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 439 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+    signedData = CryptoFunctions.signInfoECDSA(priv, data)
+    t2 = time.time()
+    logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((t2 - t1) * 1000))
+    print("sign logged")
+    signSize = len(signedData)
+    logSignSize.append("signatureSize"+ signatureAlgoritm+";"+ str(signSize) + ";Bytes"+ ";data test" )
+
+=====================================================================
+Found a 5 line (57 tokens) duplication in the following files: 
+Starting at line 2659 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1523 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        filename = gatewayName+"-"+str(numberBlocks)+"Bl-"+str(numberTransactions)+"Tr-("+str(datetime.now().strftime("%d-%b-%Y--%H-%M-%S"))+").logs"
+        filepath = os.path.join(directory,filename)
+    
+        if not os.path.exists(directory):
+            print("creating directory in gw")
+
+=====================================================================
+Found a 3 line (57 tokens) duplication in the following files: 
+Starting at line 23 of /home/aschemitt/reps/speedychain/API/src/model/Chain/BlockHeader.py
+Starting at line 28 of /home/aschemitt/reps/speedychain/API/src/model/Chain/BlockHeader.py
+Starting at line 23 of /home/aschemitt/reps/speedychain/API/src/model/Chain/BlockHeaderMulti.py
+Starting at line 28 of /home/aschemitt/reps/speedychain/API/src/model/Chain/BlockHeaderMulti.py
+
+        return "%s,%s,%s,%s,%s,%s,%s,%s,%s" % (
+            str(self.index), str(self.previousHash), str(self.timestamp), str(self.transactions), str(self.hash), str(self.nonce),
+            str(self.publicKey), str(self.blockContext), str(self.device))
+
+=====================================================================
+Found a 14 line (56 tokens) duplication in the following files: 
+Starting at line 3173 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4238 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+    def runNoConsesus(self, lifecycleDeviceName):
+        # print("Running without consensus")
+        t1 = float(((time.time()) * 1000) * 1000)
+        global peers
+        global blockContext
+        global logT5
+        global blkCounter
+        devPubKey = getBlockFromSyncList()
+        #verififyKeyContext()
+        #vblockContext = "0001"
+        #@TODO define somehow a device is in a context
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
+        newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus, lifecycleDeviceName)
+
+=====================================================================
+Found a 6 line (56 tokens) duplication in the following files: 
+Starting at line 5463 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 5644 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+            gwPvt, newBlock.__str__())  # identify the problem in this line!!
+        tsign2 = time.time()
+        logCreateSignTime.append("SignatureCreate;"+ signatureAlgoritm + ";{0:.12f};ms".format((tsign2 - tsign1) * 1000))
+        print("sign logged")
+        signSize = len(voteSignature)
+        logSignSize.append("SizeSignature;"+ signatureAlgoritm+ ";" + str(signSize) + ";Bytes" + ";voting in block " + str(newBlock.index))
+
+=====================================================================
+Found a 5 line (56 tokens) duplication in the following files: 
+Starting at line 123 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 254 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 73 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      number=5, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+
+=====================================================================
+Found a 10 line (56 tokens) duplication in the following files: 
+Starting at line 461 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1433 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        transactionStatus= server.addTransactionToPool(devPubK, encobj)
+        t3 = ((time.time() * 1000) * 1000)
+        logT31.append("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
+        # print("Device;" + deviceName + ";T31; Time to send/receive a transaction;" + str((t3 - t2) / 1000))
+        if(transactionStatus=="ok!"):
+            # logger.error("everything good now")
+            return devPubK,devPrivateK,AESKey
+        else:
+            # logger.error("Used AESKey was: " + str(AESKey))
+            logger.error("something went wrong when sending data in blk: " + str(blk) + " tr: " + str(trans))
+
+=====================================================================
+Found a 10 line (55 tokens) duplication in the following files: 
+Starting at line 867 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1267 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+            if ((tcc2 - tcc1) / 1000 < minInterval):
+                time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
+                # print("****** sleeping " + str((minInterval - ((tcc2 - tcc1) / 1000)) / 1000) + "ms")
+
+            # dBFT does not have election
+            # self.electNewContextOrchestrator(context)
+            self.removeLockfromContext(context)
+            for p in tempContextPeers:
+                peer = p.object
+                peer.removeLockfromContext(context)
+
+=====================================================================
+Found a 9 line (55 tokens) duplication in the following files: 
+Starting at line 1223 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1420 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 2047 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 2131 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3749 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3840 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    blk = ChainFunctions.findBlock(devPublicKey)
+                    # print("passed the blk")
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfoECDSA(gwPvt, str(deviceInfo))
+                    # print("BBBBBBBBBBBBB passed the devinfo")
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = CryptoFunctions.calculateTransactionHash(
+
+=====================================================================
+Found a 13 line (55 tokens) duplication in the following files: 
+Starting at line 2101 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3804 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+        blk = ChainFunctions.findBlock(devPublicKey)
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                # logger.info("Appending transaction to block #" +
+                #             str(blk.index) + "...")
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+
+=====================================================================
+Found a 8 line (55 tokens) duplication in the following files: 
+Starting at line 398 of /home/aschemitt/reps/speedychain/API/src/model/Chain/ChainFunctions.py
+Starting at line 183 of /home/aschemitt/reps/speedychain/API/src/model/Chain/ChainFunctionsMulti.py
+
+    previousBlock = getLatestBlock()
+    nextIndex = index
+    previousBlockHash = CryptoFunctions.calculateHashForBlock(previousBlock)
+    nextHash = CryptoFunctions.calculateHash(nextIndex, previousBlockHash, timestamp,
+                                             nonce, pubKey, blockContext, device)
+    inf = Transaction.Transaction(0, nextHash, timestamp, blockData, sign, 0)
+
+    return BlockHeader(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey,
+
+=====================================================================
+Found a 10 line (55 tokens) duplication in the following files: 
+Starting at line 971 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1015 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        try:
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+        except:
+            logger.error("was not possible to encrypt... verify aeskey")
+            newKeyPair()
+            addBlockOnChain() # this will force gateway to recreate the aes key
+            signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+            toSend = signedData + data
+            encobj = CryptoFunctions.encryptAES(toSend, serverAESKey)
+            logger.error("passed through sendData except")
+
+=====================================================================
+Found a 17 line (54 tokens) duplication in the following files: 
+Starting at line 2091 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 3708 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+    def addTransactionSC(self, devPublicKey, encryptedObj):
+        """ Receive a new transaction to be add to the chain, add the transaction
+            to a block and send it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+        blk = ChainFunctions.findBlock(devPublicKey)
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+
+=====================================================================
+Found a 7 line (54 tokens) duplication in the following files: 
+Starting at line 95 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 109 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 123 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2.py
+Starting at line 38 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 52 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+Starting at line 73 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2.py
+
+      number=1, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='previous_hash', full_name='stordy.block.Block.previous_hash', index=1,
+
+=====================================================================
+Found a 7 line (54 tokens) duplication in the following files: 
+Starting at line 197 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 396 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        temperature = readSensorTemperature()
+        t = ((time.time() * 1000) * 1000)
+        timeStr = "{:.0f}".format(t)
+        data = timeStr + temperature
+        logger.debug("data = "+data)
+        t1 = time.time()
+        signedData = CryptoFunctions.signInfoECDSA(privateKey, data)
+
+=====================================================================
+Found a 11 line (53 tokens) duplication in the following files: 
+Starting at line 3830 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4954 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerifyECDSA(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+                    #print("DeviceInfo: "+str(deviceInfo))
+                    #print(deviceInfo)
+                    matching = getComponentNameByType(type)
+                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching, deviceInfo)
+
+=====================================================================
+Found a 7 line (53 tokens) duplication in the following files: 
+Starting at line 88 of /home/aschemitt/reps/speedychain/API/src/controller/loader.py
+Starting at line 815 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 87 of /home/aschemitt/reps/speedychain/API/src/tools/loader.py
+
+    signedData = CryptoFunctions.signInfo(privateKey,scInfo)
+    scType = pickle.dumps(callType)
+    scData = pickle.dumps(data)
+    scFrom = pickle.dumps(origin)
+    scDest = pickle.dumps(dest)
+    scSignedData = pickle.dumps(signedData)
+    scPublicKey = pickle.dumps(publicKey)
+
+=====================================================================
+Found a 10 line (53 tokens) duplication in the following files: 
+Starting at line 377 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1383 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        logger.error("failed to execute send tr:" + str(retry)+"from Blk: "+ str(blk))
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        logger.error("*** print_exception:\n" + str(
+            traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2, file=sys.stdout)))
+        # global serverAESKey
+        # print("the size of the serverAESKey is: "+str(len(serverAESKey)))
+        # time.sleep(0.001)
+        return False  # addBlockConsensusCandiate
+
+def sendDataArgs(devPubK, devPrivateK, AESKey, trans, blk):
+
+=====================================================================
+Found a 9 line (52 tokens) duplication in the following files: 
+Starting at line 696 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 934 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1227 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1424 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 2050 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 2134 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+            print("size logged")
+            # print("BBBBBBBBBBBBB passed the devinfo")
+            gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+            # code responsible to create the hash between Info nodes.
+            prevInfoHash = CryptoFunctions.calculateTransactionHash(
+                ChainFunctions.getLatestBlockTransaction(blk))
+
+            transaction = Transaction.Transaction(
+                nextInt, prevInfoHash, gwTime, deviceInfo, signData, 0)
+
+=====================================================================
+Found a 14 line (52 tokens) duplication in the following files: 
+Starting at line 2222 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4786 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    logT26.append("gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str((currentTimestamp - originalTimestamp) / 1000))
+                # logger.info("gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
+                # logger.info(
+                #     "gateway;" + gatewayName + ";" + consensus + ";T21;Time to process Tr is;" + str(
+                #         (currentTimestamp - gwTimestamp) / 1000))
+
+        t2 = time.time()
+        logT21.append("gateway;" + gatewayName + ";T21;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+
+        return "done"
+
+
+    def updateIOTBlockLedger(self, iotBlock, gwName):
+
+=====================================================================
+Found a 16 line (52 tokens) duplication in the following files: 
+Starting at line 3921 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4016 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                    encryptedObj, devAESKey)
+                # print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars
+                # print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                # print("devTime = " + str(devTime))
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                # print("deviceData = " + str(deviceData))
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerifyECDSA(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+
+=====================================================================
+Found a 16 line (51 tokens) duplication in the following files: 
+Starting at line 53 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 73 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("10.255.255.255", 1))
+        myIP = s.getsockname()[0]
+    except:
+        myIP = '127.0.0.1'
+    finally:
+        s.close()
+        # hostname = socket.gethostname()
+        # IPAddr = socket.gethostbyname(hostname)
+        # myIP = IPAddr
+
+    return myIP
+
+
+def getTime():
+
+=====================================================================
+Found a 8 line (51 tokens) duplication in the following files: 
+Starting at line 1595 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 1651 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+                            transactionPool = transactionConsensusCandidateList[index][1]
+                            # logger.info("there is a pool candidate, pop it!!! context: " + context)
+                            transactionConsensusCandidateList[index][1] = []
+                            transactionLockList[index][1].release()
+                            pickedTransactionPool = pickle.dumps(transactionPool)
+                            return pickedTransactionPool
+
+                        transactionLockList[index][1].release()
+
+=====================================================================
+Found a 9 line (51 tokens) duplication in the following files: 
+Starting at line 1213 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1221 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1228 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+        setServerWithUri(gatewayUriA)
+
+        t3 = time.time()
+        automateLifecycleEventsNormal(blocks, transactions)
+        tNormal = tNormal + time.time() - t3
+        t3 = time.time()
+        automateLifecycleEventsMulti(blocks, transactions)
+        tMulti = tMulti + time.time() - t3
+        setServerWithUri(gatewayUriB)
+
+=====================================================================
+Found a 13 line (50 tokens) duplication in the following files: 
+Starting at line 4449 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+Starting at line 4474 of /home/aschemitt/reps/speedychain/API/src/controller/Gateway.py
+
+        print("Time to get transactions: " + timeDiff)
+        # logger.info("IoT Ledger size: " + str(size))
+        # logger.info("|-----------------------------------------|")
+        print("Components transactions count: " + str(len(transactions)))
+        if showTransactions:
+            print("|-----------------------------------------|")
+            for t in transactions:
+                print(t.strBlock())
+                print("|-----------------------------------------|")
+
+        return timeDiff, str(len(transactions))
+
+    def showTransactionWithIdMulti(self, componentId, showTransactions):
+
+=====================================================================
+Found a 11 line (50 tokens) duplication in the following files: 
+Starting at line 132 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2_grpc.py
+Starting at line 149 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2_grpc.py
+Starting at line 166 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2_grpc.py
+Starting at line 183 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2_grpc.py
+Starting at line 200 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2_grpc.py
+Starting at line 217 of /home/aschemitt/reps/speedychain/API/src/model/Chain/block_pb2_grpc.py
+Starting at line 116 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2_grpc.py
+Starting at line 133 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2_grpc.py
+Starting at line 150 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2_grpc.py
+Starting at line 167 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2_grpc.py
+Starting at line 184 of /home/aschemitt/reps/speedychain/API/src/model/Chain/transaction_pb2_grpc.py
+
+    def AddBlock(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/stordy.block.BlockService/AddBlock',
+
+=====================================================================
+Found a 7 line (50 tokens) duplication in the following files: 
+Starting at line 560 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+Starting at line 1331 of /home/aschemitt/reps/speedychain/API/src/tools/DeviceSimulator.py
+
+            AESKey = addBlockOnChainv2(devPubK, devPrivK)
+            keysArray[blk]=[devPubK, devPrivK, AESKey]
+            counter = counter + 1
+            if (counter > 10):
+                break
+        if (startTime==0):
+            startTime = (time.time())*1000*1000
+

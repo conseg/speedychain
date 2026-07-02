@@ -1,0 +1,21 @@
+API/src/controller/Gateway.py:508:# TODO -> should create a nonce in the block and in the transaction in order to generate it
+API/src/controller/Gateway.py:1023:        # TODO define how to update peers: all peers or only participating in consensus?
+API/src/controller/Gateway.py:1497:        # TODO review this part -> if 2 devices try to create a new lock at same time, crazy thing can happen
+API/src/controller/Gateway.py:1753:                # TODO modificar o tamanho de assinatura e timestamp
+API/src/controller/Gateway.py:3033:	        # @TODO change how contexts are updated
+API/src/controller/Gateway.py:3086:        # @TODO define somehow a device is in a context
+API/src/controller/Gateway.py:3128:        #@TODO define somehow a device is in a context
+API/src/controller/Gateway.py:3156:        #@TODO define somehow a device is in a context
+API/src/controller/Gateway.py:3183:        #@TODO define somehow a device is in a context
+API/src/controller/Gateway.py:3212:        #@TODO define somehow a device is in a context
+API/src/controller/Gateway.py:4248:        #@TODO define somehow a device is in a context
+API/src/controller/Gateway.py:4280:        # @TODO define somehow a device is in a context
+API/src/controller/Gateway.py:4708:            # TODO define how to update peers: all peers or only participating in consensus?
+API/src/controller/Gateway.py:5451:    if (lastBlk.timestamp > newBlock.timestamp): # @TODO this timestamp contraint can be hard -> global time
+API/src/controller/Gateway.py:5577:#     # TODO similar to what was done with block, just different verifications
+API/src/controller/Gateway.py:5930:    # @TODO there is a temporary approach to set consensus of gw
+API/src/tools/CryptoFunctions.py:205:        # TODO prehashed
+API/src/tools/CryptoFunctions.py:242:        # TODO prehashed
+API/src/tools/CryptoFunctions.py:313:        # TODO prehashed
+API/src/tools/CryptoFunctions.py:346:        # TODO prehashed
+API/src/tools/DeviceSimulator.py:152:        # TODO verificar esse try

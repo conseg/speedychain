@@ -1,0 +1,1680 @@
+API/src/__init__.py:1 at module level:
+        D104: Missing docstring in public package
+API/src/controller/Gateway.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/controller/Gateway.py:44 in public function `get_memory_usage`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:50 in public function `getMyIP`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:50 in public function `getMyIP`:
+        D400: First line should end with a period (not 'y')
+API/src/controller/Gateway.py:50 in public function `getMyIP`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:69 in public function `getTime`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:69 in public function `getTime`:
+        D400: First line should end with a period (not 'e')
+API/src/controller/Gateway.py:69 in public function `getTime`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:158 in public class `ThreadWithReturn`:
+        D101: Missing docstring in public class
+API/src/controller/Gateway.py:159 in public method `__init__`:
+        D107: Missing docstring in __init__
+API/src/controller/Gateway.py:162 in public method `run`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:165 in public method `join`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:178 in public function `bootstrapChain2`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:178 in public function `bootstrapChain2`:
+        D403: First word of the first line should be properly capitalized ('Generate', not 'generate')
+API/src/controller/Gateway.py:178 in public function `bootstrapChain2`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:194 in public function `findPeer`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:194 in public function `findPeer`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:194 in public function `findPeer`:
+        D400: First line should end with a period (not 'k')
+API/src/controller/Gateway.py:194 in public function `findPeer`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:207 in public function `getPeer`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:207 in public function `getPeer`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:207 in public function `getPeer`:
+        D400: First line should end with a period (not 't')
+API/src/controller/Gateway.py:207 in public function `getPeer`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:220 in public function `addBack`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:220 in public function `addBack`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:220 in public function `addBack`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:239 in public function `sendTransactionToPeers`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:239 in public function `sendTransactionToPeers`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:239 in public function `sendTransactionToPeers`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:291 in public function `sendBlockToPeers`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:309 in public function `syncChain`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:309 in public function `syncChain`:
+        D400: First line should end with a period (not 'r')
+API/src/controller/Gateway.py:320 in public function `connectToPeers`:
+        D403: First word of the first line should be properly capitalized ('This', not 'this')
+API/src/controller/Gateway.py:320 in public function `connectToPeers`:
+        D401: First line should be in imperative mood; try rephrasing (found 'this')
+API/src/controller/Gateway.py:320 in public function `connectToPeers`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:320 in public function `connectToPeers`:
+        D400: First line should end with a period (not 'd')
+API/src/controller/Gateway.py:320 in public function `connectToPeers`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:338 in public function `addPeersToContextPeers`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:364 in public function `addPeer2`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:364 in public function `addPeer2`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:364 in public function `addPeer2`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:364 in public function `addPeer2`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:422 in public function `generateAESSharedKey`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:422 in public function `generateAESSharedKey`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:422 in public function `generateAESSharedKey`:
+        D400: First line should end with a period (not '6')
+API/src/controller/Gateway.py:422 in public function `generateAESSharedKey`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:461 in public function `findAESKey`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:461 in public function `findAESKey`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:461 in public function `findAESKey`:
+        D400: First line should end with a period (not 't')
+API/src/controller/Gateway.py:461 in public function `findAESKey`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:474 in public function `removeAESKey`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:474 in public function `removeAESKey`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:474 in public function `removeAESKey`:
+        D400: First line should end with a period (not 't')
+API/src/controller/Gateway.py:474 in public function `removeAESKey`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:502 in public function `addTrustedPeers`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:502 in public function `addTrustedPeers`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:516 in public function `peerIsTrusted`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:524 in public function `peerIsActive`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:528 in public function `sendBlockToConsensus`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:535 in public function `receiveBlockConsensus`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:540 in public function `isValidBlock`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:585 in public function `isTransactionValid`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:597 in public function `isBlockValid`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:631 in public class `R2ac`:
+        D101: Missing docstring in public class
+API/src/controller/Gateway.py:633 in public method `__init__`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:633 in public method `__init__`:
+        D400: First line should end with a period (not 'r')
+API/src/controller/Gateway.py:638 in public method `startTransactionsConsThreads`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:643 in public method `threadTransactionConsensus`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:671 in public method `performTransactionConsensus`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:724 in public method `performTransactionPoolPBFTConsensus`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:818 in public method `performTransactionPooldBFTConsensus`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:897 in public method `prepareContextPBFT`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:897 in public method `prepareContextPBFT`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:897 in public method `prepareContextPBFT`:
+        D400: First line should end with a period (not 'k')
+API/src/controller/Gateway.py:897 in public method `prepareContextPBFT`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:1031 in public method `commitContextPBFT`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:1059 in public method `startRemoteVoting`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:1065 in public method `votePoolCandidate`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:1065 in public method `votePoolCandidate`:
+        D401: First line should be in imperative mood ('Check', not 'Checks')
+API/src/controller/Gateway.py:1065 in public method `votePoolCandidate`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:1065 in public method `votePoolCandidate`:
+        D400: First line should end with a period (not ' ')
+API/src/controller/Gateway.py:1065 in public method `votePoolCandidate`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:1171 in public method `performTransactionPoolPoAConsensus`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:1282 in public method `selectCircularLeader`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:1341 in public method `lockForContextConsensus`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:1341 in public method `lockForContextConsensus`:
+        D403: First word of the first line should be properly capitalized ('Lock', not 'lock')
+API/src/controller/Gateway.py:1341 in public method `lockForContextConsensus`:
+        D202: No blank lines allowed after function docstring (found 1)
+API/src/controller/Gateway.py:1341 in public method `lockForContextConsensus`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:1394 in public method `performTransactionOldWayPoolPoAConsensus`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:1460 in public method `addNewTransactionToSyncList`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:1460 in public method `addNewTransactionToSyncList`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:1460 in public method `addNewTransactionToSyncList`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:1460 in public method `addNewTransactionToSyncList`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:1514 in public method `getTransactionFromSyncList`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:1514 in public method `getTransactionFromSyncList`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:1514 in public method `getTransactionFromSyncList`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:1514 in public method `getTransactionFromSyncList`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:1555 in public method `getNElementsLocalTransactionPool`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:1619 in public method `getLocalTransactionPool`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:1619 in public method `getLocalTransactionPool`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:1619 in public method `getLocalTransactionPool`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:1619 in public method `getLocalTransactionPool`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:1671 in public method `addContextinLockList`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:1698 in public method `removeLockfromContext`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:1716 in public method `addTransactionToPool`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:1716 in public method `addTransactionToPool`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:1716 in public method `addTransactionToPool`:
+        D400: First line should end with a period (not 'a')
+API/src/controller/Gateway.py:1716 in public method `addTransactionToPool`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:1716 in public method `addTransactionToPool`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:1818 in public method `addTransaction`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:1818 in public method `addTransaction`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:1818 in public method `addTransaction`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:1818 in public method `addTransaction`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:1818 in public method `addTransaction`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:1969 in public method `addTinLockList`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:1988 in public method `removeLockfromT`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2005 in public method `addTransactionSC2`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:2005 in public method `addTransactionSC2`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:2005 in public method `addTransactionSC2`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:2005 in public method `addTransactionSC2`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:2005 in public method `addTransactionSC2`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:2092 in public method `addTransactionSC`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:2092 in public method `addTransactionSC`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:2092 in public method `addTransactionSC`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:2092 in public method `addTransactionSC`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:2092 in public method `addTransactionSC`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:2168 in public method `updateBlockLedger`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:2168 in public method `updateBlockLedger`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:2168 in public method `updateBlockLedger`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:2168 in public method `updateBlockLedger`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:2189 in public method `updateBlockLedgerSetTrans`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2237 in public method `updateIOTBlockLedger`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:2237 in public method `updateIOTBlockLedger`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:2237 in public method `updateIOTBlockLedger`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:2237 in public method `updateIOTBlockLedger`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:2259 in public method `removeBlockConsensusCandidate`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2266 in public method `addBlockConsensusCandidate`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2281 in public method `acquireLockRemote`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2288 in public method `releaseLockRemote`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2293 in public method `addBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:2293 in public method `addBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:2293 in public method `addBlock`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:2293 in public method `addBlock`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:2471 in public method `getRemoteContext`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2475 in public method `getRemoteContexts`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2481 in public method `addPeer`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:2481 in public method `addPeer`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:2481 in public method `addPeer`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:2537 in public method `showIoTLedger`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:2537 in public method `showIoTLedger`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:2537 in public method `showIoTLedger`:
+        D400: First line should end with a period (not ' ')
+API/src/controller/Gateway.py:2537 in public method `showIoTLedger`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:2556 in public method `showLastTransactionData`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2566 in public method `saveLog`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2572 in public method `remoteSaveLog`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2638 in public method `saveTimesSizes`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2645 in public method `remoteSaveTimesSizes`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2723 in public method `showBlockLedger`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:2723 in public method `showBlockLedger`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:2723 in public method `showBlockLedger`:
+        D400: First line should end with a period (not 'k')
+API/src/controller/Gateway.py:2723 in public method `showBlockLedger`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:2758 in public method `saveXTransactionsSizes`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2765 in public method `remoteSaveXTransactionsSizes`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2781 in public method `listPeer`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:2781 in public method `listPeer`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:2781 in public method `listPeer`:
+        D400: First line should end with a period (not 'k')
+API/src/controller/Gateway.py:2781 in public method `listPeer`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:2791 in public method `calcMerkleTree`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2804 in public method `getRemotePeerBlockChain`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2808 in public method `getLastChainBlocks`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2834 in public method `getMyOrchestrator`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2838 in public method `addVoteOrchestrator`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2846 in public method `peerVoteNewOrchestrator`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2863 in public method `electNewOrchestrator`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2894 in public method `loadElectedOrchestrator`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2904 in public method `peerVoteNewContextOrchestrator`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2940 in public method `startCleanVotesContextOrchestrator`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2957 in public method `loadElectedContextOrchestrator`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:2965 in public method `electNewContextOrchestrator`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:3024 in public method `exposedURI`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:3028 in public method `setContexts`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:3048 in public method `setContextsRemote`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:3059 in public method `setConsensus`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:3071 in public method `runPBFT`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3071 in public method `runPBFT`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:3117 in public method `rundBFT`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3117 in public method `rundBFT`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:3146 in public method `runPoW`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3146 in public method `runPoW`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:3173 in public method `runNoConsesus`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:3202 in public method `runPoA`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:3232 in public method `lockForConsensus`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3232 in public method `lockForConsensus`:
+        D403: First word of the first line should be properly capitalized ('Lock', not 'lock')
+API/src/controller/Gateway.py:3232 in public method `lockForConsensus`:
+        D202: No blank lines allowed after function docstring (found 1)
+API/src/controller/Gateway.py:3232 in public method `lockForConsensus`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:3274 in public method `releaseLockForConsensus`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3274 in public method `releaseLockForConsensus`:
+        D403: First word of the first line should be properly capitalized ('Lock', not 'lock')
+API/src/controller/Gateway.py:3274 in public method `releaseLockForConsensus`:
+        D202: No blank lines allowed after function docstring (found 1)
+API/src/controller/Gateway.py:3274 in public method `releaseLockForConsensus`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:3304 in public method `verifyBlockCandidateRemote`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3304 in public method `verifyBlockCandidateRemote`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3304 in public method `verifyBlockCandidateRemote`:
+        D400: First line should end with a period (not 'c')
+API/src/controller/Gateway.py:3304 in public method `verifyBlockCandidateRemote`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3323 in public method `addVoteBlockPBFTRemote`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3323 in public method `addVoteBlockPBFTRemote`:
+        D403: First word of the first line should be properly capitalized ('Add', not 'add')
+API/src/controller/Gateway.py:3323 in public method `addVoteBlockPBFTRemote`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3323 in public method `addVoteBlockPBFTRemote`:
+        D400: First line should end with a period (not ',')
+API/src/controller/Gateway.py:3323 in public method `addVoteBlockPBFTRemote`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:3323 in public method `addVoteBlockPBFTRemote`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3336 in public method `calcBlockPBFTRemote`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3336 in public method `calcBlockPBFTRemote`:
+        D401: First line should be in imperative mood ('Calculate', not 'Calculates')
+API/src/controller/Gateway.py:3336 in public method `calcBlockPBFTRemote`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3336 in public method `calcBlockPBFTRemote`:
+        D400: First line should end with a period (not 'k')
+API/src/controller/Gateway.py:3336 in public method `calcBlockPBFTRemote`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3345 in public method `getGwPubkey`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3345 in public method `getGwPubkey`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3345 in public method `getGwPubkey`:
+        D400: First line should end with a period (not 'y')
+API/src/controller/Gateway.py:3345 in public method `getGwPubkey`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3352 in public method `isBlockInTheChain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3352 in public method `isBlockInTheChain`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3352 in public method `isBlockInTheChain`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:3352 in public method `isBlockInTheChain`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3367 in public method `callEVM`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3367 in public method `callEVM`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3367 in public method `callEVM`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:3367 in public method `callEVM`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3458 in public method `getDeviceName`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:3463 in public method `storeChainToFile`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3463 in public method `storeChainToFile`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3463 in public method `storeChainToFile`:
+        D400: First line should end with a period (not 'e')
+API/src/controller/Gateway.py:3463 in public method `storeChainToFile`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:3463 in public method `storeChainToFile`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3470 in public method `storeNormalChainToFile`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:3489 in public method `storeMultiChainToFile`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:3507 in public method `restoreChainFromFile`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3507 in public method `restoreChainFromFile`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3507 in public method `restoreChainFromFile`:
+        D400: First line should end with a period (not 'e')
+API/src/controller/Gateway.py:3507 in public method `restoreChainFromFile`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:3507 in public method `restoreChainFromFile`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3519 in public method `restoreNormalChainFromFile`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3519 in public method `restoreNormalChainFromFile`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3519 in public method `restoreNormalChainFromFile`:
+        D400: First line should end with a period (not 'e')
+API/src/controller/Gateway.py:3519 in public method `restoreNormalChainFromFile`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:3519 in public method `restoreNormalChainFromFile`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3602 in public method `restoreMultiChainFromFile`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3602 in public method `restoreMultiChainFromFile`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3602 in public method `restoreMultiChainFromFile`:
+        D400: First line should end with a period (not 'e')
+API/src/controller/Gateway.py:3602 in public method `restoreMultiChainFromFile`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:3602 in public method `restoreMultiChainFromFile`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3660 in public method `updateGatewayKeys`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3660 in public method `updateGatewayKeys`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3660 in public method `updateGatewayKeys`:
+        D400: First line should end with a period (not 'e')
+API/src/controller/Gateway.py:3660 in public method `updateGatewayKeys`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3691 in public method `storeGatewayKeys`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3691 in public method `storeGatewayKeys`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3691 in public method `storeGatewayKeys`:
+        D400: First line should end with a period (not 'e')
+API/src/controller/Gateway.py:3691 in public method `storeGatewayKeys`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3709 in public method `addLifecycleEvent`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3709 in public method `addLifecycleEvent`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3709 in public method `addLifecycleEvent`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:3709 in public method `addLifecycleEvent`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:3709 in public method `addLifecycleEvent`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3794 in public method `addLifecycleEventStructure`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3794 in public method `addLifecycleEventStructure`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3794 in public method `addLifecycleEventStructure`:
+        D400: First line should end with a period (not ',')
+API/src/controller/Gateway.py:3794 in public method `addLifecycleEventStructure`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:3794 in public method `addLifecycleEventStructure`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3894 in public method `addLifecycleEventMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3894 in public method `addLifecycleEventMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3894 in public method `addLifecycleEventMulti`:
+        D400: First line should end with a period (not ',')
+API/src/controller/Gateway.py:3894 in public method `addLifecycleEventMulti`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:3894 in public method `addLifecycleEventMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:3992 in public method `addLifecycleEventSingle`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:3992 in public method `addLifecycleEventSingle`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:3992 in public method `addLifecycleEventSingle`:
+        D400: First line should end with a period (not ',')
+API/src/controller/Gateway.py:3992 in public method `addLifecycleEventSingle`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:3992 in public method `addLifecycleEventSingle`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4086 in public method `addBlockMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4086 in public method `addBlockMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4086 in public method `addBlockMulti`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:4086 in public method `addBlockMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4238 in public method `runNoConsesusMulti`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:4268 in public method `runPBFTMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4268 in public method `runPBFTMulti`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:4309 in public method `updateBlockLedgerMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4309 in public method `updateBlockLedgerMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4309 in public method `updateBlockLedgerMulti`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:4309 in public method `updateBlockLedgerMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4333 in public method `updateIOTBlockLedgerMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4333 in public method `updateIOTBlockLedgerMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4333 in public method `updateIOTBlockLedgerMulti`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:4333 in public method `updateIOTBlockLedgerMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4356 in public method `showIoTLedgerMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4356 in public method `showIoTLedgerMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4356 in public method `showIoTLedgerMulti`:
+        D400: First line should end with a period (not ' ')
+API/src/controller/Gateway.py:4356 in public method `showIoTLedgerMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4375 in public method `showBlockLedgerMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4375 in public method `showBlockLedgerMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4375 in public method `showBlockLedgerMulti`:
+        D400: First line should end with a period (not 'k')
+API/src/controller/Gateway.py:4375 in public method `showBlockLedgerMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4401 in public method `showBlockWithId`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4401 in public method `showBlockWithId`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4401 in public method `showBlockWithId`:
+        D400: First line should end with a period (not ' ')
+API/src/controller/Gateway.py:4401 in public method `showBlockWithId`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4419 in public method `showBlockWithIdMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4419 in public method `showBlockWithIdMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4419 in public method `showBlockWithIdMulti`:
+        D400: First line should end with a period (not ' ')
+API/src/controller/Gateway.py:4419 in public method `showBlockWithIdMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4438 in public method `showTransactionWithId`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4438 in public method `showTransactionWithId`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4438 in public method `showTransactionWithId`:
+        D400: First line should end with a period (not ' ')
+API/src/controller/Gateway.py:4438 in public method `showTransactionWithId`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4462 in public method `showTransactionWithIdMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4462 in public method `showTransactionWithIdMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4462 in public method `showTransactionWithIdMulti`:
+        D400: First line should end with a period (not ' ')
+API/src/controller/Gateway.py:4462 in public method `showTransactionWithIdMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4486 in public method `startTransactionsConsThreadsMulti`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:4494 in public method `threadTransactionConsensusMulti`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:4511 in public method `performTransactionPoolPBFTConsensusMulti`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:4610 in public method `prepareContextPBFTMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4610 in public method `prepareContextPBFTMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4610 in public method `prepareContextPBFTMulti`:
+        D400: First line should end with a period (not 'k')
+API/src/controller/Gateway.py:4610 in public method `prepareContextPBFTMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4720 in public method `commitContextPBFTMulti`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:4749 in public method `updateBlockLedgerSetTransMulti`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:4797 in public method `startRemoteVotingMulti`:
+        D102: Missing docstring in public method
+API/src/controller/Gateway.py:4803 in public method `votePoolCandidateMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4803 in public method `votePoolCandidateMulti`:
+        D401: First line should be in imperative mood ('Check', not 'Checks')
+API/src/controller/Gateway.py:4803 in public method `votePoolCandidateMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4803 in public method `votePoolCandidateMulti`:
+        D400: First line should end with a period (not ' ')
+API/src/controller/Gateway.py:4803 in public method `votePoolCandidateMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4896 in public method `isBlockInTheChainMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4896 in public method `isBlockInTheChainMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4896 in public method `isBlockInTheChainMulti`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:4896 in public method `isBlockInTheChainMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4909 in public method `addTransactionToPoolMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4909 in public method `addTransactionToPoolMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4909 in public method `addTransactionToPoolMulti`:
+        D400: First line should end with a period (not 'a')
+API/src/controller/Gateway.py:4909 in public method `addTransactionToPoolMulti`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:4909 in public method `addTransactionToPoolMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:4998 in public function `sendTransactionToPeersMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:4998 in public function `sendTransactionToPeersMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:4998 in public function `sendTransactionToPeersMulti`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5019 in public function `sendBlockToPeersMulti`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5036 in public function `restartChains`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5036 in public function `restartChains`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5036 in public function `restartChains`:
+        D400: First line should end with a period (not 'e')
+API/src/controller/Gateway.py:5036 in public function `restartChains`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5069 in public function `storeKeysFromPeers`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5069 in public function `storeKeysFromPeers`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5069 in public function `storeKeysFromPeers`:
+        D202: No blank lines allowed after function docstring (found 1)
+API/src/controller/Gateway.py:5069 in public function `storeKeysFromPeers`:
+        D400: First line should end with a period (not 'e')
+API/src/controller/Gateway.py:5069 in public function `storeKeysFromPeers`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5086 in public function `isBlockValidMulti`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:5111 in public function `getComponentNameByType`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:5115 in public function `updateComponentNameByType`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:5127 in public function `addNewBlockToSyncList`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5127 in public function `addNewBlockToSyncList`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5127 in public function `addNewBlockToSyncList`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:5127 in public function `addNewBlockToSyncList`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5150 in public function `getBlockFromSyncList`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5150 in public function `getBlockFromSyncList`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5150 in public function `getBlockFromSyncList`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:5150 in public function `getBlockFromSyncList`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5178 in public function `getPeerbyPK`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5178 in public function `getPeerbyPK`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5178 in public function `getPeerbyPK`:
+        D400: First line should end with a period (not 't')
+API/src/controller/Gateway.py:5178 in public function `getPeerbyPK`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5230 in public function `preparePBFTConsensus`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5230 in public function `preparePBFTConsensus`:
+        D403: First word of the first line should be properly capitalized ('Verify', not 'verify')
+API/src/controller/Gateway.py:5230 in public function `preparePBFTConsensus`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5230 in public function `preparePBFTConsensus`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:5230 in public function `preparePBFTConsensus`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5244 in public function `PBFTConsensus`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5244 in public function `PBFTConsensus`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5244 in public function `PBFTConsensus`:
+        D400: First line should end with a period (not ')')
+API/src/controller/Gateway.py:5244 in public function `PBFTConsensus`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5288 in public function `commitBlockPBFT`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5288 in public function `commitBlockPBFT`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5288 in public function `commitBlockPBFT`:
+        D400: First line should end with a period (not 'k')
+API/src/controller/Gateway.py:5288 in public function `commitBlockPBFT`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5337 in public function `handlePBFT`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5337 in public function `handlePBFT`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5337 in public function `handlePBFT`:
+        D400: First line should end with a period (not 'd')
+API/src/controller/Gateway.py:5337 in public function `handlePBFT`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5410 in public function `verifyBlockCandidate`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5410 in public function `verifyBlockCandidate`:
+        D401: First line should be in imperative mood ('Check', not 'Checks')
+API/src/controller/Gateway.py:5410 in public function `verifyBlockCandidate`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5410 in public function `verifyBlockCandidate`:
+        D400: First line should end with a period (not ' ')
+API/src/controller/Gateway.py:5410 in public function `verifyBlockCandidate`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5485 in public function `addVoteBlockPBFT`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5485 in public function `addVoteBlockPBFT`:
+        D403: First word of the first line should be properly capitalized ('Add', not 'add')
+API/src/controller/Gateway.py:5485 in public function `addVoteBlockPBFT`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5485 in public function `addVoteBlockPBFT`:
+        D400: First line should end with a period (not ',')
+API/src/controller/Gateway.py:5485 in public function `addVoteBlockPBFT`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:5485 in public function `addVoteBlockPBFT`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5501 in public function `calcBlockPBFT`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5501 in public function `calcBlockPBFT`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5501 in public function `calcBlockPBFT`:
+        D400: First line should end with a period (not 's')
+API/src/controller/Gateway.py:5501 in public function `calcBlockPBFT`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5596 in public function `verifyTransactionCandidate`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5596 in public function `verifyTransactionCandidate`:
+        D401: First line should be in imperative mood ('Check', not 'Checks')
+API/src/controller/Gateway.py:5596 in public function `verifyTransactionCandidate`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5596 in public function `verifyTransactionCandidate`:
+        D400: First line should end with a period (not ':')
+API/src/controller/Gateway.py:5596 in public function `verifyTransactionCandidate`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5661 in public function `addVoteTransactionPBFT`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5661 in public function `addVoteTransactionPBFT`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5661 in public function `addVoteTransactionPBFT`:
+        D400: First line should end with a period (not 'n')
+API/src/controller/Gateway.py:5661 in public function `addVoteTransactionPBFT`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5673 in public function `calcTransactionPBFT`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5673 in public function `calcTransactionPBFT`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5673 in public function `calcTransactionPBFT`:
+        D400: First line should end with a period (not 'k')
+API/src/controller/Gateway.py:5673 in public function `calcTransactionPBFT`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5704 in public function `PoWConsensus`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5704 in public function `PoWConsensus`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5704 in public function `PoWConsensus`:
+        D400: First line should end with a period (not 'e')
+API/src/controller/Gateway.py:5704 in public function `PoWConsensus`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5724 in public function `addVoteBlockPoW`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5724 in public function `addVoteBlockPoW`:
+        D403: First word of the first line should be properly capitalized ('Add', not 'add')
+API/src/controller/Gateway.py:5724 in public function `addVoteBlockPoW`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5724 in public function `addVoteBlockPoW`:
+        D400: First line should end with a period (not ',')
+API/src/controller/Gateway.py:5724 in public function `addVoteBlockPoW`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/controller/Gateway.py:5724 in public function `addVoteBlockPoW`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5749 in public function `loadOrchestratorIndex`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:5764 in public function `loadOrchestratorContextFirstinPeers`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:5791 in public function `loadOrchestratorFirstinPeers`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:5816 in public function `voteNewOrchestrator`:
+        D103: Missing docstring in public function
+API/src/controller/Gateway.py:5850 in public function `loadOrchestrator`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5850 in public function `loadOrchestrator`:
+        D400: First line should end with a period (not 'r')
+API/src/controller/Gateway.py:5863 in public function `runMasterThread`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5863 in public function `runMasterThread`:
+        D401: First line should be in imperative mood; try rephrasing (found 'DEPRECATED')
+API/src/controller/Gateway.py:5863 in public function `runMasterThread`:
+        D400: First line should end with a period (not 'r')
+API/src/controller/Gateway.py:5886 in public function `saveOrchestratorURI`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5886 in public function `saveOrchestratorURI`:
+        D403: First word of the first line should be properly capitalized ('Save', not 'save')
+API/src/controller/Gateway.py:5886 in public function `saveOrchestratorURI`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5886 in public function `saveOrchestratorURI`:
+        D400: First line should end with a period (not 'r')
+API/src/controller/Gateway.py:5886 in public function `saveOrchestratorURI`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5896 in public function `saveURItoFile`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/Gateway.py:5896 in public function `saveURItoFile`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/controller/Gateway.py:5896 in public function `saveURItoFile`:
+        D400: First line should end with a period (not ' ')
+API/src/controller/Gateway.py:5896 in public function `saveURItoFile`:
+        D208: Docstring is over-indented
+API/src/controller/Gateway.py:5909 in public function `main`:
+        D103: Missing docstring in public function
+API/src/controller/__init__.py:1 at module level:
+        D104: Missing docstring in public package
+API/src/controller/loader.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/controller/loader.py:35 in public function `defineConsensus`:
+        D103: Missing docstring in public function
+API/src/controller/loader.py:43 in public function `addBlockOnChain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/loader.py:43 in public function `addBlockOnChain`:
+        D400: First line should end with a period (not 'k')
+API/src/controller/loader.py:49 in public function `decryptAESKey`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/loader.py:49 in public function `decryptAESKey`:
+        D400: First line should end with a period (not "'")
+API/src/controller/loader.py:53 in public function `sendDataSC`:
+        D103: Missing docstring in public function
+API/src/controller/loader.py:65 in public function `createBlockForSC2`:
+        D103: Missing docstring in public function
+API/src/controller/loader.py:81 in public function `callEVMInterface`:
+        D103: Missing docstring in public function
+API/src/controller/loader.py:104 in public function `loadConnection`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/controller/loader.py:104 in public function `loadConnection`:
+        D400: First line should end with a period (not 'n')
+API/src/model/__init__.py:1 at module level:
+        D104: Missing docstring in public package
+API/src/model/Chain/block_pb2_grpc.py:89 in public function `add_BlockServiceServicer_to_server`:
+        D103: Missing docstring in public function
+API/src/model/Chain/block_pb2_grpc.py:132 in public method `AddBlock`:
+        D102: Missing docstring in public method
+API/src/model/Chain/block_pb2_grpc.py:149 in public method `FindBlock`:
+        D102: Missing docstring in public method
+API/src/model/Chain/block_pb2_grpc.py:166 in public method `LengthBlock`:
+        D102: Missing docstring in public method
+API/src/model/Chain/block_pb2_grpc.py:183 in public method `GetLastBlock`:
+        D102: Missing docstring in public method
+API/src/model/Chain/block_pb2_grpc.py:200 in public method `Length`:
+        D102: Missing docstring in public method
+API/src/model/Chain/block_pb2_grpc.py:217 in public method `GetFullChain`:
+        D102: Missing docstring in public method
+API/src/model/Chain/BlockHeader.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/model/Chain/BlockHeader.py:1 in public class `BlockHeader`:
+        D101: Missing docstring in public class
+API/src/model/Chain/BlockHeader.py:3 in public method `__init__`:
+        D107: Missing docstring in __init__
+API/src/model/Chain/BlockHeader.py:19 in public method `setTransactions`:
+        D102: Missing docstring in public method
+API/src/model/Chain/BlockHeader.py:22 in public method `__str__`:
+        D105: Missing docstring in magic method
+API/src/model/Chain/BlockHeader.py:27 in public method `__repr__`:
+        D105: Missing docstring in magic method
+API/src/model/Chain/BlockHeader.py:32 in public method `strBlock`:
+        D102: Missing docstring in public method
+API/src/model/Chain/BlockHeader.py:42 in public method `setNumberOfTransactions`:
+        D102: Missing docstring in public method
+API/src/model/Chain/BlockHeader.py:45 in public method `strBlockToSave`:
+        D102: Missing docstring in public method
+API/src/model/Chain/ChainFunctions.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/model/Chain/ChainFunctions.py:28 in public function `startBlockChain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:28 in public function `startBlockChain`:
+        D400: First line should end with a period (not 'n')
+API/src/model/Chain/ChainFunctions.py:44 in public function `createNewBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:44 in public function `createNewBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:44 in public function `createNewBlock`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctions.py:70 in public function `addBlockHeader`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:70 in public function `addBlockHeader`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:70 in public function `addBlockHeader`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctions.py:94 in public function `addBlockTransaction`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:94 in public function `addBlockTransaction`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:94 in public function `addBlockTransaction`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctions.py:116 in public function `getLatestBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:116 in public function `getLatestBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:116 in public function `getLatestBlock`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctions.py:130 in public function `getLatestBlockTransaction`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:130 in public function `getLatestBlockTransaction`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:130 in public function `getLatestBlockTransaction`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctions.py:148 in public function `getTransactions`:
+        D103: Missing docstring in public function
+API/src/model/Chain/ChainFunctions.py:173 in public function `blockContainsTransaction`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:173 in public function `blockContainsTransaction`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:173 in public function `blockContainsTransaction`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctions.py:193 in public function `findBlockByIndex`:
+        D103: Missing docstring in public function
+API/src/model/Chain/ChainFunctions.py:222 in public function `lengthOfBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:222 in public function `lengthOfBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:222 in public function `lengthOfBlock`:
+        D400: First line should end with a period (not 'k')
+API/src/model/Chain/ChainFunctions.py:243 in public function `findBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:243 in public function `findBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:243 in public function `findBlock`:
+        D400: First line should end with a period (not 'n')
+API/src/model/Chain/ChainFunctions.py:277 in public function `getBlockchainSize`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:277 in public function `getBlockchainSize`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:277 in public function `getBlockchainSize`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctions.py:291 in public function `getFullChain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:291 in public function `getFullChain`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:291 in public function `getFullChain`:
+        D400: First line should end with a period (not 'n')
+API/src/model/Chain/ChainFunctions.py:291 in public function `getFullChain`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/model/Chain/ChainFunctions.py:321 in public function `getBlockByIndex`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:321 in public function `getBlockByIndex`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:321 in public function `getBlockByIndex`:
+        D400: First line should end with a period (not 'n')
+API/src/model/Chain/ChainFunctions.py:336 in public function `getGenesisBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:336 in public function `getGenesisBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:336 in public function `getGenesisBlock`:
+        D400: First line should end with a period (not 'k')
+API/src/model/Chain/ChainFunctions.py:356 in public function `generateNextBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:356 in public function `generateNextBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:356 in public function `generateNextBlock`:
+        D400: First line should end with a period (not 't')
+API/src/model/Chain/ChainFunctions.py:391 in public function `generateNextBlock2`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:391 in public function `generateNextBlock2`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:391 in public function `generateNextBlock2`:
+        D400: First line should end with a period (not 't')
+API/src/model/Chain/ChainFunctions.py:409 in public function `restartChain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:409 in public function `restartChain`:
+        D400: First line should end with a period (not 'n')
+API/src/model/Chain/ChainFunctions.py:415 in public function `getBlocksById`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:415 in public function `getBlocksById`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:415 in public function `getBlocksById`:
+        D400: First line should end with a period (not 'D')
+API/src/model/Chain/ChainFunctions.py:429 in public function `getTransactionsWithId`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctions.py:429 in public function `getTransactionsWithId`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctions.py:429 in public function `getTransactionsWithId`:
+        D400: First line should end with a period (not 'D')
+API/src/model/Chain/ChainFunctions.py:442 in public function `findLastSameBlock`:
+        D103: Missing docstring in public function
+API/src/model/Chain/BlockHeaderMulti.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/model/Chain/BlockHeaderMulti.py:1 in public class `BlockHeaderMulti`:
+        D101: Missing docstring in public class
+API/src/model/Chain/BlockHeaderMulti.py:3 in public method `__init__`:
+        D107: Missing docstring in __init__
+API/src/model/Chain/BlockHeaderMulti.py:22 in public method `__str__`:
+        D105: Missing docstring in magic method
+API/src/model/Chain/BlockHeaderMulti.py:27 in public method `__repr__`:
+        D105: Missing docstring in magic method
+API/src/model/Chain/BlockHeaderMulti.py:32 in public method `strBlock`:
+        D102: Missing docstring in public method
+API/src/model/Chain/BlockHeaderMulti.py:49 in public method `strBlockToSave`:
+        D102: Missing docstring in public method
+API/src/model/Chain/BlockHeaderMulti.py:58 in public method `getTransactionChainByType`:
+        D102: Missing docstring in public method
+API/src/model/Chain/__init__.py:1 at module level:
+        D104: Missing docstring in public package
+API/src/model/Chain/ChainFunctionsMulti.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/model/Chain/ChainFunctionsMulti.py:12 in public function `startBlockChain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:12 in public function `startBlockChain`:
+        D202: No blank lines allowed after function docstring (found 1)
+API/src/model/Chain/ChainFunctionsMulti.py:12 in public function `startBlockChain`:
+        D400: First line should end with a period (not 'n')
+API/src/model/Chain/ChainFunctionsMulti.py:12 in public function `startBlockChain`:
+        D200: One-line docstring should fit on one line with quotes (found 2)
+API/src/model/Chain/ChainFunctionsMulti.py:18 in public function `createNewBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:18 in public function `createNewBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:18 in public function `createNewBlock`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctionsMulti.py:40 in public function `addBlockHeader`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:40 in public function `addBlockHeader`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:40 in public function `addBlockHeader`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctionsMulti.py:47 in public function `addBlockTransaction`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:47 in public function `addBlockTransaction`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:47 in public function `addBlockTransaction`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctionsMulti.py:55 in public function `getLatestBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:55 in public function `getLatestBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:55 in public function `getLatestBlock`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctionsMulti.py:62 in public function `getLatestBlockTransaction`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:62 in public function `getLatestBlockTransaction`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:62 in public function `getLatestBlockTransaction`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctionsMulti.py:70 in public function `blockContainsTransaction`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:70 in public function `blockContainsTransaction`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:70 in public function `blockContainsTransaction`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctionsMulti.py:84 in public function `findBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:84 in public function `findBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:84 in public function `findBlock`:
+        D400: First line should end with a period (not 'n')
+API/src/model/Chain/ChainFunctionsMulti.py:96 in public function `getBlockchainSize`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:96 in public function `getBlockchainSize`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:96 in public function `getBlockchainSize`:
+        D400: First line should end with a period (not ' ')
+API/src/model/Chain/ChainFunctionsMulti.py:103 in public function `getFullChain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:103 in public function `getFullChain`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:103 in public function `getFullChain`:
+        D400: First line should end with a period (not 'n')
+API/src/model/Chain/ChainFunctionsMulti.py:103 in public function `getFullChain`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/model/Chain/ChainFunctionsMulti.py:109 in public function `getBlockByIndex`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:109 in public function `getBlockByIndex`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:109 in public function `getBlockByIndex`:
+        D400: First line should end with a period (not 'n')
+API/src/model/Chain/ChainFunctionsMulti.py:124 in public function `getGenesisBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:124 in public function `getGenesisBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:124 in public function `getGenesisBlock`:
+        D400: First line should end with a period (not 'k')
+API/src/model/Chain/ChainFunctionsMulti.py:145 in public function `generateNextBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:145 in public function `generateNextBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:145 in public function `generateNextBlock`:
+        D400: First line should end with a period (not 't')
+API/src/model/Chain/ChainFunctionsMulti.py:176 in public function `generateNextBlock2`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:176 in public function `generateNextBlock2`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:176 in public function `generateNextBlock2`:
+        D400: First line should end with a period (not 't')
+API/src/model/Chain/ChainFunctionsMulti.py:194 in public function `restartChain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:194 in public function `restartChain`:
+        D400: First line should end with a period (not 'n')
+API/src/model/Chain/ChainFunctionsMulti.py:200 in public function `getBlocksById`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:200 in public function `getBlocksById`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:200 in public function `getBlocksById`:
+        D400: First line should end with a period (not 'D')
+API/src/model/Chain/ChainFunctionsMulti.py:214 in public function `getTransactionsWithId`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Chain/ChainFunctionsMulti.py:214 in public function `getTransactionsWithId`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Chain/ChainFunctionsMulti.py:214 in public function `getTransactionsWithId`:
+        D400: First line should end with a period (not 'D')
+API/src/model/Chain/ChainFunctionsMulti.py:227 in public function `findLastSameBlock`:
+        D103: Missing docstring in public function
+API/src/model/Chain/transaction_pb2_grpc.py:78 in public function `add_TransactionServiceServicer_to_server`:
+        D103: Missing docstring in public function
+API/src/model/Chain/transaction_pb2_grpc.py:116 in public method `AddTransaction`:
+        D102: Missing docstring in public method
+API/src/model/Chain/transaction_pb2_grpc.py:133 in public method `FindTransactionByHash`:
+        D102: Missing docstring in public method
+API/src/model/Chain/transaction_pb2_grpc.py:150 in public method `ExistsTransactionOnBlock`:
+        D102: Missing docstring in public method
+API/src/model/Chain/transaction_pb2_grpc.py:167 in public method `FindLastTransaction`:
+        D102: Missing docstring in public method
+API/src/model/Chain/transaction_pb2_grpc.py:184 in public method `FindAllTransactions`:
+        D102: Missing docstring in public method
+API/src/model/Peer/__init__.py:1 at module level:
+        D104: Missing docstring in public package
+API/src/model/Peer/PeerInfo.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/model/Peer/PeerInfo.py:1 in public class `PeerInfo`:
+        D101: Missing docstring in public class
+API/src/model/Peer/PeerInfo.py:2 in public method `__init__`:
+        D107: Missing docstring in __init__
+API/src/model/Transaction/LifecycleEvent.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/model/Transaction/LifecycleEvent.py:1 in public class `LifecycleEvent`:
+        D101: Missing docstring in public class
+API/src/model/Transaction/LifecycleEvent.py:3 in public method `__init__`:
+        D107: Missing docstring in __init__
+API/src/model/Transaction/LifecycleEvent.py:9 in public method `__str__`:
+        D105: Missing docstring in magic method
+API/src/model/Transaction/LifecycleEvent.py:13 in public method `__eq__`:
+        D105: Missing docstring in magic method
+API/src/model/Transaction/LifecycleEvent.py:16 in public method `__repr__`:
+        D105: Missing docstring in magic method
+API/src/model/Transaction/LifecycleEvent.py:20 in public method `strEvent`:
+        D102: Missing docstring in public method
+API/src/model/Transaction/Transaction.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/model/Transaction/Transaction.py:3 in public class `Transaction`:
+        D101: Missing docstring in public class
+API/src/model/Transaction/Transaction.py:4 in public method `__init__`:
+        D107: Missing docstring in __init__
+API/src/model/Transaction/Transaction.py:23 in public method `__str__`:
+        D105: Missing docstring in magic method
+API/src/model/Transaction/Transaction.py:27 in public method `__eq__`:
+        D105: Missing docstring in magic method
+API/src/model/Transaction/Transaction.py:30 in public method `getBytes`:
+        D102: Missing docstring in public method
+API/src/model/Transaction/Transaction.py:33 in public method `strBlock`:
+        D102: Missing docstring in public method
+API/src/model/Transaction/Transaction.py:39 in public method `strTransactionToSave`:
+        D102: Missing docstring in public method
+API/src/model/Transaction/Transaction.py:44 in public method `setHash`:
+        D102: Missing docstring in public method
+API/src/model/Transaction/Transaction.py:48 in public method `getDataAndSignatureInsideLifecycle`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/model/Transaction/Transaction.py:48 in public method `getDataAndSignatureInsideLifecycle`:
+        D401: First line should be in imperative mood ('Get', not 'Gets')
+API/src/model/Transaction/Transaction.py:48 in public method `getDataAndSignatureInsideLifecycle`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/model/Transaction/Transaction.py:48 in public method `getDataAndSignatureInsideLifecycle`:
+        D400: First line should end with a period (not 'a')
+API/src/model/Transaction/__init__.py:1 at module level:
+        D104: Missing docstring in public package
+API/src/tools/CryptoFunctions.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/tools/CryptoFunctions.py:20 in public function `calculateHash`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:20 in public function `calculateHash`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:20 in public function `calculateHash`:
+        D400: First line should end with a period (not 'd')
+API/src/tools/CryptoFunctions.py:20 in public function `calculateHash`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:37 in public function `calculateHashForBlock`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:37 in public function `calculateHashForBlock`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:37 in public function `calculateHashForBlock`:
+        D400: First line should end with a period (not 'k')
+API/src/tools/CryptoFunctions.py:37 in public function `calculateHashForBlock`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:44 in public function `calculateTransactionHash`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:44 in public function `calculateTransactionHash`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:44 in public function `calculateTransactionHash`:
+        D400: First line should end with a period (not 'h')
+API/src/tools/CryptoFunctions.py:44 in public function `calculateTransactionHash`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:57 in public function `encryptAES`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:57 in public function `encryptAES`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:57 in public function `encryptAES`:
+        D400: First line should end with a period (not 'S')
+API/src/tools/CryptoFunctions.py:57 in public function `encryptAES`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:86 in public function `decryptAES`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:86 in public function `decryptAES`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:86 in public function `decryptAES`:
+        D400: First line should end with a period (not ' ')
+API/src/tools/CryptoFunctions.py:86 in public function `decryptAES`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:121 in public function `encryptRSA2`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:121 in public function `encryptRSA2`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:121 in public function `encryptRSA2`:
+        D400: First line should end with a period (not '4')
+API/src/tools/CryptoFunctions.py:121 in public function `encryptRSA2`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:156 in public function `decryptRSA2`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:156 in public function `decryptRSA2`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:156 in public function `decryptRSA2`:
+        D400: First line should end with a period (not ' ')
+API/src/tools/CryptoFunctions.py:156 in public function `decryptRSA2`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:189 in public function `signInfo`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:189 in public function `signInfo`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:189 in public function `signInfo`:
+        D400: First line should end with a period (not 'y')
+API/src/tools/CryptoFunctions.py:189 in public function `signInfo`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:227 in public function `signVerify`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:227 in public function `signVerify`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:227 in public function `signVerify`:
+        D400: First line should end with a period (not 'd')
+API/src/tools/CryptoFunctions.py:227 in public function `signVerify`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:262 in public function `generateRSAKeyPair`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:262 in public function `generateRSAKeyPair`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:262 in public function `generateRSAKeyPair`:
+        D400: First line should end with a period (not '2')
+API/src/tools/CryptoFunctions.py:262 in public function `generateRSAKeyPair`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:297 in public function `signInfoECDSA`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:297 in public function `signInfoECDSA`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:297 in public function `signInfoECDSA`:
+        D400: First line should end with a period (not 'y')
+API/src/tools/CryptoFunctions.py:297 in public function `signInfoECDSA`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:331 in public function `signVerifyECDSA`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:331 in public function `signVerifyECDSA`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:331 in public function `signVerifyECDSA`:
+        D400: First line should end with a period (not 'd')
+API/src/tools/CryptoFunctions.py:331 in public function `signVerifyECDSA`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:362 in public function `generateECDSAKeyPair`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:362 in public function `generateECDSAKeyPair`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:362 in public function `generateECDSAKeyPair`:
+        D400: First line should end with a period (not '1')
+API/src/tools/CryptoFunctions.py:362 in public function `generateECDSAKeyPair`:
+        D208: Docstring is over-indented
+API/src/tools/CryptoFunctions.py:392 in public function `generateSharedKey`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/CryptoFunctions.py:392 in public function `generateSharedKey`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/CryptoFunctions.py:392 in public function `generateSharedKey`:
+        D400: First line should end with a period (not 's')
+API/src/tools/CryptoFunctions.py:392 in public function `generateSharedKey`:
+        D208: Docstring is over-indented
+API/src/tools/DeviceKeyMapping.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/tools/DeviceKeyMapping.py:1 in public class `DeviceKeyMapping`:
+        D101: Missing docstring in public class
+API/src/tools/DeviceKeyMapping.py:2 in public method `__init__`:
+        D107: Missing docstring in __init__
+API/src/tools/DeviceInfo.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/tools/DeviceInfo.py:1 in public class `DeviceInfo`:
+        D101: Missing docstring in public class
+API/src/tools/DeviceInfo.py:2 in public method `__init__`:
+        D107: Missing docstring in __init__
+API/src/tools/DeviceInfo.py:7 in public method `__str__`:
+        D105: Missing docstring in magic method
+API/src/tools/DeviceInfo.py:10 in public method `__eq__`:
+        D105: Missing docstring in magic method
+API/src/tools/DeviceInfo.py:13 in public method `strInfoData`:
+        D102: Missing docstring in public method
+API/src/tools/__init__.py:1 at module level:
+        D104: Missing docstring in public package
+API/src/tools/loader.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/tools/loader.py:34 in public function `defineConsensus`:
+        D103: Missing docstring in public function
+API/src/tools/loader.py:42 in public function `addBlockOnChain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/loader.py:42 in public function `addBlockOnChain`:
+        D400: First line should end with a period (not 'k')
+API/src/tools/loader.py:48 in public function `decryptAESKey`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/loader.py:48 in public function `decryptAESKey`:
+        D400: First line should end with a period (not "'")
+API/src/tools/loader.py:52 in public function `sendDataSC`:
+        D103: Missing docstring in public function
+API/src/tools/loader.py:64 in public function `createBlockForSC2`:
+        D103: Missing docstring in public function
+API/src/tools/loader.py:80 in public function `callEVMInterface`:
+        D103: Missing docstring in public function
+API/src/tools/loader.py:103 in public function `loadConnection`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/loader.py:103 in public function `loadConnection`:
+        D400: First line should end with a period (not 'n')
+API/src/tools/Logger.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/tools/Logger.py:14 in public function `configure`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/Logger.py:14 in public function `configure`:
+        D401: First line should be in imperative mood; try rephrasing (found 'Setup')
+API/src/tools/Logger.py:14 in public function `configure`:
+        D400: First line should end with a period (not 't')
+API/src/tools/DeviceSimulator.py:1 at module level:
+        D100: Missing docstring in public module
+API/src/tools/DeviceSimulator.py:62 in public function `getMyIP`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:62 in public function `getMyIP`:
+        D400: First line should end with a period (not 'y')
+API/src/tools/DeviceSimulator.py:62 in public function `getMyIP`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/tools/DeviceSimulator.py:86 in public function `setServer`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:86 in public function `setServer`:
+        D400: First line should end with a period (not "'")
+API/src/tools/DeviceSimulator.py:91 in public function `setServerWithUri`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:99 in public function `addBlockOnChain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:99 in public function `addBlockOnChain`:
+        D400: First line should end with a period (not 'k')
+API/src/tools/DeviceSimulator.py:129 in public function `addBlockOnChainv2`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:129 in public function `addBlockOnChainv2`:
+        D400: First line should end with a period (not 'k')
+API/src/tools/DeviceSimulator.py:161 in public function `sendDataTest`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:161 in public function `sendDataTest`:
+        D400: First line should end with a period (not 'm')
+API/src/tools/DeviceSimulator.py:187 in public function `sendData`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:187 in public function `sendData`:
+        D400: First line should end with a period (not 's')
+API/src/tools/DeviceSimulator.py:267 in public function `sendDataSC`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:280 in public function `decryptAESKey`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:280 in public function `decryptAESKey`:
+        D400: First line should end with a period (not "'")
+API/src/tools/DeviceSimulator.py:288 in public function `readSensorTemperature`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:288 in public function `readSensorTemperature`:
+        D401: First line should be in imperative mood ('Generate', not 'Generates')
+API/src/tools/DeviceSimulator.py:288 in public function `readSensorTemperature`:
+        D400: First line should end with a period (not "'")
+API/src/tools/DeviceSimulator.py:293 in public function `addPeer`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:293 in public function `addPeer`:
+        D400: First line should end with a period (not 'r')
+API/src/tools/DeviceSimulator.py:300 in public function `listBlockHeader`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:300 in public function `listBlockHeader`:
+        D400: First line should end with a period (not 's')
+API/src/tools/DeviceSimulator.py:314 in public function `listTransactions`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:314 in public function `listTransactions`:
+        D400: First line should end with a period (not 'x')
+API/src/tools/DeviceSimulator.py:324 in public function `listPeers`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:324 in public function `listPeers`:
+        D400: First line should end with a period (not 'k')
+API/src/tools/DeviceSimulator.py:329 in public function `newKeyPair`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:329 in public function `newKeyPair`:
+        D401: First line should be in imperative mood ('Generate', not 'Generates')
+API/src/tools/DeviceSimulator.py:329 in public function `newKeyPair`:
+        D400: First line should end with a period (not "'")
+API/src/tools/DeviceSimulator.py:338 in public function `brutePairAuth`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:338 in public function `brutePairAuth`:
+        D400: First line should end with a period (not 'd')
+API/src/tools/DeviceSimulator.py:352 in public function `bruteSend`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:352 in public function `bruteSend`:
+        D400: First line should end with a period (not 'd')
+API/src/tools/DeviceSimulator.py:369 in public function `multSend`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:387 in public function `sendDataArgs`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:387 in public function `sendDataArgs`:
+        D400: First line should end with a period (not 's')
+API/src/tools/DeviceSimulator.py:479 in public function `defineAutomaNumbers`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:479 in public function `defineAutomaNumbers`:
+        D400: First line should end with a period (not ')')
+API/src/tools/DeviceSimulator.py:485 in public function `defineContextsAutomaNumbers`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:485 in public function `defineContextsAutomaNumbers`:
+        D400: First line should end with a period (not ')')
+API/src/tools/DeviceSimulator.py:498 in public function `setContexts`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:511 in public function `saveDeviceLog`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:532 in public function `consensusTrans`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:543 in public function `simDevBlockAndTransSequential`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:587 in public function `simDevBlockAndTrans`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:633 in public function `seqDevSim`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:656 in public function `automa`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:656 in public function `automa`:
+        D401: First line should be in imperative mood ('Add', not 'Adds')
+API/src/tools/DeviceSimulator.py:656 in public function `automa`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/DeviceSimulator.py:656 in public function `automa`:
+        D400: First line should end with a period (not 'n')
+API/src/tools/DeviceSimulator.py:656 in public function `automa`:
+        D208: Docstring is over-indented
+API/src/tools/DeviceSimulator.py:683 in public function `old_automa`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:712 in public function `simulateDevices`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:749 in public function `merkle`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:749 in public function `merkle`:
+        D401: First line should be in imperative mood ('Calculate', not 'Calculates')
+API/src/tools/DeviceSimulator.py:749 in public function `merkle`:
+        D400: First line should end with a period (not 'k')
+API/src/tools/DeviceSimulator.py:757 in public function `newElection`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:763 in public function `defineInteractiveConsensus`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:773 in public function `defineConsensus`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:781 in public function `createBlockForSC`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:792 in public function `showLastTransactionData`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:798 in public function `callEVMInterface`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:879 in public function `evmConnector`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:883 in public function `executeEVM`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:887 in public function `loadConnection`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:910 in public function `gwSaveLog`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:925 in public function `addBlockOnChainMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:925 in public function `addBlockOnChainMulti`:
+        D400: First line should end with a period (not 'k')
+API/src/tools/DeviceSimulator.py:944 in public function `listBlockHeaderMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:944 in public function `listBlockHeaderMulti`:
+        D400: First line should end with a period (not 's')
+API/src/tools/DeviceSimulator.py:948 in public function `listTransactionsMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:948 in public function `listTransactionsMulti`:
+        D400: First line should end with a period (not 'x')
+API/src/tools/DeviceSimulator.py:954 in public function `sendLifecycleEventsAsText`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:954 in public function `sendLifecycleEventsAsText`:
+        D403: First word of the first line should be properly capitalized ('Send', not 'send')
+API/src/tools/DeviceSimulator.py:954 in public function `sendLifecycleEventsAsText`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/DeviceSimulator.py:954 in public function `sendLifecycleEventsAsText`:
+        D400: First line should end with a period (not 'n')
+API/src/tools/DeviceSimulator.py:954 in public function `sendLifecycleEventsAsText`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/tools/DeviceSimulator.py:954 in public function `sendLifecycleEventsAsText`:
+        D208: Docstring is over-indented
+API/src/tools/DeviceSimulator.py:998 in public function `sendLifecycleEventsAsStructure`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:998 in public function `sendLifecycleEventsAsStructure`:
+        D403: First word of the first line should be properly capitalized ('Send', not 'send')
+API/src/tools/DeviceSimulator.py:998 in public function `sendLifecycleEventsAsStructure`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/DeviceSimulator.py:998 in public function `sendLifecycleEventsAsStructure`:
+        D400: First line should end with a period (not 'n')
+API/src/tools/DeviceSimulator.py:998 in public function `sendLifecycleEventsAsStructure`:
+        D205: 1 blank line required between summary line and description (found 0)
+API/src/tools/DeviceSimulator.py:998 in public function `sendLifecycleEventsAsStructure`:
+        D208: Docstring is over-indented
+API/src/tools/DeviceSimulator.py:1033 in public function `sendLifecycleEventsMulti`:
+        D400: First line should end with a period (not 's')
+API/src/tools/DeviceSimulator.py:1033 in public function `sendLifecycleEventsMulti`:
+        D200: One-line docstring should fit on one line with quotes (found 3)
+API/src/tools/DeviceSimulator.py:1068 in public function `sendEventMulti`:
+        D400: First line should end with a period (not 's')
+API/src/tools/DeviceSimulator.py:1068 in public function `sendEventMulti`:
+        D200: One-line docstring should fit on one line with quotes (found 3)
+API/src/tools/DeviceSimulator.py:1101 in public function `sendLifecycleEventsSingle`:
+        D400: First line should end with a period (not 'n')
+API/src/tools/DeviceSimulator.py:1101 in public function `sendLifecycleEventsSingle`:
+        D200: One-line docstring should fit on one line with quotes (found 3)
+API/src/tools/DeviceSimulator.py:1138 in public function `readSpeedCPU`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:1138 in public function `readSpeedCPU`:
+        D401: First line should be in imperative mood ('Generate', not 'Generates')
+API/src/tools/DeviceSimulator.py:1138 in public function `readSpeedCPU`:
+        D400: First line should end with a period (not "'")
+API/src/tools/DeviceSimulator.py:1144 in public function `readSpeedRAM`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:1144 in public function `readSpeedRAM`:
+        D401: First line should be in imperative mood ('Generate', not 'Generates')
+API/src/tools/DeviceSimulator.py:1144 in public function `readSpeedRAM`:
+        D400: First line should end with a period (not "'")
+API/src/tools/DeviceSimulator.py:1150 in public function `readSpeedSSD`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:1150 in public function `readSpeedSSD`:
+        D401: First line should be in imperative mood ('Generate', not 'Generates')
+API/src/tools/DeviceSimulator.py:1150 in public function `readSpeedSSD`:
+        D400: First line should end with a period (not "'")
+API/src/tools/DeviceSimulator.py:1156 in public function `readSpeedVid`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:1156 in public function `readSpeedVid`:
+        D401: First line should be in imperative mood ('Generate', not 'Generates')
+API/src/tools/DeviceSimulator.py:1156 in public function `readSpeedVid`:
+        D400: First line should end with a period (not "'")
+API/src/tools/DeviceSimulator.py:1162 in public function `storeChainToFile`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:1162 in public function `storeChainToFile`:
+        D403: First word of the first line should be properly capitalized ('Store', not 'store')
+API/src/tools/DeviceSimulator.py:1162 in public function `storeChainToFile`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/DeviceSimulator.py:1162 in public function `storeChainToFile`:
+        D400: First line should end with a period (not 'e')
+API/src/tools/DeviceSimulator.py:1162 in public function `storeChainToFile`:
+        D200: One-line docstring should fit on one line with quotes (found 3)
+API/src/tools/DeviceSimulator.py:1169 in public function `restoreChainFromFile`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:1169 in public function `restoreChainFromFile`:
+        D403: First word of the first line should be properly capitalized ('Restore', not 'restore')
+API/src/tools/DeviceSimulator.py:1169 in public function `restoreChainFromFile`:
+        D301: Use r""" if any backslashes in a docstring
+API/src/tools/DeviceSimulator.py:1169 in public function `restoreChainFromFile`:
+        D400: First line should end with a period (not 'e')
+API/src/tools/DeviceSimulator.py:1169 in public function `restoreChainFromFile`:
+        D200: One-line docstring should fit on one line with quotes (found 3)
+API/src/tools/DeviceSimulator.py:1176 in public function `listBlocksWithId`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1181 in public function `listTransactionsWithId`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1185 in public function `listTransactionsWithId2`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1196 in public function `automateLifecycleEvents`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1283 in public function `automateLifecycleEventsNormal`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1297 in public function `automateLifecycleEventsMulti`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1316 in public function `simDevBlockAndTransMulti`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1358 in public function `addBlockOnChainMultiV2`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:1358 in public function `addBlockOnChainMultiV2`:
+        D400: First line should end with a period (not 'k')
+API/src/tools/DeviceSimulator.py:1377 in public function `multSendMulti`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1393 in public function `sendDataArgsMulti`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:1393 in public function `sendDataArgsMulti`:
+        D400: First line should end with a period (not 's')
+API/src/tools/DeviceSimulator.py:1451 in public function `changeComponents`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1477 in public function `showkeys`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1482 in public function `testsignverify`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1505 in public function `saveTimesSizes`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1510 in public function `saveTimesSizesLocal`:
+        D103: Missing docstring in public function
+API/src/tools/DeviceSimulator.py:1593 in public function `InteractiveMain`:
+        D210: No whitespaces allowed surrounding docstring text
+API/src/tools/DeviceSimulator.py:1593 in public function `InteractiveMain`:
+        D401: First line should be in imperative mood ('Create', not 'Creates')
+API/src/tools/DeviceSimulator.py:1593 in public function `InteractiveMain`:
+        D400: First line should end with a period (not 'e')
