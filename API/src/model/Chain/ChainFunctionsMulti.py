@@ -1,22 +1,24 @@
 import time
 
-from .BlockHeader import BlockHeader
+from .BlockHeaderMulti import BlockHeaderMulti
 from ..Transaction import Transaction
 from ...tools import CryptoFunctions
 
+
 BlockHeaderChain = []
 
-##@Roben inserted "consensus" to verify if PoW was selected
+##This code manages the chain functions with multiple transaction chains
 def startBlockChain():
-    """ Add the genesis block to the chain """
+    """ Add the genesis block to the chain 
+    """
     BlockHeaderChain.append(getGenesisBlock())
 
-def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device = "device"):
+def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device):
     """ Receive the device public key and the gateway private key then it generates a new block \n
     @param devPubKey - Public key of the requesting device \n
     @param gwPvt - Private key of the gateway \n
 
-    @return BlockHeader
+    @return BlockHeaderMulti
     """
     previousExpiredBlockHash = "None"
     previousExpiredBlock = findLastSameBlock(device)
@@ -28,46 +30,50 @@ def createNewBlock(devPubKey, gwPvt, blockContext, consensus, device = "device")
         previousBlockSignature = CryptoFunctions.encryptRSA2(previousExpiredBlock.publicKey, previousExpiredBlockHash)
 
     newBlock = generateNextBlock("new block", devPubKey, getLatestBlock(), gwPvt, blockContext, 
-                                 consensus, previousExpiredBlockHash, previousBlockSignature, device)
+                                 consensus, device, previousExpiredBlockHash, previousBlockSignature)
     ##@Regio addBlockHeader is done during consensus! please take it off for running pbft
     #addBlockHeader(newBlock)
     return newBlock
 
 def addBlockHeader(newBlockHeader):
     """ Receive a new block and append it to the chain \n
-    @param newBlockHeader - BlockHeader
+    @param newBlockHeader - BlockHeaderMulti
     """
     global BlockHeaderChain
     BlockHeaderChain.append(newBlockHeader)
 
-def addBlockTransaction(block, transaction):
+def addBlockTransaction(block, transaction, index):
     """ Receive a block and add to it a list of transactions \n
-    @param block - BlockHeader \n
-    @param transaction - list of transaction
+    @param block - BlockHeaderMulti \n
+    @param transaction - list of transaction \n
+    @param index - index of chain of transactions
     """
-    block.transactions.append(transaction)
+    block.transactions[index].append(transaction)
 
 def getLatestBlock():
     """ Return the latest block on the chain \n
-    @return BlockHeader
+    @return BlockHeaderMulti
     """
     global BlockHeaderChain
     return BlockHeaderChain[len(BlockHeaderChain) - 1]
 
-def getLatestBlockTransaction(blk):
+def getLatestBlockTransaction(blk, index):
     """ Return the latest transaction on a block \n
+    @param blk - BlockHeaderMulti object \n
+    @param index - Transaction chain index\n
     @return Transaction
     """
-    return blk.transactions[len(blk.transactions) - 1]
+    return blk.transactions[index][len(blk.transactions[index]) - 1]
 
-def blockContainsTransaction(block, transaction):
+def blockContainsTransaction(block, transaction, index):
     """ Verify if a block contains a transaction \n
-    @param block - BlockHeader object \n
+    @param block - BlockHeaderMulti object \n
     @param transaction - Transaction object\n
+    @param index - Transaction chain index\n
     @return True - the transaction is on the block\n
     @return False - the transcation is not on the block
     """
-    for tr in block.transactions:
+    for tr in block.transactions[index]:
         if tr == transaction:
             return True
 
@@ -76,7 +82,7 @@ def blockContainsTransaction(block, transaction):
 def findBlock(key):
     """ Search for a specific block in the chain\n
     @param key - Public key of a block \n
-    @return BlockHeader - found the block on the chain \n
+    @return BlockHeaderMulti - found the block on the chain \n
     @return False - not found the block on the chain
     """
     global BlockHeaderChain
@@ -94,14 +100,14 @@ def getBlockchainSize():
 
 def getFullChain():
     """ Return the entire chain\nShowing
-    @return BlockHeader[] - list of all blocks on the chain
+    @return BlockHeaderMulti[] - list of all blocks on the chain
     """
     return BlockHeaderChain
 
 def getBlockByIndex(index):
     """ Return the block on a specific position of the chain\n
     @param index - desired block position\n
-    @return BlockHeader 
+    @return BlockHeaderMulti 
     """
     # global BlockHeaderChain
     # for b in BlockHeaderChain:
@@ -115,7 +121,8 @@ def getBlockByIndex(index):
 
 def getGenesisBlock():
     """ Create the genesis block\n
-    @return BlockHeader - with the genesis block
+    @param t - current timestamp\n
+    @return BlockHeaderMulti - with the genesis block
     """
     k = """-----BEGIN PUBLIC KEY-----
 MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAM39ONP614uHF5m3C7nEh6XrtEaAk2ys
@@ -125,24 +132,24 @@ LXbjx/JnbnRglOXpNHVu066t64py5xIP8133AnLjKrJgPfXwObAO5fECAwEAAQ==
     previousHash = "0"
     nonce = 0
     blockContext = "0000"
-    time = 1465154705
+    t = 1465154705
     device = "device"
-    hash = CryptoFunctions.calculateHash(index, previousHash, time, nonce, k, blockContext, device)
+    hash = CryptoFunctions.calculateHash(index, previousHash, t, nonce, k, blockContext, device)
     inf = Transaction.Transaction(0, hash, "0", "0", '', 0)
-    blk = BlockHeader(index, previousHash, time, inf, hash, nonce, k, blockContext, "None", "None", device)
+    blk = BlockHeaderMulti(index, previousHash, t, inf, hash, nonce, k, blockContext, device, "None", "None")
     return blk
 
-def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus, 
-                      previousExpiredBlock, previousBlockSignature, device = "device"):
+def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, consensus, device, 
+                      previousExpiredBlock, previousBlockSignature):
     """ Receive the information of a new block and create it\n
     @param blockData - information of the new block\n
     @param pubKey - public key of the device how wants to generate the new block\n
-    @param previouBlock - BlockHeader object with the last block on the chain\n
+    @param previouBlock - BlockHeaderMulti object with the last block on the chain\n
     @param gwPvtKey - private key of the gateway\n
     @param consensus - it is specified current consensus adopted
-    @return BlockHeader - the new block
+    @return BlockHeaderMulti - the new block
     """
-    nextIndex = previousBlock.index + 1
+    nextIndex = previousBlock.index + 1    
     nextTimestamp = "{:.0f}".format(((time.time() * 1000) * 1000))
     previousBlockHash = CryptoFunctions.calculateHashForBlock(previousBlock)
     nonce = 0
@@ -160,17 +167,17 @@ def generateNextBlock(blockData, pubKey, previousBlock, gwPvtKey, blockContext, 
     sign = CryptoFunctions.signInfo(gwPvtKey, nextHash)
     inf = Transaction.Transaction(0, nextHash, nextTimestamp, blockData, sign, 0)
 
-    return BlockHeader(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, 
-                       nonce, pubKey, blockContext, previousExpiredBlock, previousBlockSignature, device)
+    return BlockHeaderMulti(nextIndex, previousBlockHash, nextTimestamp, inf, nextHash, 
+                            nonce, pubKey, blockContext, device, previousExpiredBlock, previousBlockSignature)
 
-def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, index, 
-                       device, previousExpiredBlock, previousBlockSignature):
+def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, numTransactionChains, 
+                       index, device, previousExpiredBlock, previousBlockSignature):
     """ Receive the information of a new block and create it\n
     @param blockData - information of the new block\n
     @param pubKey - public key of the device how wants to generate the new block\n
     @param gwPvtKey - private key of the gateway\n
     @param consensus - it is specified current consensus adopted
-    @return BlockHeader - the new block
+    @return BlockHeaderMulti - the new block
     """
     previousBlock = getLatestBlock()
     nextIndex = index
@@ -179,8 +186,8 @@ def generateNextBlock2(blockData, pubKey, sign, blockContext, timestamp, nonce, 
                                              nonce, pubKey, blockContext, device)
     inf = Transaction.Transaction(0, nextHash, timestamp, blockData, sign, 0)
 
-    return BlockHeader(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey, 
-                       blockContext, previousExpiredBlock, previousBlockSignature, device)
+    return BlockHeaderMulti(nextIndex, previousBlockHash, timestamp, inf, nextHash, nonce, pubKey, 
+                            blockContext, device, previousExpiredBlock, previousBlockSignature, numTransactionChains)
 
 def restartChain():
     """ Clear the entire chain """
@@ -199,7 +206,7 @@ def getBlocksById(id):
     for b in BlockHeaderChain:
         if (b.device in id):
             blocks.append(b)
-
+    
     return blocks
 
 def getTransactionsWithId(componentId):
@@ -210,10 +217,10 @@ def getTransactionsWithId(componentId):
     blocks = getBlocksById(componentId)
     transactions = []
     for b in blocks:
-        for t in b.transactions:
-            if (t.identification == componentId):
-                transactions.append(t)
-
+        for i in range(b.numTransactionChains):
+            if (len(b.transactions[i]) > 1 and b.transactions[i][1].identification == componentId):
+                transactions = transactions + b.transactions[i]
+    
     return transactions
 
 def findLastSameBlock(deviceId):

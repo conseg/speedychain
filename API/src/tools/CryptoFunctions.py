@@ -10,16 +10,20 @@ BS = 32
 pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS)
 unpad = lambda s: s[0:-ord(s[-1])]
 
-def calculateHash(index, previousHash, timestamp, nonce, key, blockContext):
-    """ Calculate the hash of 4 infos concatenated index+previousHash+timestamp+key\n
+def calculateHash(index, previousHash, timestamp, nonce, key, blockContext, device):
+    """ Calculate the hash of all arguments concatenated in the order as declared\n
         @param index - block index\n
         @param previousHash - previous block hash\n
         @param timestamp - generation time of the block\n
+        @param nonce - nonce of the block\n
         @param key - key of the block\n
+        @param blockContext - blockContext of the block\n
+        @param device - device name of the block\n
         @return val - hash of it all
     """
     shaFunc = hashlib.sha256()
-    shaFunc.update((str(index) + str(previousHash) + str(timestamp) + str(nonce) + str(key) + str(blockContext)).encode('utf-8'))
+    shaFunc.update((str(index) + str(previousHash) + str(timestamp) + str(nonce) + str(
+        key) + str(blockContext) + str(device)).encode('utf-8'))
     val = shaFunc.hexdigest()
     return val
 
@@ -27,7 +31,8 @@ def calculateHashForBlock(block):
     """ Receive a block and calulates his hash using the index, previous block hash, timestamp and the public key of the block\n
         @return result of calculateHash function - a hash
     """
-    return calculateHash(block.index, block.previousHash, block.timestamp, block.nonce, block.publicKey, block.blockContext)
+    return calculateHash(block.index, block.previousHash, block.timestamp, block.nonce, 
+                         block.publicKey, block.blockContext, block.device)
 
 def calculateTransactionHash(blockLedger):
     """ Receive a transaction and calculate the hash\n
@@ -36,7 +41,7 @@ def calculateTransactionHash(blockLedger):
     """
     shaFunc = hashlib.sha256()
     shaFunc.update((str(blockLedger.index) + str(blockLedger.previousHash) + str(blockLedger.timestamp) + str(
-        blockLedger.data) + str(blockLedger.signature)+ str(blockLedger.nonce)).encode('utf-8'))
+        blockLedger.data) + str(blockLedger.signature)+ str(blockLedger.nonce)+ str(blockLedger.identification)).encode('utf-8'))
     val = shaFunc.hexdigest()
     return val
 
@@ -92,29 +97,35 @@ def signInfo(gwPvtKey, data):
         @param data - data to sign\n
         @return sinature - signature of the data maked with the private key
     """
-    k = RSA.importKey(gwPvtKey)
-    signer = PKCS1_v1_5.new(k)
-    digest = SHA256.new()
-    digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
-    #digest.update(data)
-    s = signer.sign(digest)
-    sinature = base64.b64encode(s)
-    return sinature
+    try:
+        k = RSA.importKey(gwPvtKey)
+        signer = PKCS1_v1_5.new(k)
+        digest = SHA256.new()
+        digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
+        #digest.update(data)
+        s = signer.sign(digest)
+        signature = base64.b64encode(s)
+        return signature
+    except:
+        return ""
 
 def signVerify(data, signature, gwPubKey):
     """ Verify if a data sign by a private key it's unaltered\n
         @param data - data to be verified\n
-        @param signature - singature of the data to be validated\n
+        @param signature - signature of the data to be validated\n
         @param gwPubKey - peer's private key
     """
-    k = RSA.importKey(gwPubKey)
-    signer = PKCS1_v1_5.new(k)
-    digest = SHA256.new()
-    digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
-    #digest.update(data)
-    signaturerOr = base64.b64decode(signature)
-    result = signer.verify(digest, signaturerOr)
-    return result
+    try:
+        k = RSA.importKey(gwPubKey)
+        signer = PKCS1_v1_5.new(k)
+        digest = SHA256.new()
+        digest.update(data.encode('utf-8')) #added encode to support python 3 , need to evluate if it is still working
+        #digest.update(data)
+        signaturerOr = base64.b64decode(signature)
+        result = signer.verify(digest, signaturerOr)
+        return result
+    except:
+        return False
 
 def generateRSAKeyPair():
     """ Generate a pair of RSA keys using RSA 1024\n

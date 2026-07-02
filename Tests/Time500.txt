@@ -1,0 +1,85 @@
+10 blocks each with 500 transactions for each component
+1)
+Time to create all blocks and transactions: 2249150.213003158569
+Storing all blocks and transactions from NORMAL and MULTI chains to a text file
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 5000 transactions (NORMAL): 4.757881164551
+Time to get all 5010 transactions (MULTI): 0.226020812988
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 5000 transactions (NORMAL): 5.527019500732
+Time to get all 5010 transactions (MULTI): 0.231981277466
+
+Time to restore all blocks and transactions from file: 660889.451026916504
+
+2)
+Time to create all blocks and transactions: 2166749.048948287964
+Storing all blocks and transactions from NORMAL and MULTI chains to a text file
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 5000 transactions (NORMAL): 4.431009292603
+Time to get all 5010 transactions (MULTI): 0.234127044678
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 5000 transactions (NORMAL): 5.398035049438
+Time to get all 5010 transactions (MULTI): 0.203847885132
+
+Time to restore all blocks and transactions from file: 676140.821933746338
+
+3)
+Time to create all blocks and transactions: 2280735.402822494507
+Storing all blocks and transactions from NORMAL and MULTI chains to a text file
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 5000 transactions (NORMAL): 4.719018936157
+Time to get all 5010 transactions (MULTI): 0.227928161621
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 5000 transactions (NORMAL): 5.278110504150
+Time to get all 5010 transactions (MULTI): 0.324010848999
+
+Time to restore all blocks and transactions from file: 663513.320922851562
+
+4)
+Time to create all blocks and transactions: 2260363.651990890503
+Storing all blocks and transactions from NORMAL and MULTI chains to a text file
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 5000 transactions (NORMAL): 4.728078842163
+Time to get all 5010 transactions (MULTI): 0.308990478516
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 5000 transactions (NORMAL): 5.049943923950
+Time to get all 5010 transactions (MULTI): 0.203132629395
+
+Time to restore all blocks and transactions from file: 673713.706970214844
+
+5)
+Time to create all blocks and transactions: 2232810.352802276611
+Storing all blocks and transactions from NORMAL and MULTI chains to a text file
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 5000 transactions (NORMAL): 4.406929016113
+Time to get all 5010 transactions (MULTI): 0.272035598755
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 5000 transactions (NORMAL): 4.852056503296
+Time to get all 5010 transactions (MULTI): 0.271081924438
+
+Time to restore all blocks and transactions from file: 678934.453010559082
+
+6)
+Time to create all blocks and transactions: 2186593.340873718262
+Storing all blocks and transactions from NORMAL and MULTI chains to a text file
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 5000 transactions (NORMAL): 4.450082778931
+Time to get all 5010 transactions (MULTI): 0.233888626099
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 5000 transactions (NORMAL): 5.485057830811
+Time to get all 5010 transactions (MULTI): 0.220060348511
+
+Time to restore all blocks and transactions from file: 663597.541809082031
+
+7)
+Time to create all blocks and transactions: 2236557.491064071655
+Storing all blocks and transactions from NORMAL and MULTI chains to a text file
+Getting all transactions for component = SN1234_RAM_dev-gwc
+Time to get all 5000 transactions (NORMAL): 4.863023757935
+Time to get all 5010 transactions (MULTI): 0.311851501465
+Getting all transactions for component = SN1234_CPU_dev-gwa
+Time to get all 5000 transactions (NORMAL): 5.490064620972
+Time to get all 5010 transactions (MULTI): 0.218868255615
+
+Time to restore all blocks and transactions from file: 677964.972972869873
+

@@ -22,8 +22,10 @@ import merkle
 
 # SpeedCHAIN modules
 from ..model.Chain import ChainFunctions
+from ..model.Chain import ChainFunctionsMulti
 from ..model.Peer import PeerInfo
 from ..model.Transaction import Transaction
+from ..model.Transaction import LifecycleEvent
 from ..tools import CryptoFunctions
 from ..tools import DeviceInfo
 from ..tools import DeviceKeyMapping
@@ -113,7 +115,7 @@ transactionSharedPool = []
 blockContext = "0001"
 # should have all context here
 # 
-gwContextConsensus = [("0001", "PoA"),("0002", "PoA"),("0003", "PoA")]
+gwContextConsensus = [("0001", "PBFT"),("0002", "PBFT"),("0003", "PBFT")]
 sizePool = 100
 # list of votes for new orchestrator votes are: context, voter gwPub, voted gwPub, signature
 votesForNewContextOrchestrator =[]
@@ -124,6 +126,11 @@ orchestratorContextObject = []
 # [["0001", ""], ["0002", ""]]
 # transactionSharedPool could be understood as = [["0001", gwOrchestratorObj],["0002", gwOrchestratorObj]]
 
+componentsId = []
+components = ["CPU", "RAM", "SSD", "VID"]
+chainFile = "chain.txt"
+chainFileMulti = "chainmulti.txt"
+deviceName = "dev-"
 
 # example from: www.stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-pyhton
 class ThreadWithReturn(Thread):
@@ -150,6 +157,7 @@ def bootstrapChain2():
     global gwPub
     global gwPvt
     ChainFunctions.startBlockChain()
+    ChainFunctionsMulti.startBlockChain()
     gwPub, gwPvt = CryptoFunctions.generateRSAKeyPair()
 
 #############################################################################
@@ -214,15 +222,23 @@ def sendTransactionToPeers(devPublicKey, transaction):
         obj = peer.object
         # logger.debug("Sending transaction to peer " + peer.peerURI)
         trans = pickle.dumps(transaction)
-        obj.updateBlockLedger(devPublicKey, trans)
-        trans.__class__ = Transaction.Transaction
-        candidateDevInfo = trans.data
-        candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
-        originalTimestamp = float(candidateDevInfo.timestamp)
+        res = obj.updateBlockLedger(devPublicKey, trans)
+        # print ("sendTransactionToPeers res = "+res)
+        # transaction.__class__ = Transaction.Transaction
+        # candidateDevInfo = transaction.data
+        # candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+        # t = ((time.time() * 1000) * 1000)
+        # print(t)
+        # t2 = "{:.0f}".format(((time.time() * 1000) * 1000))
+        # print(t2)
+        # print(str(candidateDevInfo))
+        # print(candidateDevInfo)
+        # print(candidateDevInfo.timestamp)
+        # originalTimestamp = float(candidateDevInfo.timestamp)
 
-        currentTimestamp = float(((time.time()) * 1000) * 1000)
-        logT20.append("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
-            (currentTimestamp - originalTimestamp) / 1000))
+        # currentTimestamp = float(((time.time()) * 1000) * 1000)
+        # logT20.append("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+        #     (currentTimestamp - originalTimestamp) / 1000))
 
 
 # class sendBlks(threading.Thread):
@@ -506,11 +522,11 @@ def isValidBlock(self, data, gatewayPublicKey, devicePublicKey, peer):
 
 
 def isTransactionValid(transaction, pubKey):
-    data = str(transaction.data)[-22:-2]
-    signature = str(transaction.data)[:-22]
+    #data = str(transaction.data)[-22:-2]
+    data, signature = transaction.getDataAndSignatureInsideLifecycle()
+    #signature = str(transaction.data)[:-22]
     res = CryptoFunctions.signVerify(data, signature, pubKey)
     return res
-
 
 def isBlockValid(block):
     # Todo Fix the comparison between the hashes... for now is just a mater to simulate the time spend calculating the hashes...
@@ -520,8 +536,8 @@ def isBlockValid(block):
     # print("Index:"+str(lastBlk.index)+" prevHash:"+str(lastBlk.previousHash)+ " time:"+str(lastBlk.timestamp)+ " pubKey:")
     # lastBlkHash = CryptoFunctions.calculateHash(lastBlk)
 
-    lastBlkHash = CryptoFunctions.calculateHash(
-        lastBlk.index, lastBlk.previousHash, lastBlk.timestamp, lastBlk.nonce, lastBlk.publicKey, lastBlk.blockContext)
+    lastBlkHash = CryptoFunctions.calculateHash(lastBlk.index, lastBlk.previousHash, lastBlk.timestamp, 
+                        lastBlk.nonce, lastBlk.publicKey, lastBlk.blockContext, lastBlk.device)
 
     # print ("This Hash:"+str(lastBlkHash))
     # print ("Last Hash:"+str(block.previousHash))
@@ -1316,6 +1332,7 @@ class R2ac(object):
         global transactionLockList
         global transactionConsensusCandidateList
         # print("TTTTTTTTTTTT inside addNewTransactionToSyncList")
+        logger.info("Inside addNewTransactionToSyncList")
         index =0
         candidateTransactionTuple = (devPubKey, devInfo, context)
         # print ("********* adding a transaction from context: "+context)
@@ -1331,10 +1348,11 @@ class R2ac(object):
                 # if it got the lock, insert a new transaction into the list
                 # candidade tuple is devPubKey, devInfo, context
                 if(transactionConsensusCandidateList[index][0] == context):
+                    logger.info("addNewTransactionToSyncList: appending transaction to consensus list")
                     transactionConsensusCandidateList[index][1].append(candidateTransactionTuple)
                     transactionLockList[index][1].release()
                 else:
-                    logger.error("something went wrong when adding transaction tuple")
+                    logger.info("addNewTransactionToSyncList: ERROR something went wrong when adding transaction tuple")
                     return False
                 # print("VVVVVV Lock released in addnewtransactionsynclist")
                 return True
@@ -1347,10 +1365,12 @@ class R2ac(object):
         # return the attempt to lock the last inserted  [-1] context through its lock [1]
         # print("@@Context List after adding context to lock list for context: "+context)
         transactionLockList[-1][1].acquire(False)
+        logger.info("addNewTransactionToSyncList: appending transaction, after lock")
         transactionConsensusCandidateList.append([context, [candidateTransactionTuple]])
         # transactionConsensusCandidateList.append(candidateTransactionTuple)
         transactionLockList[-1][1].release()
         # print("VVVVVV Lock released in addnewtransactionsynclist")
+        # logger.info("Transaction tuple added to list")
         return True
         # print("Unlocked")
 
@@ -1399,61 +1419,64 @@ class R2ac(object):
     def getNElementsLocalTransactionPool(self, context, nelements):
         global transactionLockList
         global transactionConsensusCandidateList
-        # print("ENTERED in get Pool")
+        #logger.info("ENTERED in get Pool")
         transactionPool = []
-        if (len(transactionConsensusCandidateList) > 0):
-            index = 0
-            for x, y in transactionLockList:
-                if x == context:
-                    # print("X = ", x)
-                    # print("context = ", context)
-                    # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
-                    # print("@@Contextfound")
-                    i = 0
-                    getLockList = transactionLockList[index][1].acquire(False)
-                    while (not (getLockList) and i < 1000):
-                        i = i + 1
-                        # print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
-                        time.sleep(0.001)
+        try:
+            if (len(transactionConsensusCandidateList) > 0):
+                index = 0
+                for x, y in transactionLockList:
+                    if x == context:
+                        # print("X = ", x)
+                        # print("context = ", context)
+                        # return the attempt to lock the indexed context  [index] pubkey through its lock [1]
+                        # print("@@Contextfound")
+                        i = 0
                         getLockList = transactionLockList[index][1].acquire(False)
-                    if (not (getLockList)):
-                        # transactionLockList[index][1].release()
-                        logger.error("tried to GET and it was not possible, returning False")
-                        return pickle.dumps(False)
-                    # if it got the lock, insert a new transaction into the list
+                        while (not (getLockList) and i < 1000):
+                            i = i + 1
+                            # print("$$$$$$$$$ not possible to acquire a lock in getTransaciontosfromynclist")
+                            time.sleep(0.001)
+                            getLockList = transactionLockList[index][1].acquire(False)
+                        if (not (getLockList)):
+                            # transactionLockList[index][1].release()
+                            logger.error("tried to GET and it was not possible, returning False")
+                            return pickle.dumps(False)
+                        # if it got the lock, insert a new transaction into the list
 
-                    if (len(transactionConsensusCandidateList[index][1]) > 0):
-                        if (len(transactionConsensusCandidateList[index][1]) > nelements):
-                            # logger.debug("there is a candidade, pop it!!!")
-                            # transactionPool = transactionConsensusCandidateList[index]
-                            # get only N transactions from the correct context and after clean that N transactions
-                            transactionPool = transactionConsensusCandidateList[index][1][:nelements]
-                            # print("there is a pool candidate, pop it!!! context: " + context)
-                            transactionConsensusCandidateList[index][1] = transactionConsensusCandidateList[index][1][nelements:]
+                        if (len(transactionConsensusCandidateList[index][1]) > 0):
+                            if (len(transactionConsensusCandidateList[index][1]) > nelements):
+                                # logger.debug("there is a candidade, pop it!!!")
+                                # transactionPool = transactionConsensusCandidateList[index]
+                                # get only N transactions from the correct context and after clean that N transactions
+                                transactionPool = transactionConsensusCandidateList[index][1][:nelements]
+                                # print("there is a pool candidate, pop it!!! context: " + context)
+                                transactionConsensusCandidateList[index][1] = transactionConsensusCandidateList[index][1][nelements:]
+                                transactionLockList[index][1].release()
+                                pickedTransactionPool = pickle.dumps(transactionPool)
+                                return pickedTransactionPool
+
+                            # if it does not have nelements, return current amount
+                            transactionPool = transactionConsensusCandidateList[index][1]
+                            # logger.info("there is a pool candidate, pop it!!! context: " + context)
+                            transactionConsensusCandidateList[index][1] = []
                             transactionLockList[index][1].release()
                             pickedTransactionPool = pickle.dumps(transactionPool)
                             return pickedTransactionPool
 
-                        # if it does not have nelements, return current amount
-                        transactionPool = transactionConsensusCandidateList[index][1]
-                        # print("there is a pool candidate, pop it!!! context: " + context)
-                        transactionConsensusCandidateList[index][1] = []
                         transactionLockList[index][1].release()
-                        pickedTransactionPool = pickle.dumps(transactionPool)
-                        return pickedTransactionPool
+                        return pickle.dumps(False)
+                        # print("VVVVVV Transaction Tuple: ")
+                        # print(transactionTuple[0])
+                        # print("second part: ")
+                        # print(transactionTuple[1])
+                        # transaction tuple is formed by devPubKey and devInfo
+                        # return transactionPool
+                    index = index + 1
+        except:
+            logger.info("getNElementsLocalTransactionPool: EXCEPTION")
 
-                    transactionLockList[index][1].release()
-                    return pickle.dumps(False)
-                    # print("VVVVVV Transaction Tuple: ")
-                    # print(transactionTuple[0])
-                    # print("second part: ")
-                    # print(transactionTuple[1])
-                    # transaction tuple is formed by devPubKey and devInfo
-                    # return transactionPool
-                index = index + 1
-
-        # print("end of get transaction")
-        # logger.debug("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
+        #print("end of get transaction")
+        #logger.info("Removing block from list :")#+srt(len(blockConsensusCandidateList)))
         return pickle.dumps(False)
 
     def getLocalTransactionPool(self, context):
@@ -2044,7 +2067,7 @@ class R2ac(object):
         global consensusLock
         consensusLock.release()
 
-    def addBlock(self, devPubKey):
+    def addBlock(self, devPubKey, lifecycleDeviceName):
         """ Receive a device public key from a device and link it to a block on the chain\n
             @param devPubKey - request's device public key\n
             @return encKey - RSA encrypted key for the device be able to communicate with the peers
@@ -2056,6 +2079,7 @@ class R2ac(object):
         # logger.debug("|---------------------------------------------------------------------|")
         # logger.info("Block received from device")
         aesKey = ''
+        encKey = ''
         t1 = time.time()
         # print("Adding block, PubKey= " + str(devPubKey))
         blk = ChainFunctions.findBlock(devPubKey)
@@ -2107,7 +2131,7 @@ class R2ac(object):
                 # print("New Orchestrator URI: " + str(orchestratorObject.exposedURI()))
                 orchestratorObject.addBlockConsensusCandidate(pickedKey)
                 counter_fails = 0
-                while(orchestratorObject.runPBFT()==False):
+                while(orchestratorObject.runPBFT(lifecycleDeviceName)==False):
                     # logger.info("##### second attmept for a block")
                     orchestratorObject.removeBlockConsensusCandidate(pickedKey)
                     # print("$$$$$$$second trial")
@@ -2149,7 +2173,7 @@ class R2ac(object):
                 self.runPoW()
             if(consensus == "None"):
                 self.addBlockConsensusCandidate(pickedKey)
-                self.runNoConsesus()
+                self.runNoConsesus(lifecycleDeviceName)
             if(consensus == "PoA"):
                 self.lockForConsensus()
                 self.addBlockConsensusCandidate(pickedKey)
@@ -2184,13 +2208,17 @@ class R2ac(object):
                 # print("ConsensusLocks released!")
             ######end of lock consensus################
 
-        # print("Before encryption of rsa2")
+            # print("Before encryption of rsa2")
 
-        t3 = time.time()
-        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
-        logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + '{0:.12f}'.format((t3 - t1) * 1000))
-        # logger.debug("|---------------------------------------------------------------------|")
-        # print("block added")
+            t3 = time.time()
+            timeDiff = '{0:.12f}'.format((t3 - t1) * 1000)
+            # f = open('trans_normal.txt', "a")
+            # f.write(timeDiff + "\n")
+            # f.close
+            # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
+            logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + timeDiff)
+            # logger.debug("|---------------------------------------------------------------------|")
+            # print("block added")
         return encKey
 
 
@@ -2371,6 +2399,8 @@ class R2ac(object):
         # logger.info("Showing Trasactions data for peer: " + myURI)
         blk = ChainFunctions.getBlockByIndex(index)
         print("Block for index"+str(index))
+        if blk == False:
+            return "Block does not exist"
         size = len(blk.transactions)
         # logger.info("Block Ledger size: " + str(size))
         # logger.info("-------")
@@ -2669,7 +2699,7 @@ class R2ac(object):
                 obj.setConsensus(receivedConsensus)
         return True
 
-    def runPBFT(self):
+    def runPBFT(self, lifecycleDeviceName):
         """ Run the PBFT consensus to add a new block on the chain """
         # print("I am in runPBFT")
         t1 = float(((time.time()) * 1000) * 1000)
@@ -2697,10 +2727,10 @@ class R2ac(object):
             # logger.error("******************Changed to 2****************")
         # blockContext = "0002"
 
-        blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
+        blk = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus, lifecycleDeviceName)
         # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
 
-        if ((PBFTConsensus(blk, gwPub, devPubKey)) == False):
+        if ((PBFTConsensus(blk, gwPub, devPubKey, lifecycleDeviceName)) == False):
             logger.error("Consensus not finished")
             return False
         t2 = float(((time.time()) * 1000) * 1000)
@@ -2766,7 +2796,7 @@ class R2ac(object):
                          '{0:.12f}'.format((t2 - t1) * 1000))
             # print("I finished runPoW - Wrong")
 
-    def runNoConsesus(self):
+    def runNoConsesus(self, lifecycleDeviceName):
         # print("Running without consensus")
         t1 = float(((time.time()) * 1000) * 1000)
         global peers
@@ -2779,7 +2809,7 @@ class R2ac(object):
         #@TODO define somehow a device is in a context
         blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
         blkCounter = blkCounter+1
-        newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus)
+        newBlock = ChainFunctions.createNewBlock(devPubKey, gwPvt, blockContext, consensus, lifecycleDeviceName)
         signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers)
         if (signature == False):
             logger.info("Consesus was not achieved: block #" +
@@ -2896,7 +2926,7 @@ class R2ac(object):
 
     # NEW CONSENSUS @Roben
 
-    def verifyBlockCandidateRemote(self, newBlock, askerPubKey):
+    def verifyBlockCandidateRemote(self, newBlock, askerPubKey, isMulti):
         """ Receive a new block and verify if it's authentic\n
             @param newBlock - BlockHeader object\n
             @param askerPubKey - Public from the requesting peer\n
@@ -2905,11 +2935,11 @@ class R2ac(object):
         """
         global peers
         newBlock = pickle.loads(newBlock)
-        # print("inside verifyblockcandidateremote")
+        isMulti = pickle.loads(isMulti)
         # logger.debug("|---------------------------------------------------------------------|")
         # logger.debug("Verify for newBlock asked - index:"+str(newBlock.index))
         ret = verifyBlockCandidate(
-            newBlock, askerPubKey, newBlock.publicKey, peers)
+            newBlock, askerPubKey, newBlock.publicKey, peers, isMulti)
         # logger.debug("validation reulsts:"+str(ret))
         # logger.debug("|---------------------------------------------------------------------|")
         # pi = pickle.dumps(ret)
@@ -3022,15 +3052,15 @@ class R2ac(object):
             respostaJSON = json.loads(resposta)
             # print(respsotaJSON['Ret'])
             if respostaJSON['Erro'] != "":
-                logger.Exception("Transacao nao inserida")
+                logger.Exception("Transaction not inserted")
             elif chamadaJSON['Tipo'] == "Exec":
                 # print("AQUI 2")
-                logger.info("Execucao, sem insercao de dados na blockchain")
+                logger.info("Execution, without data insertion on blockchain")
             else:
                 transacao = '{ "Tipo" : "%s", "Data": "%s", "From": "%s", "To" : "%s", "Root" : "%s" }' % (
                     chamadaJSON['Tipo'], chamadaJSON['Data'], chamadaJSON['From'], chamadaJSON['To'],
                     respostaJSON['Root'])
-                logger.info("Transacao sendo inserida: %s \n" % transacao)
+                logger.info("Trasaction being inserted: %s \n" % transacao)
                 t = ((time.time() * 1000) * 1000)
                 timeStr = "{:.0f}".format(t)
                 data = timeStr + transacao+signedDatabyDevice
@@ -3044,6 +3074,1680 @@ class R2ac(object):
             # print("fim\n")
             s.close()
         return True
+
+#############################################################################
+#############################################################################
+##############         INIT Lifecycle Events (Rodrigo)         ##############
+#############################################################################
+#############################################################################
+
+    def getDeviceName(self):
+        global deviceName
+        return deviceName
+    
+    def storeChainToFile(self):
+        """ Store the entire chain to a text file
+            The gateway keys from all peers
+            The blocks and the transactions\n
+        """
+        self.storeNormalChainToFile()
+        self.storeMultiChainToFile()
+
+    def storeNormalChainToFile(self):
+        open(chainFile, 'w').close()
+        f = open(chainFile, "a")
+        storeKeysFromPeers(f)
+
+        f.write("\n")
+
+        theChain = ChainFunctions.getFullChain()
+        for b in theChain[1:]:
+            block = b.strBlockToSave()
+            #print("block= " + block)
+            f.write("block= " + block + "\n")
+            for t in b.transactions[1:]:
+                transaction = t.strTransactionToSave()
+                #print("transaction= " + transaction)
+                f.write("transaction= " + transaction + "\n")
+        f.close()
+        return True
+
+    def storeMultiChainToFile(self):
+        open(chainFileMulti, 'w').close()
+        f = open(chainFileMulti, "a")
+
+        theChain = ChainFunctionsMulti.getFullChain()
+        for b in theChain[1:]:
+            block = b.strBlockToSave()
+            #print("block= " + block)
+            f.write("block= " + block + "\n")
+            for i in range(b.numTransactionChains):
+                for t in b.transactions[i][1:]:
+                    transaction = t.strTransactionToSave()
+                    #print("transaction " + str(i) + "= " + transaction)
+                    f.write("transaction " + str(i) + "= " + transaction + "\n")
+        f.close()
+        return True
+
+    def restoreChainFromFile(self):
+        """ Store the entire chain to a text file
+            The gateway keys from all peers
+            The blocks and the transactions\n
+        """
+        t1 = time.time()
+        self.restoreNormalChainFromFile()
+        self.restoreMultiChainFromFile()
+        t2 = time.time()
+        timeDiff = '{0:.12f}'.format((t2 - t1) * 1000)
+        return timeDiff
+    
+    def restoreNormalChainFromFile(self):
+        """ Restore the entire chain from a text file
+            The gateway keys from all peers
+            The blocks and the transactions\n
+        """
+        keys = []
+        f = open(chainFile, "r")
+
+        # Gets public and private key from each gateway
+        for line in f:
+            stripped_line = line.rstrip('\n')
+            #print("line = " + str(stripped_line))
+            if (str(stripped_line) == ""):
+                #print("BREAK!")
+                break
+            split = stripped_line.split('  ')
+            publicKey = split[0].replace('\\n', '\n')
+            privateKey = split[1].replace('\\n', '\n')
+            key = [publicKey, privateKey]
+            #print("Public Key = " + str(publicKey))
+            #print("Private Key = " + str(privateKey))
+            keys.append(key)
+        
+        #print (keys)
+        # Get how many peers from file
+        # Get gw private/public keys, send them to each peer
+            # Each peer updates its keys and restart the chain (ChainFunctions.restartChain())
+        restartChains(keys)
+        
+        # Gets the blocks/transations
+        devPubKey = ""
+        for line in f:
+            #print ("")
+            stripped_line = line.rstrip('\n')
+            split_aux = stripped_line.split('= ', 1)
+            split = split_aux[1].split('  ')
+            #print(str(stripped_line))
+            if (stripped_line.startswith('block')):
+                devPubKey = split[0].replace('\\n', '\n')
+                #print("Dev Public Key = " + str(devPubKey))
+                blockContext = split[1]
+                timestamp = split[2]
+                nonce = split[3]
+                signature = split[4]
+                blockData = split[5]
+                index = int(split[6])
+                device = split[7]
+                previousExpiredBlockHash = split[8]
+                previousBlockSignature = split[9]
+                newBlock = ChainFunctions.generateNextBlock2(blockData, devPubKey, signature, blockContext, 
+                                                             timestamp, nonce, index, device, 
+                                                             previousExpiredBlockHash, previousBlockSignature)
+                ChainFunctions.addBlockHeader(newBlock)
+                #print(newBlock.strBlock())
+                sendBlockToPeers(newBlock)
+            if (stripped_line.startswith('transaction')):
+                blk = ChainFunctions.findBlock(devPubKey)        
+                if (blk != False and blk.index > 0):
+                    #print("Block found!")
+                    nextInt = blk.transactions[len(blk.transactions) - 1].index + 1
+                    prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
+                    #print("Timestamp = " + str(split[0]))
+                    #print("Device info = " + str(split[1]))
+                    #print("Sign data = " + str(split[2]))
+                    #print("Nonce = " + str(split[3]))
+
+                    deviceInfoSplit = split[1].split(", ")
+                    deviceInfo = ""
+                    if (deviceInfoSplit.count == 1):
+                        deviceInfo = split[1]
+                    else:
+                        deviceInfo = LifecycleEvent.LifecycleEvent(
+                            deviceInfoSplit[1], deviceInfoSplit[2],  deviceInfoSplit[3], deviceInfoSplit[0])
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, split[0], deviceInfo, split[2], split[3], split[4])
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    #print(transaction.strBlock())
+                    sendTransactionToPeers(devPubKey, transaction)
+
+        f.close()
+        return True
+    
+    def restoreMultiChainFromFile(self):
+        """ Restore the entire chain from a text file
+            The gateway keys from all peers
+            The blocks and the transactions\n
+        """
+        f = open(chainFileMulti, "r")
+        
+        # Gets the blocks/transations
+        devPubKey = ""
+        for line in f:
+            #print ("")
+            stripped_line = line.rstrip('\n')
+            split_aux = stripped_line.split('= ', 1)
+            split = split_aux[1].split('  ')
+            #print(str(stripped_line))
+            if (stripped_line.startswith('block')):
+                devPubKey = split[0].replace('\\n', '\n')
+                #print("Dev Public Key = " + str(devPubKey))
+                blockContext = split[1]
+                timestamp = split[2]
+                nonce = split[3]
+                signature = split[4]
+                blockData = split[5]
+                numTransactionChains = split[6]
+                index = int(split[7])
+                device = split[8]
+                previousExpiredBlockHash = split[9]
+                previousBlockSignature = split[10]
+                newBlock = ChainFunctionsMulti.generateNextBlock2(blockData, devPubKey, signature, blockContext, 
+                                                timestamp, nonce, numTransactionChains, index, device, 
+                                                previousExpiredBlockHash, previousBlockSignature)
+                ChainFunctionsMulti.addBlockHeader(newBlock)
+                #print("NewBlock: " + newBlock.strBlock())
+                sendBlockToPeersMulti(newBlock)
+            if (stripped_line.startswith('transaction')):
+                chainIndexList = [int(x) for x in split_aux[0].split() if x.isdigit()]
+                chainIndex = chainIndexList[0]
+                #print("ChainIndex = " + str(chainIndex))
+                blk = ChainFunctionsMulti.findBlock(devPubKey)      
+                if (blk != False and blk.index > 0):
+                    #print("Block found!")
+                    lastBlk = (ChainFunctionsMulti.getLatestBlockTransaction(blk, chainIndex))
+                    nextInt = lastBlk.index + 1
+                    prevInfoHash = lastBlk.hash
+                    #print("Timestamp = " + str(split[0]))
+                    #print("Device info = " + str(split[1]))
+                    #print("Sign data = " + str(split[2]))
+                    #print("Nonce = " + str(split[3]))
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, split[0], split[1], split[2], split[3], split[4])
+
+                    ChainFunctionsMulti.addBlockTransaction(blk, transaction, chainIndex)
+                    #print(transaction.strBlock())
+                    sendTransactionToPeersMulti(devPubKey, transaction, chainIndex)
+
+        f.close()
+        return True
+
+    def updateGatewayKeys(self, pubKey, privKey, gwName):
+        """ Update the gateway private and public keys, receiving it on restore from file\n
+            @param pubKey - the public key to be added\n
+            @param privKey - the private key to be added\n
+            @param gwName - the name of the gateway that sent the keys\n
+        """
+        global gwPub
+        global gwPvt
+
+        #print("Received from = "+ str(gwName))
+        pubKey = pickle.loads(pubKey)
+        privKey = pickle.loads(privKey)
+        #print("Public Key = "+ str(pubKey))
+        #print("Private Key = "+ str(privKey))
+        t1 = time.time()
+        
+        gwPub = pubKey
+        gwPvt = privKey
+        #print("gwPub = "+ str(gwPub))
+        #print("gwPvt = "+ str(gwPvt))
+        ChainFunctions.restartChain()
+        ChainFunctionsMulti.restartChain()
+        #blk = ChainFunctions.getLatestBlock()
+        #print("BlockGenesis = "+ str(blk.strBlock()))
+        #blk = ChainFunctionsMulti.getLatestBlock()
+        #print("BlockGenesis = "+ str(blk.strBlock()))
+
+        t2 = time.time()
+        # print("updating was done")
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";T3;Time to update keys;" + '{0:.12f}'.format((t2 - t1) * 1000))
+
+    def storeGatewayKeys(self, gwName):
+        """ Store the gateway keys to the text file\n
+            @param gwName - the name of the gateway that will store the keys\n
+        """
+        # print("Received from = "+ str(gwName))
+
+        f = open(chainFile, "a")
+        
+        #print("gwPub = "+ str(gwPub))
+        #print("gwPvt = "+ str(gwPvt))
+
+        pub = gwPub.replace('\n', '\\n')
+        pvt = gwPvt.replace('\n', '\\n')
+
+        f.write(pub + "  " + pvt + "\n")
+
+        f.close()
+    
+    def addLifecycleEvent(self, devPublicKey, encryptedObj):
+        """ Receive a new transaction to be add to the chain, add the transaction
+            to a block and send it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+        blk = ChainFunctions.findBlock(devPublicKey)
+        
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                #logger.info("Appending transaction to block #" + str(blk.index) + "...")
+                print("Appending transaction to block #" + str(blk.index) + "...")
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+                #print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars      #signature = plainObject[:-20]  # remove the last 20 chars
+                #print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                #print("devTime = " + str(devTime))
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                #print("deviceData = " + str(deviceData))
+
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerify(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
+                    
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, deviceInfo, signData,0)
+                    #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info(
+                        "gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info(
+                        "gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+                    # print("all done")
+                    return "ok!"
+                else:
+                    # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    return "Invalid Signature"
+            # logger.debug("--Transaction not appended--Key not found")
+            return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
+
+    def addLifecycleEventStructure(self, devPublicKey, encryptedObj, type):
+        """ Receive a new transaction to be add to the chain, 
+            the data will be created as a LifecycleEvent structure
+            add the transaction to a block and send it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+        blk = ChainFunctions.findBlock(devPublicKey)
+        
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                #logger.info("Appending transaction to block #" + str(blk.index) + "...")
+                # print("Appending transaction to block #" + str(blk.index) + "...")
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+                #print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars
+                #print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                #print("devTime = " + str(devTime))
+                #print(devTime)
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                #print("deviceData = " + str(deviceData))
+
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerify(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+                    #print("DeviceInfo: "+str(deviceInfo))
+                    #print(deviceInfo)
+                    matching = getComponentNameByType(type)
+                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching, deviceInfo)
+                    #print("LifecycleEvent: "+str(lifecycleEvent.strEvent()))
+                    #print(lifecycleEvent)
+
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    #print("gwTime: "+str(gwTime))
+                    #print(gwTime)
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
+                    
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, matching)
+                    #print("Transaction: "+str(transaction.strBlock()))
+                    #print(transaction)
+                    #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    timeDiff = str('{0:.12f}'.format((t2 - t1) * 1000))
+
+                    # f = open('trans_normal.txt', "a")
+                    # f.write(timeDiff + "\n")
+                    # f.close
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + timeDiff)
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info("gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+                    #print("all done")
+                    return "ok!"
+                else:
+                    # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    return "Invalid Signature"
+            # logger.debug("--Transaction not appended--Key not found")
+            return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
+    
+    def addLifecycleEventMulti(self, devPublicKey, encryptedObj, index, type = "", isLifecycle = True):
+        """ Receive a new transaction to be add to the chain, 
+            the data will be created as a LifecycleEvent structure
+            add the transaction to a block and send it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @param index - Transaction chain index\n
+            @param type - Type of the transaction\n
+            @param isLifecycle - True if the data is for a component lifecycle data\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        #print("Transaction received on addLifecycleEventMulti")
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+        blk = ChainFunctionsMulti.findBlock(devPublicKey)
+        
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                #logger.info("Appending transaction to block #" + str(blk.index) + "...")
+                # print("Appending transaction to block #" + str(blk.index) + "...")
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+                # print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars
+                # print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                # print("devTime = " + str(devTime))
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                # print("deviceData = " + str(deviceData))
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerify(
+                    d, signature, devPublicKey)
+                
+                if isSigned:
+                    if isLifecycle:
+                        deviceInfo = DeviceInfo.DeviceInfo(
+                            signature, devTime, deviceData)
+                        matching = [s for s in componentsId if type in s]
+                        lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching[0], deviceInfo)
+                        # print("LifecycleEvent: "+str(lifecycleEvent.strEvent()))
+                    else:
+                        lifecycleEvent = deviceData
+                        # print("Transaction data: "+str(lifecycleEvent))
+
+                    nextInt = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).hash
+                    
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, 0, matching[0])
+                    # print("Transaction: "+str(transaction.strBlock()))
+                    #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctionsMulti.addBlockTransaction(blk, transaction, index)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    timeDiff = str('{0:.12f}'.format((t2 - t1) * 1000))
+                    # f = open('trans_multi.txt', "a")
+                    # f.write(timeDiff + "\n")
+                    # f.close
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + timeDiff)
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info("gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeersMulti(devPublicKey, transaction, index)
+                    # print("all done")
+                    return "ok!"
+                else:
+                    # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    return "Invalid Signature"
+            # logger.debug("--Transaction not appended--Key not found")
+            return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
+
+    def addLifecycleEventSingle(self, devPublicKey, encryptedObjs, types):
+        """ Receive a new transaction to be add to the chain, 
+            the data will be created as a LifecycleEvent structure
+            add the transaction to a block and send it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        global gwPvt
+        global gwPub
+        t1 = time.time()
+        blk = ChainFunctions.findBlock(devPublicKey)
+        lifecycleEvents = []
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                #logger.info("Appending transaction to block #" + str(blk.index) + "...")
+                print("Appending transaction to block #" + str(blk.index) + "...")
+                for i in range(4):
+                    # plainObject contains [Signature + Time + Data]
+
+                    plainObject = CryptoFunctions.decryptAES(
+                        encryptedObjs[i], devAESKey)
+                    #print("plainObject = " + str(plainObject))
+                    split = plainObject.split()
+                    signature = split[0]  #plainObject[:88] # get first 88 chars
+                    #print("signature = " + str(signature))
+                    # remove the 16 char of timestamp
+                    devTime = split[1]  # plainObject[88:104]
+                    #print("devTime = " + str(devTime))
+                    #print(devTime)
+                    # retrieve the last chars which are the data
+                    deviceData = split[2]  # plainObject[104:]
+                    #print("deviceData = " + str(deviceData))
+
+                    d = " "+devTime+" "+deviceData
+                    isSigned = CryptoFunctions.signVerify(
+                        d, signature, devPublicKey)
+
+                    if isSigned:
+                        deviceInfo = DeviceInfo.DeviceInfo(
+                            signature, devTime, deviceData)
+                        #print("DeviceInfo: "+str(deviceInfo))
+                        matching = [s for s in componentsId if types[i] in s]
+                        lifecycleEvents.append(LifecycleEvent.LifecycleEvent(types[i], matching[0], deviceInfo))
+                        #print("LifecycleEvent: "+str(lifecycleEvents[i].strEvent()))
+                            
+                    else:
+                        # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                        return "Invalid Signature"
+                
+                if isSigned:
+                    nextInt = blk.transactions[len(
+                        blk.transactions) - 1].index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(lifecycleEvents))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    #print("gwTime: "+str(gwTime))
+                    #print(gwTime)
+                    # code responsible to create the hash between Info nodes.
+                    prevInfoHash = (ChainFunctions.getLatestBlockTransaction(blk)).hash
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, lifecycleEvents, signData, 0, "")
+                    #print("Transaction: "+str(transaction.strBlock()))
+                    #transaction.setHash(CryptoFunctions.calculateTransactionHash(transaction))
+                    # send to consensus
+                    # if not consensus(newBlockLedger, gwPub, devPublicKey):
+                    #    return "Not Approved"
+                    # if not PBFTConsensus(blk, gwPub, devPublicKey):
+                    #     return "Consensus Not Reached"
+
+                    ChainFunctions.addBlockTransaction(blk, transaction)
+                    # logger.debug("Block #" + str(blk.index) + " added locally")
+                    # logger.debug("Sending block #" +
+                    #             str(blk.index) + " to peers...")
+                    t2 = time.time()
+                    logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                    currentTimestamp = float(((time.time()) * 1000) * 1000)
+                    logger.info("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    logger.info("gateway;" + gatewayName  + ";T26;First Transaction Latency;" + str(
+                            (currentTimestamp - float(devTime)) / 1000))
+                    # --->> this function should be run in a different thread.
+                    sendTransactionToPeers(devPublicKey, transaction)
+                    #print("all done")
+                    return "ok!"      
+            # logger.debug("--Transaction not appended--Key not found")
+            return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
+
+    def addBlockMulti(self, devPubKey, lifecycleDeviceName):
+        """ Receive a device public key from a device and link it to a block on the chain\n
+            @param devPubKey - request's device public key\n
+            @param deviceName - Name of the device that created the block\n
+            @return encKey - RSA encrypted key for the device be able to communicate with the peers
+        """
+        global gwPub
+        global consensusLock
+        global orchestratorObject
+        #print("addingblock... DevPubKey:" + devPubKey)
+        # logger.debug("|---------------------------------------------------------------------|")
+        # logger.info("Block received from device")
+        aesKey = ''
+        encKey = ''
+        t1 = time.time()
+        blk = ChainFunctionsMulti.findBlock(devPubKey)
+        #print("consensus:" + str(consensus))
+        if (blk != False and blk.index > 0):
+            #print("blk:" + str(blk.index))
+            #print("inside first if")
+            logger.error("It may be already be registered, generating another aeskey")
+            aesKey = findAESKey(devPubKey)
+            logger.error("passed by findAESKEY")
+            if ((aesKey == False) or (len(aesKey) != 32)):
+                logger.error("aeskey had a problem...")
+                removeAESKey(aesKey)
+                aesKey = generateAESKey(blk.publicKey)
+                encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
+                return encKey
+                # t2 = time.time()
+            logger.error("actually it didn't had problem with the key")
+            logger.error("publick key received was: " + str(devPubKey) + "blk key was: " + str(blk.publicKey) + " ...")
+            removeAESKey(aesKey)
+            aesKey = generateAESKey(blk.publicKey)
+            encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
+            return encKey
+            # t2 = time.time()
+        else:
+            #print("inside else")
+            # logger.debug("***** New Block: Chain size:" +
+            #              str(ChainFunctions.getBlockchainSize()))
+            pickedKey = pickle.dumps(devPubKey)
+            aesKey = generateAESKey(devPubKey)
+            # print("pickedKey: ")
+            # print(pickedKey)
+
+            encKey = CryptoFunctions.encryptRSA2(devPubKey, aesKey)
+            # t2 = time.time()
+            # Old No Consensus
+            # bl = ChainFunctions.createNewBlock(devPubKey, gwPvt)
+            # sendBlockToPeers(bl)
+            # logger.debug("starting block consensus")
+            #############LockCONSENSUS STARTS HERE###############
+            if(consensus == "PBFT"):
+                #print("Running PBFT consensus for MULTI")
+                # PBFT elect new orchestator every time that a new block should be inserted
+                # allPeersAreLocked = False
+                self.lockForConsensus()
+                # print("ConsensusLocks acquired!")
+                self.electNewOrchestrator()
+                # print("New Orchestrator URI: " + str(orchestratorObject.exposedURI()))
+                orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                counter_fails = 0
+                while(orchestratorObject.runPBFTMulti(lifecycleDeviceName)==False):
+                    # logger.info("##### second attmept for a block")
+                    orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                    # print("$$$$$$$second trial")
+                    self.electNewOrchestrator()
+                    orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                    counter_fails = counter_fails + 1
+                    if (counter_fails > 200):
+                        return -1
+            if(consensus == "dBFT" or consensus == "Witness3"):
+                # print("indo pro dbft")
+                # consensusLock.acquire(1) # only 1 consensus can be running at same time
+                # for p in peers:
+                #     obj=p.object
+                #     obj.acquireLockRemote()
+                self.lockForConsensus()
+
+                orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                # print("blockadded!")
+                counter_fails = 0
+                while (orchestratorObject.rundBFT() == False):
+                    # logger.info("##### second attempt for a block")
+                    orchestratorObject.removeBlockConsensusCandidate(pickedKey)
+                    logger.error("Consensus not achieved, trying another one")
+                    self.electNewOrchestrator()
+                    orchestratorObject.addBlockConsensusCandidate(pickedKey)
+                    counter_fails = counter_fails +1
+                    if (counter_fails > 200):
+                        return -1
+                # print("after rundbft")
+            if(consensus == "PoW"):
+                # consensusLock.acquire(1) # only 1 consensus can be running at same time
+                # for p in peers:
+                #     obj=p.object
+                #     obj.acquireLockRemote()
+                self.lockForConsensus()
+                # print("ConsensusLocks acquired!")
+                self.addBlockConsensusCandidate(pickedKey)
+                self.runPoW()
+            if(consensus == "None"):
+                #print("inside NONE consensus")
+                self.addBlockConsensusCandidate(pickedKey)
+                self.runNoConsesusMulti(lifecycleDeviceName)
+            if(consensus == "PoA"):
+                self.lockForConsensus()
+                self.addBlockConsensusCandidate(pickedKey)
+                self.runPoA()
+
+            # print("after orchestratorObject.addBlockConsensusCandidate")
+            # try:
+            # PBFTConsensus(bl, gwPub, devPubKey)
+            # except KeyboardInterrupt:
+            #     sys.exit()
+            # except:
+            #     print("failed to execute:")
+            #     logger.error("failed to execute:")
+            #     exc_type, exc_value, exc_traceback = sys.exc_info()
+            #     print "*** print_exception:"    l
+            #     traceback.print_exception(exc_type, exc_value, exc_traceback,
+            #                           limit=6, file=sys.stdout)
+            #
+            # logger.debug("end block consensus")
+            # try:
+            #     #thread.start_new_thread(sendBlockToPeers,(bl))
+            #     t1 = sendBlks(1, bl)
+            #     t1.start()
+            # except:
+            #     print "thread not working..."
+
+            if(consensus == "PBFT" or consensus == "dBFT" or consensus == "Witness3" or consensus == "PoW"):
+                self.releaseLockForConsensus()
+                for p in peers:
+                    obj = p.object
+                    obj.releaseLockRemote()
+                # print("ConsensusLocks released!")
+            ######end of lock consensus################
+
+        # print("Before encription of rsa2")
+
+        t3 = time.time()
+        timeDiff = '{0:.12f}'.format((t3 - t1) * 1000)
+        # f = open('trans_multi.txt', "a")
+        # f.write(timeDiff + "\n")
+        # f.close
+        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to generate key;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        logT6.append("gateway;" + gatewayName + ";" + consensus + ";T6;Time to add and replicate a new block in blockchain;" + timeDiff)
+        # logger.debug("|---------------------------------------------------------------------|")
+        # print("block added")
+        return encKey
+
+    def runNoConsesusMulti(self):
+        # print("Running without consensus")
+        t1 = float(((time.time()) * 1000) * 1000)
+        global peers
+        global blockContext
+        global logT5
+        global blkCounter
+        devPubKey = getBlockFromSyncList()
+        #verififyKeyContext()
+        #blockContext = "0001"
+        #@TODO define somehow a device is in a context
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
+        newBlock = ChainFunctionsMulti.createNewBlock(devPubKey, gwPvt, blockContext, consensus, deviceName)
+        signature = verifyBlockCandidate(newBlock, gwPub, devPubKey, peers, True)
+        if (signature == False):
+            logger.info("Consesus was not achieved: block #" +
+                        str(newBlock.index) + " will not be added")
+            return False
+        ChainFunctionsMulti.addBlockHeader(newBlock)
+        sendBlockToPeersMulti(newBlock)
+        t2 = float(((time.time()) * 1000) * 1000)
+        logT5.append(
+            "gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with no consensus;" + str(
+                (t2 - t1) / 1000))
+        # logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with none consensus algorithm;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        # print("Finish adding Block without consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
+        return True
+
+    def runPBFTMulti(self, lifecycleDeviceName):
+        """ Run the PBFT consensus to add a new block on the chain """
+        # print("I am in runPBFT")
+        t1 = float(((time.time()) * 1000) * 1000)
+        global gwPvt
+        global blockContext
+        global gwContextConsensus
+        global blkCounter
+        global logT5
+        devPubKey = getBlockFromSyncList()
+        #verififyKeyContext()
+        #vblockContext = "0001"
+        # set each block with a different context, e.g., based on the rest of division of bc size by number of contexts
+        # @TODO define somehow a device is in a context
+        # randomContext = random.randrange(0,len(gwContextConsensus))
+        # if(len(gwContextConsensus==0)):
+        #     logger.error("no contexts" + " My gw name is: " + gatewayName)
+        #     blockContext = "9999"
+        # else:
+        blockContext = gwContextConsensus[(blkCounter % len(gwContextConsensus))][0]
+        blkCounter = blkCounter+1
+        # if(random.randrange(1,3) == 1):
+        #     blockContext = "0001"
+        # else:
+        #     blockContext = "0002"
+            # logger.error("******************Changed to 2****************")
+        # blockContext = "0002"
+
+        blk = ChainFunctionsMulti.createNewBlock(devPubKey, gwPvt, blockContext, consensus, lifecycleDeviceName)
+        # logger.debug("Running PBFT function to block(" + str(blk.index) + ")")
+
+        if ((PBFTConsensus(blk, gwPub, devPubKey, lifecycleDeviceName, True)) == False):
+            logger.error("Consensus not finished")
+            return False
+        t2 = float(((time.time()) * 1000) * 1000)
+        logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus;" +  str((t2 - t1) / 1000))
+        # logT5.append("gateway;" + gatewayName + ";" + consensus + ";T5;Time to add a new block with pBFT consensus;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        return True
+        # print("Finish PBFT consensus in: "+ '{0:.12f}'.format((t2 - t1) * 1000))
+
+    def updateBlockLedgerMulti(self, pubKey, transaction, index):
+        # update local bockchain adding a new transaction
+        """ Receive a new transaction and add it to the chain\n
+            @param pubKey - Block public key\n
+            @param transaction - Data to be insert on the block\n
+            @param index - index of chain of transactions\n
+            @return "done" - method done (the block are not necessarily inserted)
+        """
+        trans = pickle.loads(transaction)
+        idx = pickle.loads(index)
+        t1 = time.time()
+        # logger.info("Received transaction #" + (str(trans.index)))
+        blk = ChainFunctionsMulti.findBlock(pubKey)
+        if blk != False:
+            # logger.debug("Transaction size in the block = " +
+            #              str(len(blk.transactions)))
+            if not (ChainFunctionsMulti.blockContainsTransaction(blk, trans, idx)):
+                if validatorClient:
+                    isTransactionValid(trans, pubKey)
+                ChainFunctionsMulti.addBlockTransaction(blk, trans, idx)
+        t2 = time.time()
+        logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a transaction in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        return "done"
+
+    def updateIOTBlockLedgerMulti(self, iotBlock, gwName):
+        # update local bockchain adding a new block
+        """ Receive a block and add it to the chain\n
+            @param iotBlock - Block to be add\n
+            @param gwName - sender peer's name
+        """
+        global logT3
+        # print("Updating IoT Block Ledger, in Gw: "+str(gwName))
+        # logger.debug("updateIoTBlockLedger Function")
+        b = pickle.loads(iotBlock)
+        # print("picked....")
+        t1 = time.time()
+        # logger.debug("Received block #" + (str(b.index)))
+        # logger.info("Received block #" + str(b.index) +
+        #             " from gateway " + str(gwName))
+        if isBlockValidMulti(b):
+            # print("updating is valid...")
+            ChainFunctionsMulti.addBlockHeader(b)
+        t2 = time.time()
+        # print("updating was done")
+        logT3.append(
+            "gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in BL;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        # logger.info("gateway;" + gatewayName + ";" + consensus + ";T3;Time to add a new block in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+
+    def showIoTLedgerMulti(self):
+        """ Log all chain \n
+            @return "ok" - done
+        """
+        # logger.info("Showing Block Header data for peer: " + myURI)
+        print("Showing Block Header data for peer: " + myURI)
+        size = ChainFunctionsMulti.getBlockchainSize()
+        # logger.info("IoT Ledger size: " + str(size))
+        # logger.info("|-----------------------------------------|")
+        print("IoT Ledger size: " + str(size))
+        print("|-----------------------------------------|")
+        theChain = ChainFunctionsMulti.getFullChain()
+        for b in theChain:
+        # logger.info(b.strBlock())
+        # logger.info("|-----------------------------------------|")
+            print(b.strBlock())
+            print("|-----------------------------------------|")
+        return "ok"
+    
+    def showBlockLedgerMulti(self, index):
+        """ Log all transactions of a block\n
+            @param index - index of the block\n
+            @return "ok" - done
+        """
+        print("Showing Transactions data for peer: " + myURI)
+        # logger.info("Showing Trasactions data for peer: " + myURI)
+        blk = ChainFunctionsMulti.getBlockByIndex(index)
+        print("Block for index"+str(index))
+        if blk == False:
+            return "Block does not exist"
+        #print("Block for index: "+str(index))
+        sizeChains = len(blk.transactions)
+        # logger.info("Block Ledger size: " + str(size))
+        # logger.info("-------")
+        print("Transactions chains size: " + str(sizeChains))
+        print("-------")
+        i = 0
+        for tranChain in blk.transactions:
+            print("Transactions inside chain " + str(i) + ": " + str(len(tranChain)))
+            for t in tranChain:
+                print(t.strBlock())
+                print("-------")
+            i = i + 1
+        return "ok"
+    
+    def showBlockWithId(self, deviceId):
+        """ Log blocks with specific ID \n
+            @param deviceId - Device ID to get blocks\n
+            @return "ok" - done
+        """
+        # logger.info("Showing Block Header data for peer: " + myURI)
+        print("Showing Block Headers with ID: " + deviceId)
+        t1 = time.time()
+        blocks = ChainFunctions.getBlocksById(deviceId)
+        t2 = time.time()
+        print("Time to get blocks: " + '{0:.12f}'.format((t2 - t1) * 1000))
+        print("Device blocks count: " + str(len(blocks)))
+        print("|-----------------------------------------|")
+        for b in blocks:
+            print(b.strBlock())
+            print("|-----------------------------------------|")
+        return "ok"
+    
+    def showBlockWithIdMulti(self, deviceId):
+        """ Log blocks with multiple chains with specific ID \n
+            @param deviceId - Device ID to get blocks\n
+            @return "ok" - done
+        """
+        # logger.info("Showing Block Header data for peer: " + myURI)   
+        print("")     
+        print("Showing Block Headers with ID (for MULTI transactions): " + deviceId)
+        t1 = time.time()
+        blocks = ChainFunctionsMulti.getBlocksById(deviceId)
+        t2 = time.time()
+        print("Time to get blocks: " + '{0:.12f}'.format((t2 - t1) * 1000))
+        print("Device blocks count: " + str(len(blocks)))
+        print("|-----------------------------------------|")
+        for b in blocks:
+            print(b.strBlock())
+            print("|-----------------------------------------|")
+        return "ok"
+        
+    def showTransactionWithId(self, componentId, showTransactions):
+        """ Log transactions with specific ID \n
+            @param componentId - Component ID to get blocks\n
+            @param showTransactions - Flag to show or not the transactions\n
+            @return the time to get all transactions
+        """
+        # logger.info("Showing Block Header data for peer: " + myURI)
+        print("Showing transactions Headers with ID: " + componentId)
+        t1 = time.time()
+        transactions = ChainFunctions.getTransactionsWithId(componentId)
+        t2 = time.time()
+        timeDiff = '{0:.12f}'.format((t2 - t1) * 1000)
+        print("Time to get transactions: " + timeDiff)
+        # logger.info("IoT Ledger size: " + str(size))
+        # logger.info("|-----------------------------------------|")
+        print("Components transactions count: " + str(len(transactions)))
+        if showTransactions:
+            print("|-----------------------------------------|")
+            for t in transactions:
+                print(t.strBlock())
+                print("|-----------------------------------------|")
+        
+        return timeDiff, str(len(transactions))
+    
+    def showTransactionWithIdMulti(self, componentId, showTransactions):
+        """ Log transactions for multi chains with specific ID \n
+            @param componentId - Component ID to get blocks\n
+            @param showTransactions - Flag to show or not the transactions\n
+            @return the time to get all transactions
+        """
+        # logger.info("Showing Block Header data for peer: " + myURI)   
+        print("")     
+        print("Showing transactions Headers with ID (for MULTI transactions): " + componentId)
+        t1 = time.time()
+        transactions = ChainFunctionsMulti.getTransactionsWithId(componentId)
+        t2 = time.time()
+        timeDiff = '{0:.12f}'.format((t2 - t1) * 1000)
+        print("Time to get transactions MULTI: " + timeDiff)
+        # logger.info("IoT Ledger size: " + str(size))
+        # logger.info("|-----------------------------------------|")
+        print("Components transactions count: " + str(len(transactions)))
+        if showTransactions:
+            print("|-----------------------------------------|")
+            for t in transactions:
+                print(t.strBlock())
+                print("|-----------------------------------------|")
+        
+        return timeDiff, str(len(transactions))
+    
+    def startTransactionsConsThreadsMulti(self):
+        try:
+            for x,y in gwContextConsensus:
+                threading.Thread(target=self.threadTransactionConsensusMulti, args=(x,y)).start()
+                # if (gwContextConsensus[0]) [("0001", "PoA"),("0002", "PBFT")]
+        except:
+            logger.info("startTransactionsConsThreadsMulti: EXCEPTION")
+
+    def threadTransactionConsensusMulti(self, context, consensus):
+        # a sleep time to give time to all gateways connect and etc
+        time.sleep(15)
+        # the other sleep times in this method is due to bad parallelism of Python... without any sleep, this thread can leave others in starvation
+        if(consensus=="PBFT"):
+            # while(True):
+            try:
+                for index in range(len(orchestratorContextObject)):
+                    if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
+                        self.performTransactionPoolPBFTConsensusMulti(context)
+                        # time.sleep(0.02)
+                    # else:
+                # time.sleep(0.1)
+            except:
+                logger.info("threadTransactionConsensusMulti: EXCEPTION")
+        logger.info("threadTransactionConsensusMulti: END THREAD")
+    
+    def performTransactionPoolPBFTConsensusMulti(self,context):
+        global contextPeers
+        global logT22
+        global sizePool
+        candidatePool =[]
+        # sizePool = 30 # slice of transactions get from each pool
+        minInterval = 10 # interval between consensus in ms
+        minTransactions = 0 # minimum number of transactions to start consensus
+
+        # for index in range(len(orchestratorContextObject)):
+        #     # print("*** obj " + str(orchestratorContextObject[index][1]) + " my pyro " + str(Pyro4.Proxy(myURI)))
+        #     # print("obj URI: " + str(orchestratorContextObject[index][1].exposedURI()) + "myURI " + str(myURI))
+        #     # orchestratorContextObject[index][1].exposedURI()
+        #     if (orchestratorContextObject[index][0] == context and orchestratorContextObject[index][1].exposedURI() == myURI):
+        # print("******************I Am the PBFT Leader of context: "+context)
+        logger.info("performTransactionPoolPBFTConsensusMulti: Inside method")
+        try:
+            while(len(candidatePool)==0):
+                tcc1 = ((time.time()) * 1000) * 1000
+                # just to not printing in every time that enters here, leave it only for interactive
+
+                while(self.addContextinLockList(context)==False):
+                    # logger.error("I AM NOT WITH LOCK!!!!!")
+                    time.sleep(0.001)
+                tempContextPeers = []
+                for x in range(len(contextPeers)):
+                    # print(" ***VVVVV **** context? " +contextPeers[x][0])
+                    if (contextPeers[x][0] == context):
+                        tempContextPeers = contextPeers[x][1]
+                # use this if you want to get all elements from trpool
+                # pickedCandidatePool = self.getLocalTransactionPool(context)
+                # use this if you want to get first sizePool elements
+                pickedCandidatePool = self.getNElementsLocalTransactionPool(context,sizePool)
+                myPool = pickle.loads(pickedCandidatePool)
+                if (myPool != False):
+                    candidatePool = myPool
+                    # print("I got my pool in PBFT")
+
+                for p in tempContextPeers:
+                    peer = p.object
+                    while(peer.addContextinLockList(context)==False):
+                        time.sleep(0.001)
+                    # pickedRemotePool = peer.getLocalTransactionPool(context)
+                    pickedRemotePool = peer.getNElementsLocalTransactionPool(context,sizePool)
+                    remoteCandidatePool = pickle.loads(pickedRemotePool)
+
+                    if(remoteCandidatePool!=False):
+                        # .extend append each from another list
+                        candidatePool.extend(remoteCandidatePool)
+                        # while(len(remoteCandidatePool)>0):
+                        #     # cant just append the remoteCandidatePool, should add each tuple
+                        #     remoteTR = remoteCandidatePool.pop(0)
+                        #     candidatePool.append((remoteTR[0],remoteTR[1]))
+
+                        # candidatePool.append(remoteCandidatePool)
+                candidatePoolSize = len(candidatePool)
+                if (candidatePoolSize!=0):
+                    logger.info("performTransactionPoolPBFTConsensusMulti: Inside PBFT Transaction")
+                    # logger.info("**************Inside PBFT Transaction ***************")
+                    self.prepareContextPBFTMulti(context,candidatePool,tempContextPeers)
+
+                    # if you want to set a min interval between consensus
+                    tcc2 = ((time.time()) * 1000) * 1000
+
+                    # te2 = ((time.time()) * 1000) * 1000
+                    # logger.error("ELECTION; " + str((te2-te1)/1000))
+                    self.removeLockfromContext(context)
+                    for p in tempContextPeers:
+                        peer = p.object
+                        peer.removeLockfromContext(context)
+
+                    # if ((tcc2 - tcc1) / 1000 < minInterval):
+                    #     time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
+                    # election for new orchestrator
+                    self.electNewContextOrchestrator(context)
+                    # orchestratorContextObject.performTransactionPoolPBFTConsensusMulti(context)
+                    tcc2 = ((time.time()) * 1000) * 1000
+                    logT22.append("T22 CONTEXT; "+context+";PBFT CONSENSUS TIME; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize) + ";TPUT;" + str((candidatePoolSize)/(((tcc2-tcc1)/1000)/1000)))
+                    # call to execute the consensus for the new leader
+                    for index in range(len(orchestratorContextObject)):
+                        if (orchestratorContextObject[index][0] == context):
+                            logger.info("performTransactionPoolPBFTConsensusMulti: running thread")
+                            threading.Thread(target=orchestratorContextObject[index][1].performTransactionPoolPBFTConsensusMulti, args=[context]).start()
+                    logger.info("performTransactionPoolPBFTConsensusMulti: CONTEXT "+context+" PBFT CONSENSUS; " + str((tcc2-tcc1)/1000) + "; SIZE; "+str(candidatePoolSize))
+                    return
+
+                else:
+                    self.removeLockfromContext(context)
+                    for p in tempContextPeers:
+                        peer = p.object
+                        peer.removeLockfromContext(context)
+                    tcc2 = ((time.time()) * 1000) * 1000
+                    if((tcc2 - tcc1) / 1000 < minInterval):
+                        time.sleep((minInterval - ((tcc2 - tcc1) / 1000)) / 1000)
+                        # print("****** sleeping " + str((minInterval - ((tcc2 - tcc1) / 1000)) / 1000) + "ms")
+        except:
+            logger.info("performTransactionPoolPBFTConsensusMulti: EXCEPTION")
+
+    def prepareContextPBFTMulti(self, context, candidatePool, alivePeers):
+        """ Send a new candidatePool for all the available peers on the network\n
+            @param newBlock - BlockHeader object\n
+            @param generatorGwPub - Public key from the peer who want to generate the block\n
+            @param generatorDevicePub - Public key from the device who want to generate the block\n
+        """
+        logger.info("prepareContextPBFTMulti: inside prepare")
+        candidateTransactionPool =[]
+        votesPoolTotal = []
+        validTransactionPool =[]
+        try:
+            while (len(candidatePool) > 0):
+                logger.info("prepareContextPBFTMulti: inside prepare--while")
+                candidateTransaction = candidatePool.pop(0)
+                if (candidateTransaction != False):
+                    logger.info("prepareContextPBFTMulti: inside prepare--notfalse candidate")
+                    devPublicKey = candidateTransaction[0]
+                    lifecycleEvent = candidateTransaction[1]
+                    if(ChainFunctionsMulti.findBlock(devPublicKey)!=False):
+                        blk = ChainFunctionsMulti.findBlock(devPublicKey)
+                        lastBlk = (ChainFunctionsMulti.getLatestBlockTransaction(blk, lifecycleEvent.index))
+                        nextInt = lastBlk.index + 1
+                        signData = CryptoFunctions.signInfo(gwPvt, str(lifecycleEvent.data))
+                        gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                        # code responsible to create the hash between Info nodes.
+                        prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, lifecycleEvent.index)).hash
+                        transaction = Transaction.Transaction(nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, lifecycleEvent.index, lifecycleEvent.id)
+                        
+                        #verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
+                        
+                        candidateTransactionPool.append((devPublicKey, transaction))
+                        logger.info("prepareContextPBFTMulti: prepare--transaction appended")
+                        #trSign = CryptoFunctions.signInfo(gwPvt,str(transaction))
+                        # votesPoolTotal.append([(devPublicKey, transaction), [trSign]])
+                        votesPoolTotal.append([(devPublicKey, transaction), ["valid"]])
+            if(len(candidateTransactionPool)==0):
+                logger.info("prepareContextPBFTMulti: tran were invalid or no tran at all (Multi)")
+                logger.error("All tr were invalid or no tr at all (Multi)")
+                return
+
+            dumpedPool = pickle.dumps(candidateTransactionPool)
+
+            arrayPeersThreads = []
+            # counter =0
+            dumpedGwPub = pickle.dumps(gwPub)
+            for p in alivePeers:
+                logger.info("prepareContextPBFTMulti: peer alive")
+                # default type of thread that accepts return value in the join
+                arrayPeersThreads.append(ThreadWithReturn(target=self.startRemoteVotingMulti, args=(context, dumpedPool, dumpedGwPub, p)))
+                # arrayPeersThreads.append(threading.Thread(target=self.startRemoteVotingMulti, args=(context,dumpedPool,dumpedGwPub,p)))
+                # start the last inserted thread in array
+                arrayPeersThreads[-1].start()
+                # counter = counter+1
+
+            #logger.info("after start")
+            for i in range(len(arrayPeersThreads)):
+
+                # default class of thread used to have a return on join
+                pickedVotes, pickedVotesSignature, remoteGwPk = arrayPeersThreads[i].join()
+                # arrayPeersThreads[i].join()
+                # logger.error("after join")
+
+                # will get from a queue of returns (from votes)
+                # pickedVotes, pickedVotesSignature, remoteGwPk = my_queue.get()
+
+                # logger.error("got stuff")
+                # pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidate(context, dumpedPool, dumpedGwPub)
+                votes = pickle.loads(pickedVotes)
+                votesSignature = pickle.loads(pickedVotesSignature)
+                # verify if list of votes are valid, i.e., peer signature in votes is correct
+                if(CryptoFunctions.signVerify(str(votes),votesSignature, p.object.getGwPubkey())):
+                    logger.info("prepareContextPBFTMulti: Votes Signature is valid")
+                    # logger.error("Votes Signature is valid")
+                    for index in range(len(votes)):
+                        # if there is a vote
+                        if(votes[index][1]=="valid"):
+                            # append a new vote
+                            votesPoolTotal[index][1].append(votes[index][1])
+                            # verify if it get the minimun number of votes
+                            if (len(votesPoolTotal[index][1]) > ((2 / 3) * len(alivePeers))):
+                                # verify if it was not already inserted
+                                if(not(votesPoolTotal[index][0] in validTransactionPool)):
+                                    # insert in validated pool
+                                    logger.info("prepareContextPBFTMulti: append to validTransactionPool")
+                                    validTransactionPool.append(votesPoolTotal[index][0])
+                                    # logger.info("Valid vote appended")
+                    if (len(validTransactionPool)==len(votesPoolTotal)):
+                        # logger.error("YES... breaked... reduced the time ;)")
+                        break
+                # get every return from the method votePoolCandidate called by each thread and count votes after joins
+
+
+            # for v in range(len(votesPoolTotal)):
+            #     if (len(votesPoolTotal[v][1]) > ((2 / 3) * len(alivePeers))):
+            #         # logger.error("APPENDED in final pool")
+            #         validTransactionPool.append(votesPoolTotal[v][0])
+
+            # commit
+
+            # TODO define how to update peers: all peers or only participating in consensus?
+            #
+            if(self.commitContextPBFTMulti(validTransactionPool,alivePeers)):
+                logger.info("prepareContextPBFTMulti: commitContextPBFTMulti returned true")
+            # if (self.commitContextPBFTMulti(validTransactionPool, peers)):
+                return True
+
+            return False
+        except:
+            logger.info("prepareContextPBFTMulti: EXCEPTION")
+            return False
+
+    def commitContextPBFTMulti(self, validTransactionPool, alivePeers):
+        arrayPeersThreads = [] * len(alivePeers)
+
+        if(len(validTransactionPool)>0):
+            dumpedSetTrans = pickle.dumps(validTransactionPool)
+            # addLocally
+            logger.info("commitContextPBFTMulti: Adding locally")
+            self.updateBlockLedgerSetTransMulti(dumpedSetTrans,True)
+
+            # add remote
+            index = 0
+            for p in alivePeers:
+
+                obj=p.object
+                # obj.updateBlockLedgerSetTransMulti(dumpedSetTrans,False)
+                arrayPeersThreads.append(threading.Thread(target=obj.updateBlockLedgerSetTransMulti, args=(dumpedSetTrans,False)))
+                arrayPeersThreads[index].start()
+                index = index+1
+
+            # this can be a problem for performance... trying
+            # for i in range(len(arrayPeersThreads)):
+            #     arrayPeersThreads[i].join()
+
+            logger.info("commitContextPBFTMulti: PASSED")
+            return True
+        logger.info("commitContextPBFTMulti: Failed to commit transactions")
+        logger.error("!!!! Failed to commit transactions !!!")
+        return False
+
+    def updateBlockLedgerSetTransMulti(self, candidatePool, isFirst):
+        global logT20
+        global logT21
+        global logT26
+        # update local bockchain adding a new transaction
+        """ Receive a new transaction and add it to the chain\n
+            @param pubKey - Block public key\n
+            @param transaction - Data to be insert on the block\n
+            @return "done" - method done (the block are not necessarily inserted)
+        """
+        setTrans = pickle.loads(candidatePool)
+        t1 = time.time()
+        # print("inside updateBlockLedgerSeTrans, setTrans: " + str(setTrans))
+        logger.info("updateBlockLedgerSetTransMulti: Received transaction #" + (str(setTrans.index)))
+        originalLen = len(setTrans)
+        while (len(setTrans)>0):
+            candidateTransaction = setTrans.pop(0)
+            # print("popped element from Pool")
+            # print(candidateTransaction)
+            logger.info("updateBlockLedgerSetTransMulti: popped element from Pool")
+            if (candidateTransaction != False):
+                devPublicKey = candidateTransaction[0]
+                deviceTrans = candidateTransaction[1]
+                blk = ChainFunctionsMulti.findBlock(devPublicKey)
+                logger.info("updateBlockLedgerSetTransMulti: add transaction to chain")
+                ChainFunctionsMulti.addBlockTransaction(blk, deviceTrans, deviceTrans.nonce)
+                deviceTrans.__class__ = Transaction.Transaction
+                candidateLifecycleEvent = deviceTrans.data
+                candidateLifecycleEvent.__class__ = LifecycleEvent.LifecycleEvent
+                candidateDevInfo = candidateLifecycleEvent.data
+                candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+                originalTimestamp = float (candidateDevInfo.timestamp)
+                gwTimestamp = float(deviceTrans.timestamp)
+                currentTimestamp = float (((time.time())*1000)*1000)
+                logT20.append("gateway;" + gatewayName +";Context;" +blk.blockContext + ";T20;Transaction Latency;" + str((currentTimestamp - originalTimestamp)/1000))
+                if(isFirst):
+                    logT26.append("gateway;" + gatewayName + ";Context;" + blk.blockContext + ";T26;First Transaction Latency;" + str((currentTimestamp - originalTimestamp) / 1000))
+                logger.info("updateBlockLedgerSetTransMulti: gateway;" + gatewayName + ";" + consensus + ";T20;Latency to generate and insert in my Gw is;" + str((currentTimestamp - originalTimestamp)/1000))
+                # logger.info(
+                #     "gateway;" + gatewayName + ";" + consensus + ";T21;Time to process Tr is;" + str(
+                #         (currentTimestamp - gwTimestamp) / 1000))
+
+        t2 = time.time()
+        logT21.append("gateway;" + gatewayName + ";T21;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+        #logger.info("gateway;" + gatewayName + ";" + consensus + ";T2;Time to add a set of ;" + str(originalLen) + "; transactions in block ledger;" + '{0:.12f}'.format((t2 - t1) * 1000))
+
+        return "done"
+
+    def startRemoteVotingMulti(self, context, dumpedPool, dumpedGwPub, p):
+        pickedVotes, pickedVotesSignature, remoteGwPk = p.object.votePoolCandidateMulti(context, dumpedPool, dumpedGwPub)
+        return pickedVotes, pickedVotesSignature, remoteGwPk
+
+
+    def votePoolCandidateMulti(self, context, candidatePool, pickedGwPub):
+        """ Checks whether the new block has the following characteristics: \n
+            * The hash of the previous block are correct in the new block data\n
+            * The new block index is equals to the previous block index plus one\n
+            * The generation time of the last block is smaller than the new one \n
+            If the new block have it all, sign it with the peer private key\n
+            @return False - The block does not have one or more of the previous characteristics\n
+            @return votesPool, signature and GwPub - return a list of votes (valid), signature and gwpub
+        """
+        global logT23
+        t1 = (time.time()*1000)
+        validation = True
+        votesPool =[]
+        receivedPool = pickle.loads(candidatePool)
+        receivedGwPub = pickle.loads(pickedGwPub)
+        while(len(receivedPool) > 0):
+            candidate = receivedPool.pop(0)
+            receivedDevPub = candidate[0]
+            candidateTr = candidate[1]
+            candidateTr.__class__ = Transaction.Transaction
+            candidateLifecycle = candidateTr.data
+            candidateLifecycle.__class__ = LifecycleEvent.LifecycleEvent
+
+            # verify if device is registered and if the index and timestamp are correct
+            if (ChainFunctionsMulti.findBlock(receivedDevPub) != False):
+                blk = ChainFunctionsMulti.findBlock(receivedDevPub)
+                # print("passed the blk")
+                lastBlk = (ChainFunctionsMulti.getLatestBlockTransaction(blk, candidateLifecycle.index))
+                lastTrIndex = lastBlk.index
+                lastTimestamp = lastBlk.timestamp
+                if(lastTrIndex >= candidateTr.index or lastTimestamp >= candidateTr.timestamp ):
+                    logger.error("***********************")
+                    logger.error("***Invalid Tr time or index*")
+                    logger.error("***********************")
+                    validation = False
+
+                # verify the gw of the device
+                candidateDevInfo = candidateLifecycle.data
+                candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+                verifyGwSign = CryptoFunctions.signVerify(str(candidateDevInfo), candidateTr.signature, receivedGwPub)
+                if (verifyGwSign != True):
+                    logger.error("***********************")
+                    logger.error("***Invalid Gw Signature*")
+                    logger.error("***********************")
+                    validation = False
+
+                # verify the signature of the device
+                d = " "+candidateDevInfo.timestamp+" "+candidateDevInfo.data
+
+                isSigned = CryptoFunctions.signVerify(d, candidateDevInfo.deviceSignature, receivedDevPub)
+                if (isSigned != True):
+                    logger.error("***********************")
+                    logger.error("***Invalid Device Signature*")
+                    logger.error("***********************")
+                    validation = False
+                # after verifications...
+
+                # first Tr is a dummy generated data
+                if(len(blk.transactions[candidateLifecycle.index])-1 > 0):
+                    lastTrLifecycle = lastBlk.data
+                    lastTrLifecycle.__class__ = LifecycleEvent.LifecycleEvent
+                    lastTrDevInfo = lastTrLifecycle.data
+                    lastTrDevInfo.__class__ = DeviceInfo.DeviceInfo
+
+                    if(lastTrDevInfo.timestamp >= candidateDevInfo.timestamp):
+                        logger.error("***********************")
+                        logger.error("***Invalid device info time*")
+                        logger.error("***********************")
+                        validation = False
+
+            else:
+                logger.error("***********************")
+                logger.error("***Invalid PubKey -> it is not in BC*")
+                logger.error("***********************")
+                validation = False
+
+
+            if(validation==True):
+            #     # trSign = CryptoFunctions.signInfo(gwPvt, str(candidateTr))
+            #     # votesPool.append([(receivedDevPub, candidateTr), trSign])
+            #     # send only de candidate Tr signature
+                votesPool.append([(candidateTr.signature), "valid"])
+            # # if it is not valid, do not vote as valid
+            else:
+                votesPool.append([(candidateTr.signature), ""])
+            validation = True
+        votesSignature=CryptoFunctions.signInfo(gwPvt, str(votesPool))
+        t2 = (time.time()*1000)
+        logT23.append("T23 VOTING;CONTEXT "+context+";VOTING TIME; " + str(t2-t1))
+        # logger.error("!!!!! My verification sign = " + str(CryptoFunctions.signVerify(str(votesPool),votesSignature,gwPub)))
+        # logger.error("My signature is: " + votesSignature + "my votespool is: " + str(votesPool) + "my pub is" + gwPub)
+        return pickle.dumps(votesPool), pickle.dumps(votesSignature), gwPub
+
+    def isBlockInTheChainMulti(self, devPubKey):
+        """ Verify if a block is on the chain\n
+            @param devPubKey - block pub key\n
+            @return boolean - True: block found, False: block not found
+        """
+        blk = ChainFunctionsMulti.findBlock(devPubKey)
+        # print("Inside inBlockInTheChain, devPumyVoteForNewOrchestratorbKey= " + str(devPubKey))
+        if(blk == False):
+            # logger.debug("Block is false="+str(devPubKey))
+            return False
+        else:
+            return True
+        
+    def addTransactionToPoolMulti(self, devPublicKey, encryptedObj, type, index):
+        """ Receive a new transaction to be add to the chain, a
+            send to the pool it to all peers\n
+            @param devPublicKey - Public key from the sender device\n
+            @param encryptedObj - Info of the transaction encrypted with AES 256\n
+            @return "ok!" - all done\n
+            @return "Invalid Signature" - an invalid key are found\n
+            @return "Key not found" - the device's key are not found
+        """
+        # logger.debug("Transaction received")
+        global gwPvt
+        global gwPub
+        global logT24
+        global logT25
+        t1 = time.time()
+
+        # loading key and encryptedObj from from pickle serialization
+        devPublicKey=pickle.loads(devPublicKey)
+        # print("DevPubKey= " + str(devPublicKey))
+        encryptedObj=pickle.loads(encryptedObj)
+        type=pickle.loads(type)
+        index=pickle.loads(index)
+        blk = ChainFunctionsMulti.findBlock(devPublicKey)
+        # self.addContextinLockList(devPublicKey)
+        if (blk != False and blk.index > 0):
+            devAESKey = findAESKey(devPublicKey)
+            if (devAESKey != False):
+                # plainObject contains [Signature + Time + Data]
+
+                plainObject = CryptoFunctions.decryptAES(
+                    encryptedObj, devAESKey)
+
+                #print("plainObject = " + str(plainObject))
+                split = plainObject.split()
+                signature = split[0]  #plainObject[:88] # get first 88 chars
+                #print("signature = " + str(signature))
+                # remove the 16 char of timestamp
+                devTime = split[1]  # plainObject[88:104]
+                #print("devTime = " + str(devTime))
+                # retrieve the last chars which are the data
+                deviceData = split[2]  # plainObject[104:]
+                #print("deviceData = " + str(deviceData))
+                t2 = time.time()
+                #logger.info("gateway;" + gatewayName + ";" + consensus + ";T1;Time to add a new transaction in a block;" + '{0:.12f}'.format((t2 - t1) * 1000))
+                logger.info("addTransactionToPoolMulti: gateway;" + gatewayName + ";" + consensus + ";T1;Transaction data received")
+
+                d = " "+devTime+" "+deviceData
+                isSigned = CryptoFunctions.signVerify(
+                    d, signature, devPublicKey)
+
+                if isSigned:
+                    deviceInfo = DeviceInfo.DeviceInfo(
+                        signature, devTime, deviceData)
+                    matching = getComponentNameByType(type)
+                    lifecycleEvent = LifecycleEvent.LifecycleEvent(type, matching, deviceInfo, index)
+                    # send to consensus here
+                    devContext = blk.blockContext
+                    t2=time.time()
+                    logT24.append("T24 VERIFICATION TIME; " + str((t2-t1)*1000))
+                    nextInt = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).index + 1
+                    signData = CryptoFunctions.signInfo(gwPvt, str(deviceInfo))
+                    gwTime = "{:.0f}".format(((time.time() * 1000) * 1000))
+                    prevInfoHash = (ChainFunctionsMulti.getLatestBlockTransaction(blk, index)).hash
+                    transaction = Transaction.Transaction(
+                        nextInt, prevInfoHash, gwTime, lifecycleEvent, signData, index, matching)
+                    #ChainFunctionsMulti.addBlockTransaction(blk, transaction, index)
+                    t3=time.time()
+                    logger.info("addTransactionToPoolMulti: gateway;" + gatewayName + ";" + consensus + ";T1;Transaction created")
+                    while ( self.addNewTransactionToSyncList(devPublicKey, lifecycleEvent, devContext) == False):
+                        logger.error("tried to insert and it was not possible, trying again")
+                        time.sleep(0.001)
+                    t4=time.time()
+                    logT25.append("T25 Appending TX IN POOL TIME; " + str((t4-t3)*1000))
+                    # after context
+
+                    # print("all done")
+                    # self.removeLockfromContext(devPublicKey)
+                    return "ok!"
+                else:
+                    # logger.debug("--Transaction not appended--Transaction Invalid Signature")
+                    # self.removeLockfromContext(devPublicKey)
+                    return "Invalid Signature"
+            # logger.debug("--Transaction not appended--Key not found")
+            # self.removeLockfromContext(devPublicKey)
+            return "key not found"
+        logger.error("key not found when adding transaction")
+        # self.removeLockfromContext(devPublicKey)
+        return "block false"
+
+def sendTransactionToPeersMulti(devPublicKey, transaction, index):
+    """ Send a transaction received to all peers connected.\n
+        @param devPublickey - public key from the sending device\n
+        @param transaction - info to be add to a block
+    """
+    global peers
+    for peer in peers:
+        obj = peer.object
+        # logger.debug("Sending transaction to peer " + peer.peerURI)
+        trans = pickle.dumps(transaction)
+        idx = pickle.dumps(index)
+        obj.updateBlockLedgerMulti(devPublicKey, trans, idx)
+        # trans.__class__ = Transaction.Transaction
+        # candidateDevInfo = trans.data
+        # candidateDevInfo.__class__ = DeviceInfo.DeviceInfo
+        # originalTimestamp = float(candidateDevInfo.timestamp)
+
+        # currentTimestamp = float(((time.time()) * 1000) * 1000)
+        # logT20.append("gateway;" + gatewayName + ";T20;Transaction Latency;" + str(
+        #     (currentTimestamp - originalTimestamp) / 1000))
+
+def sendBlockToPeersMulti(IoTBlock):
+    """
+    Receive a block and send it to all peers connected.\n
+    @param IoTBlock - BlockHeader object
+    """
+    global peers
+    # print("sending block to peers")
+    # logger.debug("Running through peers")
+    for peer in peers:
+        # print ("Inside for in peers")
+        obj = peer.object
+        # print("sending IoT Block to: " + str(peer.peerURI))
+        # logger.debug("Sending block to peer " + str(peer.peerURI))
+        dat = pickle.dumps(IoTBlock)
+        obj.updateIOTBlockLedgerMulti(dat, myName)
+    # print("block sent to all peers")
+
+def restartChains(keys):
+    """ Store the gateway keys to the text file\n
+        @param keys - all the gateways keys read from file to start the chain\n
+    """
+    global peers
+    global gwPub
+    global gwPvt
+
+    # Update the local keys
+    key = keys[0]
+    gwPub = key[0]
+    gwPvt = key[1]
+    #print ("public = " + str(gwPub) + ", private = " + str(gwPvt))
+
+    ChainFunctions.restartChain()
+    ChainFunctionsMulti.restartChain()
+    #blk = ChainFunctionsMulti.getLatestBlock()
+    #print("BlockGenesis = "+ str(blk.strBlock()))
+    # print("sending block to peers")
+    # logger.debug("Running through peers")
+    i = 1
+    for peer in peers:
+        # Send each key pair to each peer
+        key = keys[i]
+        #print ("public = " + str(key[0]) + ", private = " + str(key[1]))
+        obj = peer.object
+        #print("sending KEY to: " + str(peer.peerURI))
+        # logger.debug("Sending block to peer " + str(peer.peerURI))
+        pubKey = pickle.dumps(key[0])
+        privKey = pickle.dumps(key[1])
+        obj.updateGatewayKeys(pubKey, privKey, myName)
+        i = i + 1
+
+def storeKeysFromPeers(f):
+    """ Store the gateway keys to the text file\n
+        @param f - the file to store the local keys\n
+    """
+
+    #print("gwPub = "+ str(gwPub))
+    #print("gwPvt = "+ str(gwPvt))
+
+    pub = gwPub.replace('\n', '\\n')
+    pvt = gwPvt.replace('\n', '\\n')
+
+    f.write(pub + "  " + pvt + "\n")
+
+    for peer in peers:
+        obj = peer.object
+        #print("sending request to: " + str(peer.peerURI))
+        obj.storeGatewayKeys(myName)
+
+def isBlockValidMulti(block):
+    # Todo Fix the comparison between the hashes... for now is just a mater to simulate the time spend calculating the hashes...
+    # global BlockHeaderChain
+    # print(str(len(BlockHeaderChain)))
+    lastBlk = ChainFunctionsMulti.getLatestBlock()
+    # print("Index:"+str(lastBlk.index)+" prevHash:"+str(lastBlk.previousHash)+ " time:"+str(lastBlk.timestamp)+ " pubKey:")
+    # lastBlkHash = CryptoFunctions.calculateHash(lastBlk)
+
+    lastBlkHash = CryptoFunctions.calculateHash(lastBlk.index, lastBlk.previousHash, lastBlk.timestamp, 
+                        lastBlk.nonce, lastBlk.publicKey, lastBlk.blockContext, lastBlk.device)
+
+    # print ("This Hash:"+str(lastBlkHash))
+    # print ("Last Hash:"+str(block.previousHash))
+    if(lastBlkHash == block.previousHash):
+        # logger.info("isBlockValid == true")
+        return True
+    else:
+        logger.error("isBlockValid == false")
+        logger.error("lastBlkHash = " + str(lastBlkHash))
+        logger.error("block.previous = " + str(block.previousHash))
+        logger.error("lastBlk Index = " + str(lastBlk.index))
+        logger.error("block.index = " + str(block.index))
+        # return False
+        return True
+
+def getComponentNameByType(type):
+    matching = [s for s in componentsId if type in s]
+    return matching[0]
+
+def updateComponentNameByType(comp, newCompId):
+    for c in range(componentsId):
+        if (comp in componentsId[c]):
+            componentsId[c] = newCompId
+
+#############################################################################
+#############################################################################
+##############          END Lifecycle Events (Rodrigo)         ##############
+#############################################################################
+#############################################################################
 
 def addNewBlockToSyncList(devPubKey):
     """ Add a new block to a syncronized list through the peers\n
@@ -3159,7 +4863,7 @@ def preparePBFTConsensus():
 
 ######PBFT Consensus for blocks########
 
-def PBFTConsensus(newBlock, generatorGwPub, generatorDevicePub):
+def PBFTConsensus(newBlock, generatorGwPub, generatorDevicePub, lifecycleDeviceName, isMulti = False):
     """ Make the configurations needed to run consensus and call the method runPBFT()\n
         @param newBlock - BlockHeader object\n
         @param generatorGwPub - Public key from the peer who want to generate the block\n
@@ -3177,7 +4881,7 @@ def PBFTConsensus(newBlock, generatorGwPub, generatorDevicePub):
     # t.start()
     # print("inside PBFTConsensus, before commitblockpbft")
     if(commitBlockPBFT(newBlock, generatorGwPub,
-                    generatorDevicePub, connectedPeers)):
+                    generatorDevicePub, connectedPeers, lifecycleDeviceName, isMulti)):
         return True
 
     return False
@@ -3203,7 +4907,7 @@ def PBFTConsensus(newBlock, generatorGwPub, generatorDevicePub):
     #         return True
     # return False
 
-def commitBlockPBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
+def commitBlockPBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers, lifecycleDeviceName, isMulti):
     """ Send a new block for all the available peers on the network\n
         @param newBlock - BlockHeader object\n
         @param generatorGwPub - Public key from the peer who want to generate the block\n
@@ -3217,11 +4921,16 @@ def commitBlockPBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
     # print("inside commitblockpbft")
     while (pbftFinished and i < 30):
         # print("inside commitblockpbft, inside while")
-        pbftAchieved = handlePBFT(newBlock, generatorGwPub, generatorGwPub, alivePeers)
+        pbftAchieved = handlePBFT(newBlock, generatorGwPub, generatorGwPub, alivePeers, isMulti)
         if(not pbftAchieved):
             oldId = newBlock.index
             # logger.info("PBFT not achieve, Recreating block="+ str(ChainFunctions.getBlockchainSize()))
-            newBlock = ChainFunctions.createNewBlock(generatorDevicePub, gwPvt, blockContext, consensus)
+            if isMulti:
+                newBlock = ChainFunctionsMulti.createNewBlock(generatorDevicePub, gwPvt, 
+                                                              blockContext, consensus, lifecycleDeviceName)
+            else:
+                newBlock = ChainFunctions.createNewBlock(generatorDevicePub, gwPvt, 
+                                                         blockContext, consensus, lifecycleDeviceName)
             # logger.info("Block Recriated ID was:("+str(oldId)+") new:("+str(newBlock.index)+")")
             i = i + 1
             time.sleep(0.01)
@@ -3247,7 +4956,7 @@ def commitBlockPBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
     #     for t in threads:
     #         t.join()
 
-def handlePBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
+def handlePBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers, isMulti):
     """ Send the new block to all the peers available to be verified\n
         @param newBlock - BlockHeader object\n
         @param generatorGwPub - Public key from the peer who want to generate the block\n
@@ -3260,23 +4969,27 @@ def handlePBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
     # logger.debug("Running commit function to block: "+str(hashblk))
     # print("######before handlePBFT first for")
     picked = pickle.dumps(newBlock)
+    picked2 = pickle.dumps(isMulti)
     for p in alivePeers:
         # logger.debug("Asking for block verification from: "+str(p.peerURI))
         # verifyRet = p.object.verifyBlockCandidateRemote(pickle.dumps(newBlock), generatorGwPub, generatorDevicePub)
 
-        verifyRet = p.object.verifyBlockCandidateRemote(picked, generatorGwPub)
+        verifyRet = p.object.verifyBlockCandidateRemote(picked, generatorGwPub, picked2)
         # logger.debug("Answer received: "+str(verifyRet))
         # print("######inside handlePBFT first for")
         if(verifyRet):
             peerPubKey = p.object.getGwPubkey()
-            # logger.debug("Pub Key from gateway that voted: "+str(peerPubKey))
-            # logger.debug("Running the add vote to block")
+            # logger.info("Pub Key from gateway that voted: "+str(peerPubKey))
+            # logger.info("Running the add vote to block")
             addVoteBlockPBFT(newBlock, peerPubKey, verifyRet)
-            calcRet = calcBlockPBFT(newBlock, alivePeers)
-            # logger.debug("Result from calcBlockPBFT:"+str(calcRet))
+            calcRet = calcBlockPBFT(newBlock, alivePeers, isMulti)
+            # logger.info("Result from calcBlockPBFT:"+str(calcRet))
             if(calcRet):
                 # logger.info("Consensus was achieve, updating peers and finishing operation")
-                sendBlockToPeers(newBlock)
+                if isMulti:
+                    sendBlockToPeersMulti(newBlock)
+                else:
+                    sendBlockToPeers(newBlock)
                 # print("handlePBFT = true")
                 return True
     # logger.info("Consesus was not Achieved!!! Block(" +
@@ -3316,7 +5029,7 @@ def handlePBFT(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
 #     logger.info("Consesus was not Achieved!!! Block("+str(newBlock.index)+") will not added")
 #     return False
 
-def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
+def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeers, isMulti = False):
     """ Checks whether the new block has the following characteristics: \n
         * The hash of the previous block are correct in the new block data\n
         * The new block index is equals to the previous block index plus one\n
@@ -3326,14 +5039,19 @@ def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeer
         @return voteSignature - The block has been verified and approved
     """
     blockValidation = True
-    lastBlk = ChainFunctions.getLatestBlock()
+    if isMulti:
+        #print("Inside verifyBlockCandidate, with MULTI")
+        lastBlk = ChainFunctionsMulti.getLatestBlock()
+    else:
+        #print("Inside verifyBlockCandidate, with NORMAL")
+        lastBlk = ChainFunctions.getLatestBlock()
     # logger.debug("last block:"+str(lastBlk.strBlock()))
     lastBlkHash = CryptoFunctions.calculateHashForBlock(lastBlk)
     # print("Index:"+str(lastBlk.index)+" prevHash:"+str(lastBlk.previousHash)+ " time:"+str(lastBlk.timestamp)+ " pubKey:")
     # lastBlkHash = CryptoFunctions.calculateHash(lastBlk.index, lastBlk.previousHash, lastBlk.timestamp,
     #                                             lastBlk.publicKey)
-    # print ("This Hash:"+str(lastBlkHash))
-    # print ("Last Hash:"+str(block.previousHash))
+    # print ("Last Hash:"+str(lastBlkHash))
+    # print ("Prev Hash:"+str(newBlock.previousHash))
 
     if (lastBlkHash != newBlock.previousHash):
         # print("validation lastblkhash")
@@ -3360,12 +5078,13 @@ def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeer
         blockValidation = False
         return blockValidation
     if blockValidation:
-        # logger.info("block successfully validated")
+        logger.info("block successfully validated")
         voteSignature = CryptoFunctions.signInfo(
             gwPvt, newBlock.__str__())  # identify the problem in this line!!
         # logger.debug("block successfully signed")
         # addVoteBlockPBFT(newBlock, gwPub, voteSignature)
         # logger.debug("block successfully added locally")
+        # print("finish verifyBlockCandidate")
         return voteSignature
         # addVoteBlockPBFT(newBlock, gwPub, voteSignature) #vote positively, signing the candidate block
         # for p in alivePeers:
@@ -3392,7 +5111,7 @@ def addVoteBlockPBFT(newBlock, voterPub, voterSign):
     # newBlockCandidate[CryptoFunctions.calculateHashForBlock(newBlock)][voterPub] = voterSign
     return True
 
-def calcBlockPBFT(newBlock, alivePeers):
+def calcBlockPBFT(newBlock, alivePeers, isMulti):
     """ Verify if the new block achieved the consensus\n
         @param newBlock - BlockHeader object\n
         @param alivePeers - list of available peers\n
@@ -3417,7 +5136,10 @@ def calcBlockPBFT(newBlock, alivePeers):
     # if len(newBlockCandidate[CryptoFunctions.calculateHashForBlock(newBlock)]) > ((2/3)*len(alivePeers)):
     if (blHash in newBlockCandidate) and (locDicCount >= cont):
         # logger.debug("Consensus achieved!")
-        ChainFunctions.addBlockHeader(newBlock)
+        if isMulti:
+            ChainFunctionsMulti.addBlockHeader(newBlock)
+        else:
+            ChainFunctions.addBlockHeader(newBlock)
         # for p in alivePeers:
         #     p.object.insertBlock(blkHash)
         # print("calcBLockPBFT = True")
@@ -3425,65 +5147,6 @@ def calcBlockPBFT(newBlock, alivePeers):
     else:
         # logger.debug("Consensus Not achieved yet!")
         # print("calcBLockPBFT = false")
-        return False
-
-def verifyBlockCandidate(newBlock, generatorGwPub, generatorDevicePub, alivePeers):
-    """ Checks whether the new block has the following characteristics: \n
-        * The hash of the previous block are correct in the new block data\n
-        * The new block index is equals to the previous block index plus one\n
-        * The generation time of the last block is smaller than the new one \n
-        If the new block have it all, sign it with the peer private key\n
-        @return False - The block does not have one or more of the previous characteristics\n
-        @return voteSignature - The block has been verified and approved
-    """
-    blockValidation = True
-    lastBlk = ChainFunctions.getLatestBlock()
-    # logger.debug("last block:"+str(lastBlk.strBlock()))
-    lastBlkHash = CryptoFunctions.calculateHashForBlock(lastBlk)
-    # print("Index:"+str(lastBlk.index)+" prevHash:"+str(lastBlk.previousHash)+ " time:"+str(lastBlk.timestamp)+ " pubKey:")
-    # lastBlkHash = CryptoFunctions.calculateHash(lastBlk.index, lastBlk.previousHash, lastBlk.timestamp,
-    #                                             lastBlk.publicKey)
-    # print ("This Hash:"+str(lastBlkHash))
-    # print ("Last Hash:"+str(block.previousHash))
-
-    if (lastBlkHash != newBlock.previousHash):
-        # print("validation lastblkhash")
-        logger.error("Failed to validate new block(" +
-                        str(newBlock.index)+") HASH value")
-        # logger.debug("lastBlkHash="+str(lastBlkHash))
-        # logger.debug("newBlock-previousHash="+str(newBlock.previousHash))
-        blockValidation = False
-        return blockValidation
-    if (int(lastBlk.index+1) != int(newBlock.index)):
-        # print("validation lastblkindex")
-        logger.error("Failed to validate new block(" +
-                        str(newBlock.index)+") INDEX value")
-        # logger.debug("lastBlk Index="+str(lastBlk.index))
-        # logger.debug("newBlock Index="+str(newBlock.index))
-        blockValidation = False
-        return blockValidation
-    if (lastBlk.timestamp > newBlock.timestamp): # @TODO this timestamp contraint can be hard -> global time
-        # print("validation lastblktime")
-        logger.error("Failed to validate new block(" +
-                        str(newBlock.index)+") TIME value")
-        # logger.debug("lastBlk time:"+str(lastBlk.timestamp))
-        # logger.debug("lastBlk time:"+str(newBlock.timestamp))
-        blockValidation = False
-        return blockValidation
-    if blockValidation:
-        # logger.info("block successfully validated")
-        voteSignature = CryptoFunctions.signInfo(
-            gwPvt, newBlock.__str__())  # identify the problem in this line!!
-        # logger.debug("block successfully signed")
-        # addVoteBlockPBFT(newBlock, gwPub, voteSignature)
-        # logger.debug("block successfully added locally")
-        return voteSignature
-        # addVoteBlockPBFT(newBlock, gwPub, voteSignature) #vote positively, signing the candidate block
-        # for p in alivePeers:
-        #     p.object.addVoteBlockPBFTRemote(newBlock, gwPub, voteSignature) #put its vote in the list of each peer
-        # return True
-    else:
-        # print("Failed to validate new block")
         return False
 
 ######
@@ -3850,12 +5513,15 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
     global blockContext
     global gwContextConsensus
     global consensus
-    global sizePool
+    global sizePool    
+    global componentsId
+    global deviceName
 
     gatewayName = local_gatewayName
     nameServerIP = nameServerIP_received
     nameServerPort = nameServerPort_received
     sizePool = poolSize
+    deviceName = deviceName + gatewayName
 
     blockContext =gatewayContext
     # @TODO there is a temporary approach to set consensus of gw
@@ -3898,6 +5564,10 @@ def main(nameServerIP_received, nameServerPort_received, local_gatewayName, gate
 
     # create the blockchain
     bootstrapChain2()
+
+    # initialzie some components mocked identification
+    for comp in components:
+        componentsId.append("SN1234_"+comp+"_"+str(deviceName))
 
     # print ("Please copy the server address: PYRO:chain.server...... as shown and use it in deviceSimulator.py")
     #with Pyro4.Daemon(getMyIP()) as daemon:

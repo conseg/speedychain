@@ -110,3 +110,10 @@ venv.bak/
 .gitignore
 .vscode/settings.json
 .vscode/settings.json
+
+# EVM files
+*.mod
+*.sum
+
+# Chain persistent files
+# *.txt
